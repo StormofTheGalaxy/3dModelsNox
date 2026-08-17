@@ -10,10 +10,12 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/db/package.json packages/db/
+COPY packages/storage/package.json packages/storage/
 COPY app/package.json app/
 COPY ws/package.json ws/
 COPY worker/package.json worker/
-RUN npm ci --ignore-scripts
+# Скрипты установки не отключаем: sharp тянет платформенные бинарники.
+RUN npm ci
 
 FROM base AS runner
 ENV NODE_ENV=production
@@ -21,6 +23,7 @@ COPY --from=deps /repo/node_modules ./node_modules
 COPY package.json tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY packages/db ./packages/db
+COPY packages/storage ./packages/storage
 COPY prisma ./prisma
 COPY worker ./worker
 

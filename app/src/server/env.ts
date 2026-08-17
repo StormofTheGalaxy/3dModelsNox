@@ -29,6 +29,17 @@ const serverEnvSchema = z.object({
   RESEND_API_KEY: z.string().default(''),
   EMAIL_FROM: z.string().default('PolyForge <noreply@example.com>'),
   EMAIL_TRANSPORT: z.enum(['console', 'resend']).default('console'),
+
+  // Хранилище файлов. В локальной разработке — диск, в проде — S3.
+  STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+  STORAGE_LOCAL_DIR: z.string().default('.data/uploads'),
+  S3_ENDPOINT: z.string().default(''),
+  S3_REGION: z.string().default('ru-1'),
+  S3_ACCESS_KEY_ID: z.string().default(''),
+  S3_SECRET_ACCESS_KEY: z.string().default(''),
+  S3_BUCKET_PUBLIC: z.string().default('polyforge-public'),
+  S3_BUCKET_PRIVATE: z.string().default('polyforge-private'),
+  S3_PUBLIC_BASE_URL: z.string().default(''),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

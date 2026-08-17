@@ -163,7 +163,16 @@
     "title": "Кабинет",
     "greeting": "Привет, {nickname}",
     "designerSoon": "Кабинет дизайнера появится в следующей фазе разработки.",
-    "customerSoon": "Кабинет заказчика появится в следующей фазе разработки."
+    "customerSoon": "Кабинет заказчика появится в следующей фазе разработки.",
+    "myWorks": "Мои работы",
+    "addWork": "Добавить работу",
+    "completeProfile": "Заполните профиль",
+    "completeProfileDesigner": "Без специализаций и стилей вас не найдут в каталоге.",
+    "completeProfileCustomer": "Расскажите о себе — дизайнеры охотнее откликаются.",
+    "profileReady": "Профиль заполнен",
+    "openProfile": "Открыть профиль",
+    "worksCount": "Работ в портфолио: {count}",
+    "ordersSoon": "Заказы и сделки появятся в фазах 3 и 4."
   },
   "settings": {
     "title": "Настройки аккаунта",
@@ -225,7 +234,29 @@
     "credentials": "Неверный email или пароль",
     "accountBanned": "Аккаунт заблокирован",
     "accountBannedUntil": "Аккаунт заблокирован до {date}",
-    "emailNotVerified": "Сначала подтвердите email"
+    "emailNotVerified": "Сначала подтвердите email",
+    "profile": {
+      "specializationRequired": "Выберите хотя бы одну специализацию",
+      "bioTooLong": "Слишком длинный текст",
+      "displayNameTooShort": "Минимум 2 символа",
+      "displayNameTooLong": "Максимум 64 символа",
+      "invalidUrl": "Нужна полная ссылка, начиная с https://",
+      "tooManyLinks": "Не больше 5 ссылок",
+      "tooManyTags": "Слишком много значений"
+    },
+    "work": {
+      "titleTooShort": "Минимум 3 символа",
+      "titleTooLong": "Максимум 120 символов",
+      "descriptionTooLong": "Слишком длинное описание",
+      "mediaRequired": "Добавьте хотя бы одно изображение",
+      "designerProfileRequired": "Сначала заполните профиль дизайнера"
+    },
+    "upload": {
+      "unsupportedType": "Такой формат файла не поддерживается",
+      "tooLarge": "Файл больше {limit} МБ",
+      "failed": "Не удалось загрузить файл",
+      "tooMany": "Больше {limit} файлов на работу нельзя"
+    }
   },
   "empty": {
     "title": "Пока пусто",
@@ -259,5 +290,232 @@
     "privacy": "Политика конфиденциальности",
     "rules": "Правила платформы",
     "draftNotice": "Черновик документа. Финальная редакция появится до открытия беты."
+  },
+  "taxonomy": {
+    "specialization": {
+      "character": "Персонажи",
+      "environment": "Окружение",
+      "props": "Пропсы",
+      "weapons": "Оружие",
+      "vehicles": "Техника",
+      "animation": "Анимация",
+      "rigging": "Риггинг",
+      "texturing": "Текстуринг",
+      "other": "Другое"
+    },
+    "style": {
+      "realism": "Реализм",
+      "stylized": "Стилизация",
+      "lowpoly": "Лоуполи",
+      "pixel": "Пиксель",
+      "anime": "Аниме",
+      "scifi": "Sci-fi",
+      "fantasy": "Фэнтези",
+      "other": "Другое"
+    },
+    "assetType": {
+      "character": "Персонаж",
+      "environment": "Окружение",
+      "prop": "Пропс",
+      "weapon": "Оружие",
+      "vehicle": "Техника",
+      "building": "Здание",
+      "animation": "Анимация",
+      "texture": "Текстуры",
+      "other": "Другое"
+    },
+    "availability": {
+      "open": "Открыт к заказам",
+      "busy": "Занят",
+      "closed": "Не берёт заказы"
+    },
+    "level": {
+      "novice": "Новичок",
+      "verified": "Верифицирован",
+      "pro": "Pro",
+      "top": "Топ"
+    },
+    "customerType": {
+      "indie": "Инди-разработчик",
+      "studio": "Студия",
+      "server_project": "Игровой сервер или мод",
+      "other": "Другое"
+    },
+    "visibility": {
+      "public": "Публичная",
+      "link_only": "Только по ссылке"
+    },
+    "reportCategory": {
+      "spam": "Спам",
+      "abuse": "Оскорбления",
+      "fraud": "Мошенничество",
+      "nsfw": "NSFW-контент",
+      "plagiarism": "Плагиат",
+      "rules_evasion": "Обход правил"
+    },
+    "language": {
+      "ru": "Русский",
+      "en": "English",
+      "uk": "Українська",
+      "kk": "Қазақша",
+      "de": "Deutsch",
+      "es": "Español",
+      "pt": "Português",
+      "zh": "中文"
+    }
+  },
+  "profile": {
+    "designerTitle": "Профиль дизайнера",
+    "customerTitle": "Профиль заказчика",
+    "editDesigner": "Редактировать профиль дизайнера",
+    "editCustomer": "Редактировать профиль заказчика",
+    "avatar": "Аватар",
+    "cover": "Обложка",
+    "imageHint": "PNG, JPG или WebP",
+    "country": "Страна",
+    "languages": "Языки общения",
+    "specializations": "Специализации",
+    "styles": "Стили",
+    "software": "Софт",
+    "softwareHint": "Blender, ZBrush, Substance… Можно добавить своё",
+    "engines": "Движки",
+    "enginesHint": "Unity, Unreal, Godot… Можно добавить своё",
+    "hourlyRate": "Ставка в час",
+    "minBudget": "Минимальный бюджет",
+    "rateHint": "Ориентир для заказчика. Итоговую цену вы согласуете в сделке",
+    "currency": "Валюта",
+    "availability": "Статус",
+    "bio": "О себе",
+    "bioHint": "Чем занимаетесь, с чем любите работать, как ведёте проект",
+    "displayName": "Название или имя",
+    "type": "Тип заказчика",
+    "projectLinks": "Ссылки на проекты",
+    "projectLinksHint": "Сайт, Steam, Discord-сервер — по одной ссылке на строку",
+    "save": "Сохранить профиль",
+    "portfolio": "Портфолио",
+    "reviews": "Отзывы",
+    "reviewsSoon": "Отзывы появятся вместе со сделками — фаза 5 разработки.",
+    "noWorks": "Работ пока нет",
+    "noWorksOwn": "Загрузите первую работу — портфолио продаёт лучше слов.",
+    "invite": "Пригласить в заказ",
+    "message": "Написать",
+    "soonPhase": "Появится в следующих фазах",
+    "memberSince": "На платформе с {date}",
+    "emptyDesignerTitle": "Профиль дизайнера ещё не заполнен",
+    "emptyDesignerText": "Заполните специализации и стили — без них вас не найдут в каталоге.",
+    "emptyCustomerTitle": "Профиль заказчика ещё не заполнен",
+    "emptyCustomerText": "Укажите, кто вы и над чем работаете — дизайнеры охотнее откликаются.",
+    "createProfile": "Заполнить профиль",
+    "metrics": {
+      "ordersCompleted": "Заказов выполнено",
+      "rating": "Рейтинг",
+      "onTime": "В срок",
+      "disputes": "Проиграно споров",
+      "repeatClients": "Повторные клиенты",
+      "ordersCreated": "Заказов создано",
+      "dealsCompleted": "Сделок завершено",
+      "responsiveness": "Отзывчивость",
+      "noData": "нет данных"
+    }
+  },
+  "works": {
+    "title": "Работы",
+    "mine": "Мои работы",
+    "new": "Добавить работу",
+    "edit": "Редактировать",
+    "delete": "Удалить работу",
+    "deleteConfirm": "Удалить работу вместе со всеми файлами? Действие необратимо.",
+    "deleted": "Работа удалена",
+    "loadMore": "Показать ещё",
+    "likes": "Лайки",
+    "views": "Просмотры",
+    "badgeOnPlatform": "Выполнено на платформе",
+    "linkOnly": "Только по ссылке",
+    "form": {
+      "title": "Название",
+      "titleHint": "Коротко и по делу: «Стилизованный орк для мобильной RPG»",
+      "description": "Описание",
+      "descriptionHint": "Задача, подход, что было сложным",
+      "assetType": "Тип ассета",
+      "styles": "Стили",
+      "software": "Софт",
+      "engines": "Движки",
+      "tech": "Технические детали",
+      "techHint": "Все поля необязательные",
+      "polycount": "Полигонаж",
+      "textureInfo": "Текстуры",
+      "textureHint": "Например: 4K PBR, Albedo/Normal/Roughness",
+      "formats": "Форматы",
+      "timeSpent": "Затрачено часов",
+      "visibility": "Видимость",
+      "visibilityHint": "«Только по ссылке» — работа не попадает в галерею и каталог",
+      "media": "Медиа",
+      "mediaHint": "Перетащите файлы или выберите. Первое изображение станет обложкой",
+      "dropzone": "Перетащите файлы сюда",
+      "dropzoneAction": "или выберите на диске",
+      "processing": "Обработка…",
+      "failed": "Не удалось обработать",
+      "remove": "Убрать",
+      "cover": "Обложка",
+      "submit": "Опубликовать работу",
+      "submitEdit": "Сохранить изменения"
+    },
+    "detail": {
+      "tech": "Технические детали",
+      "polycount": "Полигонаж",
+      "textures": "Текстуры",
+      "formats": "Форматы",
+      "timeSpent": "Время работы",
+      "hours": "{count} ч",
+      "author": "Автор",
+      "share": "Поделиться",
+      "copyLink": "Скопировать ссылку",
+      "linkCopied": "Ссылка скопирована",
+      "orderSimilar": "Заказать похожее",
+      "moreByAuthor": "Ещё работы автора"
+    },
+    "filters": {
+      "all": "Все",
+      "style": "Стиль",
+      "assetType": "Тип",
+      "software": "Софт",
+      "sort": "Сортировка",
+      "new": "Новые",
+      "popularWeek": "Популярное за неделю",
+      "popularAll": "Популярное за всё время",
+      "reset": "Сбросить"
+    },
+    "empty": {
+      "title": "Работ пока нет",
+      "text": "Здесь появятся работы дизайнеров платформы.",
+      "filtered": "Под фильтры ничего не подошло. Попробуйте ослабить условия."
+    },
+    "needProfile": "Сначала заполните профиль дизайнера — работы привязываются к нему."
+  },
+  "designers": {
+    "title": "Дизайнеры",
+    "subtitle": "Каталог 3D-художников платформы",
+    "filters": {
+      "specialization": "Специализация",
+      "style": "Стиль",
+      "availability": "Статус",
+      "verifiedOnly": "Только верифицированные"
+    },
+    "empty": "Под эти фильтры дизайнеров не нашлось.",
+    "perHour": "{amount} {currency}/час",
+    "from": "от {amount} {currency}",
+    "noRate": "Ставка не указана",
+    "orders": "{count} заказов"
+  },
+  "report": {
+    "button": "Пожаловаться",
+    "title": "Отправить жалобу",
+    "description": "Модератор проверит и примет решение. Ложные жалобы тоже учитываются.",
+    "category": "Причина",
+    "text": "Что произошло",
+    "textHint": "Опишите проблему — так модератору быстрее разобраться",
+    "submit": "Отправить жалобу",
+    "sent": "Жалоба отправлена. Спасибо.",
+    "alreadySent": "Вы уже жаловались на этот объект."
   }
 }

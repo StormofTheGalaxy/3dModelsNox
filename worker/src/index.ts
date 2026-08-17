@@ -3,12 +3,14 @@ import { Redis } from 'ioredis';
 
 import { QUEUES } from '@polyforge/shared';
 
+import { markImageFailed, processImage, type ProcessImagePayload } from './jobs/process-image';
+import { storage } from './storage';
+
 /**
  * Фоновые задачи (§2.1).
  *
- * В фазе 0 поднят каркас BullMQ: подключение, очереди, graceful shutdown и
- * плановая очистка протухших токенов. Обработчики писем, водяных знаков,
- * ИИ-задач и дайджестов добавляются в фазах 1–6.
+ * Фаза 1: сжатие изображений портфолио и очистка осиротевших объектов.
+ * Письма, ИИ-задачи, водяные знаки и дайджесты — фазы 2, 4 и 6.
  */
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -19,11 +21,10 @@ const connection = new Redis(REDIS_URL, { maxRetriesPerRequest: null });
 const CONCURRENCY = Number(process.env.WORKER_CONCURRENCY ?? 5);
 
 const workers: Worker[] = [];
-const queues: Queue[] = [];
+const queues = new Map<string, Queue>();
 
-/** Регистрирует очередь и воркер с одинаковым подключением. */
 function register(name: string, processor: (job: Job) => Promise<void>): void {
-  queues.push(new Queue(name, { connection }));
+  queues.set(name, new Queue(name, { connection }));
 
   const worker = new Worker(name, processor, { connection, concurrency: CONCURRENCY });
 
@@ -41,8 +42,24 @@ register(QUEUES.email, async (job) => {
 });
 
 register(QUEUES.media, async (job) => {
-  // Сжатие, webp и водяные знаки — фазы 1 и 4.
-  console.info(`[worker:media] задача ${job.name} принята`);
+  if (job.name !== 'process-image') {
+    console.info(`[worker:media] неизвестная задача ${job.name}`);
+    return;
+  }
+
+  const payload = job.data as ProcessImagePayload;
+
+  try {
+    await processImage(payload);
+    console.info(`[worker:media] изображение ${payload.mediaId} обработано`);
+  } catch (error) {
+    // На последней попытке помечаем медиа как failed: показывать спиннер
+    // бесконечно хуже, чем честно сказать, что превью не собралось.
+    if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
+      await markImageFailed(payload.mediaId);
+    }
+    throw error;
+  }
 });
 
 register(QUEUES.ai, async (job) => {
@@ -60,12 +77,25 @@ register(QUEUES.maintenance, async (job) => {
     return;
   }
 
+  if (job.name === 'delete-storage-objects') {
+    const { keys } = job.data as { keys: string[] };
+    // Производные webp лежат рядом с оригиналом — удаляем и их.
+    const allKeys = keys.flatMap((key) => [
+      key,
+      key.replace(/\.[^./]+$/, '.display.webp'),
+      key.replace(/\.[^./]+$/, '.thumb.webp'),
+    ]);
+    await storage().delete('public', allKeys);
+    console.info(`[worker:maintenance] удалено объектов: ${allKeys.length}`);
+    return;
+  }
+
   console.info(`[worker:maintenance] задача ${job.name} принята`);
 });
 
 /** Повторяющиеся задачи. Ключ повторения не даёт дублировать расписание. */
 async function scheduleRepeatableJobs(): Promise<void> {
-  const maintenance = queues.find((queue) => queue.name === QUEUES.maintenance);
+  const maintenance = queues.get(QUEUES.maintenance);
   if (!maintenance) return;
 
   await maintenance.add(
@@ -88,7 +118,7 @@ console.info(`[worker] запущен, очереди: ${Object.values(QUEUES).j
 async function shutdown(signal: string): Promise<void> {
   console.info(`[worker] ${signal} — останавливаюсь`);
   await Promise.allSettled(workers.map((worker) => worker.close()));
-  await Promise.allSettled(queues.map((queue) => queue.close()));
+  await Promise.allSettled([...queues.values()].map((queue) => queue.close()));
   await connection.quit();
   process.exit(0);
 }

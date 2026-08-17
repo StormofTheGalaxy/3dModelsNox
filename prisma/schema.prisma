@@ -112,6 +112,13 @@ model User {
   auditLogs       AuditLog[]      @relation("AuditActor")
   settingsChanged PlatformSetting[] @relation("SettingUpdatedBy")
 
+  designerProfile DesignerProfile?
+  customerProfile CustomerProfile?
+  works           PortfolioWork[]  @relation("WorkAuthor")
+  workLikes       WorkLike[]       @relation("WorkLiker")
+  reportsFiled    Report[]         @relation("ReportAuthor")
+  reportsResolved Report[]         @relation("ReportResolver")
+
   @@index([status])
   @@index([role])
   @@index([createdAt])
@@ -266,4 +273,305 @@ model AuditLog {
   @@index([action, createdAt])
   @@index([targetType, targetId])
   @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 1: профили и портфолио
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Specialization {
+  character
+  environment
+  props
+  weapons
+  vehicles
+  animation
+  rigging
+  texturing
+  other
+}
+
+enum ArtStyle {
+  realism
+  stylized
+  lowpoly
+  pixel
+  anime
+  scifi
+  fantasy
+  other
+}
+
+enum AssetType {
+  character
+  environment
+  prop
+  weapon
+  vehicle
+  building
+  animation
+  texture
+  other
+}
+
+enum Availability {
+  open
+  busy
+  closed
+}
+
+enum DesignerLevel {
+  novice
+  verified
+  pro
+  top
+}
+
+enum CustomerType {
+  indie
+  studio
+  server_project
+  other
+}
+
+enum MediaType {
+  image
+  video
+}
+
+/// Медиа появляется сразу после загрузки, а сжатие и webp делает воркер.
+enum MediaStatus {
+  processing
+  ready
+  failed
+}
+
+enum WorkVisibility {
+  public
+  link_only
+}
+
+enum WorkSource {
+  uploaded
+  from_deal
+}
+
+enum ReportTargetType {
+  user
+  work
+  order
+  brief
+  message
+  review
+}
+
+enum ReportCategory {
+  spam
+  abuse
+  fraud
+  nsfw
+  plagiarism
+  rules_evasion
+}
+
+enum ReportStatus {
+  open
+  confirmed
+  rejected
+}
+
+/// Профиль дизайнера. Создаётся при первом использовании роли (§1.4).
+model DesignerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  avatarUrl String?
+  coverUrl  String?
+
+  country   String?
+  languages String[] @default([])
+
+  specializations Specialization[] @default([])
+  styles          ArtStyle[]       @default([])
+  /// Свободный список: пресеты лежат в @polyforge/shared, но «другое» разрешено.
+  software        String[]         @default([])
+  engines         String[]         @default([])
+
+  /// Деньги в целых единицах валюты: копейки в ставке фрилансера не нужны.
+  hourlyRate Int?
+  minBudget  Int?
+  currency   String @default("USD")
+
+  availability Availability @default(open)
+  bio          String?
+
+  level      DesignerLevel @default(novice)
+  verifiedAt DateTime?
+
+  // Кэшируемые метрики (§3). Пересчёт — в фазах 4–5.
+  ordersCompleted   Int   @default(0)
+  rating            Float @default(0)
+  ratingCount       Int   @default(0)
+  onTimePct         Int?
+  repeatClientsPct  Int?
+  disputesLost      Int   @default(0)
+  responsesToday    Int   @default(0)
+
+  /// Заполнен ли профиль настолько, чтобы показывать его в каталоге.
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([availability, level])
+  @@index([completedAt])
+  @@map("designer_profiles")
+}
+
+/// Профиль заказчика. Тот же аккаунт, другой контекст.
+model CustomerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  displayName  String
+  avatarUrl    String?
+  type         CustomerType @default(indie)
+  projectLinks String[]     @default([])
+  bio          String?
+
+  ordersCreated       Int   @default(0)
+  dealsCompleted      Int   @default(0)
+  rating              Float @default(0)
+  ratingCount         Int   @default(0)
+  responsivenessScore Int?
+  disputesLost        Int   @default(0)
+
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("customer_profiles")
+}
+
+model PortfolioWork {
+  id String @id @default(cuid())
+
+  designerId String
+  designer   User   @relation("WorkAuthor", fields: [designerId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+
+  assetType AssetType?
+  styles    ArtStyle[] @default([])
+  software  String[]   @default([])
+  engines   String[]   @default([])
+
+  // Техблок — весь опциональный (§4.3).
+  polycount      Int?
+  textureInfo    String?
+  formats        String[] @default([])
+  timeSpentHours Int?
+
+  source          WorkSource @default(uploaded)
+  dealId          String?
+  /// Бейдж «Выполнено на платформе» — только для работ из завершённых сделок.
+  badgeOnPlatform Boolean    @default(false)
+
+  visibility WorkVisibility @default(public)
+  /// Для visibility=link_only: работа открывается только по этому токену.
+  shareToken String?        @unique
+
+  views      Int @default(0)
+  likesCount Int @default(0)
+
+  /// Пост-модерация: работы не проходят премодерацию (§4.3).
+  isHidden   Boolean   @default(false)
+  hiddenAt   DateTime?
+  hiddenById String?
+
+  publishedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  media WorkMedia[]
+  likes WorkLike[]
+
+  @@index([designerId, publishedAt])
+  @@index([visibility, isHidden, publishedAt])
+  @@index([visibility, isHidden, likesCount])
+  @@map("portfolio_works")
+}
+
+model WorkMedia {
+  id     String        @id @default(cuid())
+  workId String
+  work   PortfolioWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  type   MediaType
+  status MediaStatus @default(processing)
+
+  /// Ключ оригинала в хранилище — по нему воркер забирает файл на обработку.
+  storageKey   String
+  url          String
+  thumbnailUrl String?
+
+  width           Int?
+  height          Int?
+  sizeBytes       Int?
+  durationSeconds Int?
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workId, order])
+  @@map("work_media")
+}
+
+model WorkLike {
+  id String @id @default(cuid())
+
+  workId String
+  work   PortfolioWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("WorkLiker", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([workId, userId])
+  @@index([userId])
+  @@map("work_likes")
+}
+
+/// Жалоба на любой объект платформы (§4.10). Разбор — в админке фазы 7.
+model Report {
+  id String @id @default(cuid())
+
+  reporterId String?
+  reporter   User?   @relation("ReportAuthor", fields: [reporterId], references: [id], onDelete: SetNull)
+
+  targetType ReportTargetType
+  targetId   String
+  category   ReportCategory
+  text       String?
+
+  status         ReportStatus @default(open)
+  resolvedById   String?
+  resolvedBy     User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt     DateTime?
+  resolutionNote String?
+
+  createdAt DateTime @default(now())
+
+  /// Один пользователь — одна открытая жалоба на объект.
+  @@unique([reporterId, targetType, targetId])
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@map("reports")
 }

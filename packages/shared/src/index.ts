@@ -2,4 +2,8 @@ export * from './locales';
 export * from './constants';
 export * from './settings';
 export * from './audit';
+export * from './media';
+export * from './domain/taxonomy';
 export * from './schemas/auth';
+export * from './schemas/profile';
+export * from './schemas/work';

@@ -28,7 +28,14 @@ export const AUDIT_ACTIONS = [
   'user.role_changed',
   'user.level_changed',
   'strike.issued',
+  'report.created',
   'report.resolved',
+
+  // профили и портфолио
+  'profile.updated',
+  'work.published',
+  'work.hidden',
+  'work.deleted',
 
   // ТЗ и сделки (появятся в фазах 2 и 4)
   'brief.frozen',
@@ -57,6 +64,7 @@ export const AUDIT_TARGET_TYPES = [
   'brief',
   'order',
   'response',
+  'message',
   'deal',
   'milestone',
   'payment',

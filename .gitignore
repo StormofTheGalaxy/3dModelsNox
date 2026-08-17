@@ -26,3 +26,6 @@ npm-debug.log*
 # локальные тома docker
 .docker-data/
 backups/
+
+# локальное файловое хранилище (STORAGE_DRIVER=local)
+.data/

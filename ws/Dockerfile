@@ -11,6 +11,7 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/db/package.json packages/db/
+COPY packages/storage/package.json packages/storage/
 COPY app/package.json app/
 COPY ws/package.json ws/
 COPY worker/package.json worker/

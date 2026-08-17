@@ -1,7 +1,5 @@
 'use server';
 
-import type { z } from 'zod';
-
 import { prisma } from '@polyforge/db';
 import {
   EMAIL_VERIFICATION_TTL_SECONDS,
@@ -29,18 +27,7 @@ import { checkRateLimit, resetRateLimit } from '../ratelimit';
 import { getSetting } from '../settings';
 import { verifyTurnstile } from '../turnstile';
 import { errorState, successState, type ActionState } from './types';
-
-/** Первая ошибка каждого поля в виде ключей i18n. */
-function fieldErrorsFrom(error: z.ZodError): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const issue of error.issues) {
-    const field = issue.path[0];
-    if (typeof field === 'string' && !(field in result)) {
-      result[field] = issue.message;
-    }
-  }
-  return result;
-}
+import { fieldErrorsFrom } from './form';
 
 function localeFrom(value: FormDataEntryValue | null): Locale {
   return value === 'en' ? 'en' : 'ru';

@@ -11,8 +11,10 @@
   "dependencies": {
     "@polyforge/db": "*",
     "@polyforge/shared": "*",
+    "@polyforge/storage": "*",
     "bullmq": "^5.34.0",
-    "ioredis": "^5.4.1"
+    "ioredis": "^5.4.1",
+    "sharp": "^0.34.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

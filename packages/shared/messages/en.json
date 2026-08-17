@@ -163,7 +163,16 @@
     "title": "Dashboard",
     "greeting": "Hi, {nickname}",
     "designerSoon": "The designer dashboard arrives in the next development phase.",
-    "customerSoon": "The client dashboard arrives in the next development phase."
+    "customerSoon": "The client dashboard arrives in the next development phase.",
+    "myWorks": "My works",
+    "addWork": "Add a work",
+    "completeProfile": "Complete your profile",
+    "completeProfileDesigner": "Without specializations and styles nobody finds you in the catalogue.",
+    "completeProfileCustomer": "Tell people about yourself — designers respond more readily.",
+    "profileReady": "Profile complete",
+    "openProfile": "Open profile",
+    "worksCount": "Works in portfolio: {count}",
+    "ordersSoon": "Orders and deals arrive in phases 3 and 4."
   },
   "settings": {
     "title": "Account settings",
@@ -225,7 +234,29 @@
     "credentials": "Wrong email or password",
     "accountBanned": "Account is banned",
     "accountBannedUntil": "Account is banned until {date}",
-    "emailNotVerified": "Confirm your email first"
+    "emailNotVerified": "Confirm your email first",
+    "profile": {
+      "specializationRequired": "Pick at least one specialization",
+      "bioTooLong": "This text is too long",
+      "displayNameTooShort": "At least 2 characters",
+      "displayNameTooLong": "At most 64 characters",
+      "invalidUrl": "A full link starting with https:// is required",
+      "tooManyLinks": "No more than 5 links",
+      "tooManyTags": "Too many values"
+    },
+    "work": {
+      "titleTooShort": "At least 3 characters",
+      "titleTooLong": "At most 120 characters",
+      "descriptionTooLong": "This description is too long",
+      "mediaRequired": "Add at least one image",
+      "designerProfileRequired": "Fill in your designer profile first"
+    },
+    "upload": {
+      "unsupportedType": "This file format is not supported",
+      "tooLarge": "The file is larger than {limit} MB",
+      "failed": "Could not upload the file",
+      "tooMany": "No more than {limit} files per work"
+    }
   },
   "empty": {
     "title": "Nothing here yet",
@@ -259,5 +290,232 @@
     "privacy": "Privacy Policy",
     "rules": "Platform Rules",
     "draftNotice": "Draft document. The final version will be published before the beta opens."
+  },
+  "taxonomy": {
+    "specialization": {
+      "character": "Characters",
+      "environment": "Environments",
+      "props": "Props",
+      "weapons": "Weapons",
+      "vehicles": "Vehicles",
+      "animation": "Animation",
+      "rigging": "Rigging",
+      "texturing": "Texturing",
+      "other": "Other"
+    },
+    "style": {
+      "realism": "Realism",
+      "stylized": "Stylized",
+      "lowpoly": "Low poly",
+      "pixel": "Pixel",
+      "anime": "Anime",
+      "scifi": "Sci-fi",
+      "fantasy": "Fantasy",
+      "other": "Other"
+    },
+    "assetType": {
+      "character": "Character",
+      "environment": "Environment",
+      "prop": "Prop",
+      "weapon": "Weapon",
+      "vehicle": "Vehicle",
+      "building": "Building",
+      "animation": "Animation",
+      "texture": "Textures",
+      "other": "Other"
+    },
+    "availability": {
+      "open": "Open to work",
+      "busy": "Busy",
+      "closed": "Not taking work"
+    },
+    "level": {
+      "novice": "Novice",
+      "verified": "Verified",
+      "pro": "Pro",
+      "top": "Top"
+    },
+    "customerType": {
+      "indie": "Indie developer",
+      "studio": "Studio",
+      "server_project": "Game server or mod",
+      "other": "Other"
+    },
+    "visibility": {
+      "public": "Public",
+      "link_only": "Link only"
+    },
+    "reportCategory": {
+      "spam": "Spam",
+      "abuse": "Abuse",
+      "fraud": "Fraud",
+      "nsfw": "NSFW content",
+      "plagiarism": "Plagiarism",
+      "rules_evasion": "Rules evasion"
+    },
+    "language": {
+      "ru": "Русский",
+      "en": "English",
+      "uk": "Українська",
+      "kk": "Қазақша",
+      "de": "Deutsch",
+      "es": "Español",
+      "pt": "Português",
+      "zh": "中文"
+    }
+  },
+  "profile": {
+    "designerTitle": "Designer profile",
+    "customerTitle": "Client profile",
+    "editDesigner": "Edit designer profile",
+    "editCustomer": "Edit client profile",
+    "avatar": "Avatar",
+    "cover": "Cover",
+    "imageHint": "PNG, JPG or WebP",
+    "country": "Country",
+    "languages": "Spoken languages",
+    "specializations": "Specializations",
+    "styles": "Styles",
+    "software": "Software",
+    "softwareHint": "Blender, ZBrush, Substance… you can add your own",
+    "engines": "Engines",
+    "enginesHint": "Unity, Unreal, Godot… you can add your own",
+    "hourlyRate": "Hourly rate",
+    "minBudget": "Minimum budget",
+    "rateHint": "A reference for clients. The final price is agreed in the deal",
+    "currency": "Currency",
+    "availability": "Status",
+    "bio": "About you",
+    "bioHint": "What you do, what you enjoy working on, how you run a project",
+    "displayName": "Name or studio",
+    "type": "Client type",
+    "projectLinks": "Project links",
+    "projectLinksHint": "Website, Steam, Discord server — one link per line",
+    "save": "Save profile",
+    "portfolio": "Portfolio",
+    "reviews": "Reviews",
+    "reviewsSoon": "Reviews arrive together with deals — development phase 5.",
+    "noWorks": "No works yet",
+    "noWorksOwn": "Upload your first piece — a portfolio sells better than words.",
+    "invite": "Invite to an order",
+    "message": "Message",
+    "soonPhase": "Coming in a later phase",
+    "memberSince": "On the platform since {date}",
+    "emptyDesignerTitle": "Designer profile is not filled in yet",
+    "emptyDesignerText": "Add specializations and styles — without them nobody finds you in the catalogue.",
+    "emptyCustomerTitle": "Client profile is not filled in yet",
+    "emptyCustomerText": "Say who you are and what you're building — designers respond more readily.",
+    "createProfile": "Fill in the profile",
+    "metrics": {
+      "ordersCompleted": "Orders completed",
+      "rating": "Rating",
+      "onTime": "On time",
+      "disputes": "Disputes lost",
+      "repeatClients": "Repeat clients",
+      "ordersCreated": "Orders created",
+      "dealsCompleted": "Deals completed",
+      "responsiveness": "Responsiveness",
+      "noData": "no data"
+    }
+  },
+  "works": {
+    "title": "Works",
+    "mine": "My works",
+    "new": "Add a work",
+    "edit": "Edit",
+    "delete": "Delete work",
+    "deleteConfirm": "Delete this work and all its files? This cannot be undone.",
+    "deleted": "Work deleted",
+    "loadMore": "Show more",
+    "likes": "Likes",
+    "views": "Views",
+    "badgeOnPlatform": "Made on the platform",
+    "linkOnly": "Link only",
+    "form": {
+      "title": "Title",
+      "titleHint": "Short and specific: “Stylized orc for a mobile RPG”",
+      "description": "Description",
+      "descriptionHint": "The task, your approach, what was tricky",
+      "assetType": "Asset type",
+      "styles": "Styles",
+      "software": "Software",
+      "engines": "Engines",
+      "tech": "Technical details",
+      "techHint": "Every field is optional",
+      "polycount": "Poly count",
+      "textureInfo": "Textures",
+      "textureHint": "For example: 4K PBR, Albedo/Normal/Roughness",
+      "formats": "Formats",
+      "timeSpent": "Hours spent",
+      "visibility": "Visibility",
+      "visibilityHint": "“Link only” keeps the work out of the gallery and catalogue",
+      "media": "Media",
+      "mediaHint": "Drag files in or pick them. The first image becomes the cover",
+      "dropzone": "Drop files here",
+      "dropzoneAction": "or choose from disk",
+      "processing": "Processing…",
+      "failed": "Processing failed",
+      "remove": "Remove",
+      "cover": "Cover",
+      "submit": "Publish work",
+      "submitEdit": "Save changes"
+    },
+    "detail": {
+      "tech": "Technical details",
+      "polycount": "Poly count",
+      "textures": "Textures",
+      "formats": "Formats",
+      "timeSpent": "Time spent",
+      "hours": "{count} h",
+      "author": "Author",
+      "share": "Share",
+      "copyLink": "Copy link",
+      "linkCopied": "Link copied",
+      "orderSimilar": "Order something similar",
+      "moreByAuthor": "More by this author"
+    },
+    "filters": {
+      "all": "All",
+      "style": "Style",
+      "assetType": "Type",
+      "software": "Software",
+      "sort": "Sort",
+      "new": "Newest",
+      "popularWeek": "Popular this week",
+      "popularAll": "Popular all time",
+      "reset": "Reset"
+    },
+    "empty": {
+      "title": "No works yet",
+      "text": "Works by platform designers will show up here.",
+      "filtered": "Nothing matched these filters. Try loosening them."
+    },
+    "needProfile": "Fill in your designer profile first — works are attached to it."
+  },
+  "designers": {
+    "title": "Designers",
+    "subtitle": "Catalogue of 3D artists on the platform",
+    "filters": {
+      "specialization": "Specialization",
+      "style": "Style",
+      "availability": "Status",
+      "verifiedOnly": "Verified only"
+    },
+    "empty": "No designers matched these filters.",
+    "perHour": "{amount} {currency}/h",
+    "from": "from {amount} {currency}",
+    "noRate": "Rate not specified",
+    "orders": "{count} orders"
+  },
+  "report": {
+    "button": "Report",
+    "title": "Send a report",
+    "description": "A moderator will review it and decide. False reports are also recorded.",
+    "category": "Reason",
+    "text": "What happened",
+    "textHint": "Describe the problem — it helps the moderator act faster",
+    "submit": "Send report",
+    "sent": "Report sent. Thank you.",
+    "alreadySent": "You have already reported this."
   }
 }
