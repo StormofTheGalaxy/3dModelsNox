@@ -1,4 +1,3 @@
-import 'server-only';
 
 import en from '@polyforge/shared/messages/en.json';
 import ru from '@polyforge/shared/messages/ru.json';

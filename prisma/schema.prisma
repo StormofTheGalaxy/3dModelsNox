@@ -119,6 +119,18 @@ model User {
   reportsFiled    Report[]         @relation("ReportAuthor")
   reportsResolved Report[]         @relation("ReportResolver")
 
+  briefs          Brief[]          @relation("BriefOwner")
+  briefVersions   BriefVersion[]   @relation("BriefVersionAuthor")
+  briefTemplates  BriefTemplate[]  @relation("BriefTemplateOwner")
+  briefChanges    BriefChangeRequest[] @relation("BriefChangeAuthor")
+  aiCredits       AICreditLedger[] @relation("AICreditOwner")
+
+  orders          Order[]          @relation("OrderCustomer")
+  responses       OrderResponse[]  @relation("ResponseDesigner")
+  savedFilters    SavedFilter[]    @relation("SavedFilterOwner")
+  notifications   Notification[]   @relation("NotificationRecipient")
+  notificationPrefs NotificationPreference[] @relation("NotificationPrefOwner")
+
   @@index([status])
   @@index([role])
   @@index([createdAt])
@@ -574,4 +586,441 @@ model Report {
   @@index([status, createdAt])
   @@index([targetType, targetId])
   @@map("reports")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 2: система ТЗ
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum BriefStatus {
+  draft
+  active
+  /// Заморожено стартом сделки: правки только через BriefChangeRequest (§4.4).
+  frozen
+  archived
+}
+
+enum BriefAccess {
+  private
+  link
+  selected
+  public
+}
+
+/// Кто автор ТЗ. Дизайнер тоже может собрать ТЗ — например, под свой оффер.
+enum BriefOwnerRole {
+  customer
+  designer
+}
+
+enum BriefChangeStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum PdfExportStatus {
+  pending
+  ready
+  failed
+}
+
+model Brief {
+  id String @id @default(cuid())
+
+  ownerId   String
+  owner     User           @relation("BriefOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerRole BriefOwnerRole @default(customer)
+
+  title  String
+  status BriefStatus @default(draft)
+  access BriefAccess @default(private)
+
+  /// Секретная ссылка для access=link. Создаётся при первом шаринге.
+  shareToken String? @unique
+
+  /// Точечный доступ для access=selected.
+  allowedUserIds String[] @default([])
+
+  /// Язык, на котором ТЗ написано. Перевод для зрителя — фаза 6.
+  sourceLocale Locale @default(ru)
+
+  /// Пять секций по zod-схеме из @polyforge/shared. JSON, потому что состав
+  /// полей меняется вместе с продуктом, а миграция на каждое поле не нужна.
+  sections Json
+
+  /// Номер последней версии. Снимок каждой лежит в BriefVersion.
+  currentVersion Int @default(1)
+
+  /// Экспорт в PDF готовит воркер; здесь — ссылка на последний результат.
+  pdfStatus     PdfExportStatus?
+  pdfUrl        String?
+  pdfStorageKey String?
+  pdfVersion    Int?
+
+  views Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions       BriefVersion[]
+  changeRequests BriefChangeRequest[]
+  orders         Order[]              @relation("OrderBrief")
+
+  @@index([ownerId, updatedAt])
+  @@index([status, access])
+  @@map("briefs")
+}
+
+/// Снимок ТЗ. Сделка замораживает конкретную версию (§4.4), поэтому снимки
+/// неизменяемы: правка ТЗ создаёт новую запись, а не переписывает старую.
+model BriefVersion {
+  id String @id @default(cuid())
+
+  briefId String
+  brief   Brief  @relation(fields: [briefId], references: [id], onDelete: Cascade)
+
+  version  Int
+  title    String
+  sections Json
+
+  authorId String?
+  author   User?   @relation("BriefVersionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  comment String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([briefId, version])
+  @@index([briefId, createdAt])
+  @@map("brief_versions")
+}
+
+/// Пресеты ТЗ: системные из seed и личные («Сохранить как мой шаблон»).
+/// Публичные шаблоны сообщества — фаза 2 post-MVP.
+model BriefTemplate {
+  id String @id @default(cuid())
+
+  /// Стабильный ключ системного пресета; у личных шаблонов пуст.
+  key String? @unique
+
+  ownerId String?
+  owner   User?   @relation("BriefTemplateOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  isSystem Boolean @default(false)
+  /// Порядок в списке пресетов.
+  order    Int     @default(0)
+
+  /// Подписи системных пресетов — ключи i18n; у личных это готовый текст.
+  title       String
+  description String?
+
+  sections Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([isSystem, order])
+  @@map("brief_templates")
+}
+
+/// Запрос на изменение замороженного ТЗ. Модель заводится сейчас,
+/// UI появится вместе со сделками в фазе 4 (§7).
+model BriefChangeRequest {
+  id String @id @default(cuid())
+
+  briefId String
+  brief   Brief  @relation(fields: [briefId], references: [id], onDelete: Cascade)
+
+  /// Сделка, в рамках которой запрошено изменение.
+  dealId String?
+
+  authorId String?
+  author   User?   @relation("BriefChangeAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  description String
+  /// Предлагаемые секции целиком — сравнение показывает UI.
+  proposed    Json?
+
+  status       BriefChangeStatus @default(pending)
+  resolvedById String?
+  resolvedAt   DateTime?
+  resolutionNote String?
+
+  createdAt DateTime @default(now())
+
+  @@index([briefId, status])
+  @@map("brief_change_requests")
+}
+
+/// Расход ИИ-кредитов (§3). Append-only: баланс считается по журналу,
+/// поэтому историю списаний всегда можно показать пользователю.
+model AICreditLedger {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("AICreditOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Ключ ИИ-фичи из реестра настроек `ai_feature_costs`.
+  feature String
+  /// Списание положительное, возврат при ошибке — отрицательный.
+  cost    Int
+
+  /// Пул, из которого списано: brief_generate или общий.
+  pool String @default("general_pool")
+
+  /// Период учёта в формате YYYY-MM: месячный лимит считается по нему.
+  period String
+
+  targetType String?
+  targetId   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, period, pool])
+  @@index([createdAt])
+  @@map("ai_credit_ledger")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 3: витрина заказов, отклики, уведомления
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  draft
+  published
+  in_progress
+  completed
+  cancelled
+  archived
+}
+
+/// Аукцион — post-MVP (§3): схема заложена, UI не делается.
+enum OrderWorkMode {
+  fixed
+  auction
+}
+
+enum ResponseStatus {
+  new
+  viewed
+  shortlist
+  rejected
+  accepted
+}
+
+/// Шаблонные причины отказа: свободный текст здесь чаще ранит, чем помогает.
+enum ResponseRejectReason {
+  price_too_high
+  timeline_too_long
+  portfolio_mismatch
+  chose_another
+  order_cancelled
+  other
+}
+
+enum NotificationType {
+  order_new_match
+  order_response_received
+  order_customer_inactive
+  order_expiring
+  response_status_changed
+  response_accepted
+  brief_shared
+  system
+}
+
+model Order {
+  id String @id @default(cuid())
+
+  customerId String
+  customer   User   @relation("OrderCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+
+  /// ТЗ, из которого опубликован заказ. Одно ТЗ может использоваться в
+  /// нескольких заказах — сделка хранит снимок версии (§4.4).
+  briefId String
+  brief   Brief  @relation("OrderBrief", fields: [briefId], references: [id], onDelete: Restrict)
+
+  title    String
+  workMode OrderWorkMode @default(fixed)
+  status   OrderStatus   @default(draft)
+
+  /// Денормализовано из ТЗ на момент публикации: витрина не должна ходить
+  /// в JSON секций на каждой карточке.
+  assetType  AssetType?
+  styles     ArtStyle[] @default([])
+  engine     String?
+  platform   String?
+
+  budgetMode     String  @default("open")
+  budgetAmount   Int?
+  budgetCurrency String  @default("USD")
+  deadline       DateTime?
+
+  /// Превью-референс из ТЗ для карточки.
+  previewUrl String?
+
+  /// Материал для полнотекстового поиска: заголовок, описание и теги.
+  searchText String @default("")
+
+  /// Точное число видит только заказчик; публично — градация конкуренции.
+  responsesCount Int @default(0)
+
+  invitedDesignerIds String[] @default([])
+
+  publishedAt DateTime?
+  /// Автоархив через N дней без активности (§4.5). Продление в один клик.
+  expiresAt   DateTime?
+  lastActivityAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  responses OrderResponse[]
+  bids      Bid[]
+
+  @@index([status, publishedAt])
+  @@index([customerId, status])
+  @@index([status, expiresAt])
+  @@map("orders")
+}
+
+model OrderResponse {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  designerId String
+  designer   User   @relation("ResponseDesigner", fields: [designerId], references: [id], onDelete: Cascade)
+
+  coverText String
+  price     Int
+  currency  String @default("USD")
+  days      Int
+
+  /// 1–3 работы из портфолио (§3).
+  attachedWorkIds String[] @default([])
+
+  /// Приглашённые помечаются и поднимаются в списке.
+  isInvited Boolean @default(false)
+
+  status       ResponseStatus        @default(new)
+  rejectReason ResponseRejectReason?
+
+  /// Когда заказчик открыл отклик — от этого считается его отзывчивость.
+  viewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Один дизайнер — один отклик на заказ.
+  @@unique([orderId, designerId])
+  @@index([designerId, createdAt])
+  @@index([orderId, status])
+  @@map("order_responses")
+}
+
+/// Сохранённый поиск по витрине (§4.5) с уведомлениями о новых совпадениях.
+model SavedFilter {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("SavedFilterOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  title  String
+  /// Параметры фильтра по zod-схеме `orderFilterSchema`.
+  params Json
+
+  notifyEmail  Boolean @default(true)
+  notifyInApp  Boolean @default(true)
+
+  /// До какого момента совпадения уже разосланы — курсор дайджеста.
+  lastNotifiedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("saved_filters")
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  type    NotificationType
+  /// Данные для отрисовки: заголовки, идентификаторы, ссылки.
+  payload Json
+
+  readAt DateTime?
+  /// Отправлено ли письмо — чтобы дайджест не продублировал уведомление.
+  emailSentAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+/// Настройки подписок по типам уведомлений (§4.7).
+model NotificationPreference {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("NotificationPrefOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  type  NotificationType
+  inApp Boolean @default(true)
+  email Boolean @default(true)
+
+  @@unique([userId, type])
+  @@map("notification_preferences")
+}
+
+// ── Аукцион: post-MVP (§3). Схема заложена, логика и UI не делаются. ────────
+
+enum AuctionMode {
+  open_reverse
+  sealed
+}
+
+model Auction {
+  id String @id @default(cuid())
+
+  orderId String @unique
+  mode    AuctionMode @default(open_reverse)
+
+  startPrice Int?
+  currency   String @default("USD")
+  endsAt     DateTime?
+
+  /// Торги необязывающие; отказ победителя фиксируется и бьёт по метрике.
+  winnerBidId String?
+  closedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("auctions")
+}
+
+model Bid {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  designerId String
+  amount     Int
+  currency   String @default("USD")
+  days       Int?
+
+  withdrawnAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([orderId, amount])
+  @@map("bids")
 }

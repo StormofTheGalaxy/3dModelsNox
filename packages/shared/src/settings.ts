@@ -179,6 +179,7 @@ export const SETTINGS_REGISTRY = {
       estimate: 1,
       chat_summary: 1,
       onboarding_parse: 1,
+      field_hint: 1,
       dispute_summary: 1,
       content_translate: 0,
     },

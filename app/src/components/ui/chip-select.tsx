@@ -19,6 +19,7 @@ export function ChipSelect<T extends string>({
   max,
   single = false,
   invalid,
+  onChange,
 }: {
   name: string;
   options: readonly T[];
@@ -29,21 +30,28 @@ export function ChipSelect<T extends string>({
   /** Режим одиночного выбора — для фильтров. */
   single?: boolean;
   invalid?: boolean;
+  /**
+   * Уведомление о выборе. Нужно, когда состояние формы живёт снаружи
+   * (конструктор ТЗ); обычным формам хватает скрытого поля.
+   */
+  onChange?: (values: T[]) => void;
 }) {
   const [selected, setSelected] = useState<T[]>([...defaultValue]);
 
   function toggle(option: T) {
     setSelected((current) => {
-      if (single) {
-        return current[0] === option ? [] : [option];
-      }
-      if (current.includes(option)) {
-        return current.filter((item) => item !== option);
-      }
-      if (max !== undefined && current.length >= max) {
-        return current;
-      }
-      return [...current, option];
+      const next = single
+        ? current[0] === option
+          ? []
+          : [option]
+        : current.includes(option)
+          ? current.filter((item) => item !== option)
+          : max !== undefined && current.length >= max
+            ? current
+            : [...current, option];
+
+      if (next !== current) onChange?.(next);
+      return next;
     });
   }
 

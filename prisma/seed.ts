@@ -3,6 +3,8 @@ import { hash } from '@node-rs/argon2';
 import { prisma } from '@polyforge/db';
 import { SETTINGS_REGISTRY, SETTING_KEYS } from '@polyforge/shared';
 
+import { SYSTEM_BRIEF_TEMPLATES } from './brief-templates';
+
 /**
  * Идемпотентный seed: настройки платформы + суперадмин.
  * Запускается на каждом деплое, ничего не перезатирая.
@@ -84,8 +86,35 @@ async function seedSuperAdmin(): Promise<void> {
   console.info(`✓ суперадмин создан: ${email} (${count} инвайтов)`);
 }
 
+/**
+ * Системные пресеты ТЗ. Секции обновляются на каждом деплое: они часть кода,
+ * а не пользовательские данные. Личные шаблоны seed не трогает.
+ */
+async function seedBriefTemplates(): Promise<void> {
+  for (const template of SYSTEM_BRIEF_TEMPLATES) {
+    const sections = template.build() as object;
+
+    await prisma.briefTemplate.upsert({
+      where: { key: template.key },
+      update: { sections, order: template.order, isSystem: true },
+      create: {
+        key: template.key,
+        isSystem: true,
+        order: template.order,
+        // Подписи берутся из словарей i18n по ключу пресета.
+        title: `briefTemplates.${template.key}.title`,
+        description: `briefTemplates.${template.key}.description`,
+        sections,
+      },
+    });
+  }
+
+  console.info(`✓ пресеты ТЗ: ${SYSTEM_BRIEF_TEMPLATES.length}`);
+}
+
 async function main(): Promise<void> {
   await seedSettings();
+  await seedBriefTemplates();
   await seedSuperAdmin();
 }
 

@@ -2,7 +2,9 @@
 # Фоновый воркер BullMQ.
 
 FROM node:22-bookworm-slim AS base
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+# fonts-dejavu-core — кириллица в PDF-экспорте ТЗ (§4.4).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        openssl ca-certificates fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /repo
 
@@ -35,4 +37,4 @@ RUN groupadd --system --gid 1001 nodejs \
     && chown -R polyforge:nodejs /repo
 USER polyforge
 
-CMD ["npx", "tsx", "worker/src/index.ts"]
+CMD ["npx", "tsx", "--tsconfig", "worker/tsconfig.json", "worker/src/index.ts"]

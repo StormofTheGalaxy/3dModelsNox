@@ -7,3 +7,5 @@ export * from './domain/taxonomy';
 export * from './schemas/auth';
 export * from './schemas/profile';
 export * from './schemas/work';
+export * from './schemas/brief';
+export * from './schemas/order';

@@ -17,12 +17,15 @@ export function TagInput({
   defaultValue = [],
   max = 15,
   placeholder,
+  onChange,
 }: {
   name: string;
   presets?: readonly string[];
   defaultValue?: readonly string[];
   max?: number;
   placeholder?: string;
+  /** Уведомление о списке — для форм, чьё состояние живёт снаружи. */
+  onChange?: (values: string[]) => void;
 }) {
   const [tags, setTags] = useState<string[]>([...defaultValue]);
   const [draft, setDraft] = useState('');
@@ -38,7 +41,11 @@ export function TagInput({
     // Сравнение без регистра: «blender» и «Blender» — один и тот же софт.
     if (tags.some((tag) => tag.toLowerCase() === trimmed.toLowerCase())) return;
 
-    setTags((current) => [...current, trimmed]);
+    setTags((current) => {
+      const next = [...current, trimmed];
+      onChange?.(next);
+      return next;
+    });
     setDraft('');
   }
 
@@ -49,7 +56,11 @@ export function TagInput({
       return;
     }
     if (event.key === 'Backspace' && draft === '' && tags.length > 0) {
-      setTags((current) => current.slice(0, -1));
+      setTags((current) => {
+        const next = current.slice(0, -1);
+        onChange?.(next);
+        return next;
+      });
     }
   }
 
@@ -72,7 +83,13 @@ export function TagInput({
             {tag}
             <button
               type="button"
-              onClick={() => setTags((current) => current.filter((item) => item !== tag))}
+              onClick={() =>
+                setTags((current) => {
+                  const next = current.filter((item) => item !== tag);
+                  onChange?.(next);
+                  return next;
+                })
+              }
               className="transition-opacity hover:opacity-70"
               aria-label={`${tag} ✕`}
             >
