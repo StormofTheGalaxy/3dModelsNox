@@ -61,6 +61,28 @@ export async function enqueueImageProcessing(job: ProcessImageJob): Promise<void
   }
 }
 
+export interface BriefPdfJob {
+  briefId: string;
+  locale: 'ru' | 'en';
+}
+
+/**
+ * Экспорт ТЗ в PDF (§4.4). Генерация идёт в воркере: рендер документа
+ * занимает секунды и не должен держать запрос пользователя.
+ */
+export async function enqueueBriefPdf(job: BriefPdfJob): Promise<void> {
+  try {
+    await queue(QUEUES.media).add('brief-pdf', job, {
+      attempts: 2,
+      backoff: { type: 'exponential', delay: 3_000 },
+      removeOnComplete: 50,
+      removeOnFail: 200,
+    });
+  } catch (error) {
+    console.error('[queue] не удалось поставить экспорт ТЗ в PDF', error);
+  }
+}
+
 /** Удаление осиротевших объектов хранилища после удаления работы. */
 export async function enqueueStorageCleanup(keys: string[]): Promise<void> {
   if (keys.length === 0) return;

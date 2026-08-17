@@ -4,20 +4,24 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
+    "dev": "tsx watch --tsconfig ./tsconfig.json src/index.ts",
+    "start": "tsx --tsconfig ./tsconfig.json src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@polyforge/ai": "*",
     "@polyforge/db": "*",
     "@polyforge/shared": "*",
     "@polyforge/storage": "*",
+    "@react-pdf/renderer": "^4.3.0",
     "bullmq": "^5.34.0",
     "ioredis": "^5.4.1",
+    "react": "^19.2.0",
     "sharp": "^0.34.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

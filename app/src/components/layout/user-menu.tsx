@@ -1,7 +1,7 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { LayoutDashboard, LogOut, Settings, Shield, Ticket } from 'lucide-react';
+import { FileText, LayoutDashboard, LogOut, Settings, Shield, Ticket } from 'lucide-react';
 import NextLink from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -68,6 +68,13 @@ export function UserMenu({
             <Link href="/dashboard">
               <LayoutDashboard className="size-4 text-fg-muted" aria-hidden />
               {t('dashboard')}
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild className={itemClass}>
+            <Link href="/briefs">
+              <FileText className="size-4 text-fg-muted" aria-hidden />
+              {t('briefs')}
             </Link>
           </DropdownMenu.Item>
 

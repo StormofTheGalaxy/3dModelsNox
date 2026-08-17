@@ -3,14 +3,15 @@ import { Redis } from 'ioredis';
 
 import { QUEUES } from '@polyforge/shared';
 
+import { generateBriefPdf, markBriefPdfFailed, type BriefPdfPayload } from './jobs/brief-pdf';
 import { markImageFailed, processImage, type ProcessImagePayload } from './jobs/process-image';
 import { storage } from './storage';
 
 /**
  * Фоновые задачи (§2.1).
  *
- * Фаза 1: сжатие изображений портфолио и очистка осиротевших объектов.
- * Письма, ИИ-задачи, водяные знаки и дайджесты — фазы 2, 4 и 6.
+ * Фазы 1–2: сжатие изображений портфолио, экспорт ТЗ в PDF и очистка
+ * осиротевших объектов. Письма, водяные знаки и дайджесты — фазы 4 и 6.
  */
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -42,6 +43,20 @@ register(QUEUES.email, async (job) => {
 });
 
 register(QUEUES.media, async (job) => {
+  if (job.name === 'brief-pdf') {
+    const payload = job.data as BriefPdfPayload;
+    try {
+      await generateBriefPdf(payload);
+      console.info(`[worker:media] ТЗ ${payload.briefId} экспортировано в PDF`);
+    } catch (error) {
+      if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
+        await markBriefPdfFailed(payload.briefId);
+      }
+      throw error;
+    }
+    return;
+  }
+
   if (job.name !== 'process-image') {
     console.info(`[worker:media] неизвестная задача ${job.name}`);
     return;

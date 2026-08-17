@@ -119,6 +119,12 @@ model User {
   reportsFiled    Report[]         @relation("ReportAuthor")
   reportsResolved Report[]         @relation("ReportResolver")
 
+  briefs          Brief[]          @relation("BriefOwner")
+  briefVersions   BriefVersion[]   @relation("BriefVersionAuthor")
+  briefTemplates  BriefTemplate[]  @relation("BriefTemplateOwner")
+  briefChanges    BriefChangeRequest[] @relation("BriefChangeAuthor")
+  aiCredits       AICreditLedger[] @relation("AICreditOwner")
+
   @@index([status])
   @@index([role])
   @@index([createdAt])
@@ -574,4 +580,198 @@ model Report {
   @@index([status, createdAt])
   @@index([targetType, targetId])
   @@map("reports")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 2: система ТЗ
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum BriefStatus {
+  draft
+  active
+  /// Заморожено стартом сделки: правки только через BriefChangeRequest (§4.4).
+  frozen
+  archived
+}
+
+enum BriefAccess {
+  private
+  link
+  selected
+  public
+}
+
+/// Кто автор ТЗ. Дизайнер тоже может собрать ТЗ — например, под свой оффер.
+enum BriefOwnerRole {
+  customer
+  designer
+}
+
+enum BriefChangeStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum PdfExportStatus {
+  pending
+  ready
+  failed
+}
+
+model Brief {
+  id String @id @default(cuid())
+
+  ownerId   String
+  owner     User           @relation("BriefOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerRole BriefOwnerRole @default(customer)
+
+  title  String
+  status BriefStatus @default(draft)
+  access BriefAccess @default(private)
+
+  /// Секретная ссылка для access=link. Создаётся при первом шаринге.
+  shareToken String? @unique
+
+  /// Точечный доступ для access=selected.
+  allowedUserIds String[] @default([])
+
+  /// Язык, на котором ТЗ написано. Перевод для зрителя — фаза 6.
+  sourceLocale Locale @default(ru)
+
+  /// Пять секций по zod-схеме из @polyforge/shared. JSON, потому что состав
+  /// полей меняется вместе с продуктом, а миграция на каждое поле не нужна.
+  sections Json
+
+  /// Номер последней версии. Снимок каждой лежит в BriefVersion.
+  currentVersion Int @default(1)
+
+  /// Экспорт в PDF готовит воркер; здесь — ссылка на последний результат.
+  pdfStatus     PdfExportStatus?
+  pdfUrl        String?
+  pdfStorageKey String?
+  pdfVersion    Int?
+
+  views Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions       BriefVersion[]
+  changeRequests BriefChangeRequest[]
+
+  @@index([ownerId, updatedAt])
+  @@index([status, access])
+  @@map("briefs")
+}
+
+/// Снимок ТЗ. Сделка замораживает конкретную версию (§4.4), поэтому снимки
+/// неизменяемы: правка ТЗ создаёт новую запись, а не переписывает старую.
+model BriefVersion {
+  id String @id @default(cuid())
+
+  briefId String
+  brief   Brief  @relation(fields: [briefId], references: [id], onDelete: Cascade)
+
+  version  Int
+  title    String
+  sections Json
+
+  authorId String?
+  author   User?   @relation("BriefVersionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  comment String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([briefId, version])
+  @@index([briefId, createdAt])
+  @@map("brief_versions")
+}
+
+/// Пресеты ТЗ: системные из seed и личные («Сохранить как мой шаблон»).
+/// Публичные шаблоны сообщества — фаза 2 post-MVP.
+model BriefTemplate {
+  id String @id @default(cuid())
+
+  /// Стабильный ключ системного пресета; у личных шаблонов пуст.
+  key String? @unique
+
+  ownerId String?
+  owner   User?   @relation("BriefTemplateOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  isSystem Boolean @default(false)
+  /// Порядок в списке пресетов.
+  order    Int     @default(0)
+
+  /// Подписи системных пресетов — ключи i18n; у личных это готовый текст.
+  title       String
+  description String?
+
+  sections Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([isSystem, order])
+  @@map("brief_templates")
+}
+
+/// Запрос на изменение замороженного ТЗ. Модель заводится сейчас,
+/// UI появится вместе со сделками в фазе 4 (§7).
+model BriefChangeRequest {
+  id String @id @default(cuid())
+
+  briefId String
+  brief   Brief  @relation(fields: [briefId], references: [id], onDelete: Cascade)
+
+  /// Сделка, в рамках которой запрошено изменение.
+  dealId String?
+
+  authorId String?
+  author   User?   @relation("BriefChangeAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  description String
+  /// Предлагаемые секции целиком — сравнение показывает UI.
+  proposed    Json?
+
+  status       BriefChangeStatus @default(pending)
+  resolvedById String?
+  resolvedAt   DateTime?
+  resolutionNote String?
+
+  createdAt DateTime @default(now())
+
+  @@index([briefId, status])
+  @@map("brief_change_requests")
+}
+
+/// Расход ИИ-кредитов (§3). Append-only: баланс считается по журналу,
+/// поэтому историю списаний всегда можно показать пользователю.
+model AICreditLedger {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("AICreditOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Ключ ИИ-фичи из реестра настроек `ai_feature_costs`.
+  feature String
+  /// Списание положительное, возврат при ошибке — отрицательный.
+  cost    Int
+
+  /// Пул, из которого списано: brief_generate или общий.
+  pool String @default("general_pool")
+
+  /// Период учёта в формате YYYY-MM: месячный лимит считается по нему.
+  period String
+
+  targetType String?
+  targetId   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, period, pool])
+  @@index([createdAt])
+  @@map("ai_credit_ledger")
 }

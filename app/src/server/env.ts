@@ -40,6 +40,10 @@ const serverEnvSchema = z.object({
   S3_BUCKET_PUBLIC: z.string().default('polyforge-public'),
   S3_BUCKET_PRIVATE: z.string().default('polyforge-private'),
   S3_PUBLIC_BASE_URL: z.string().default(''),
+
+  // ИИ. Без ключа поднимается детерминированная заглушка (см. packages/ai).
+  OPENAI_API_KEY: z.string().default(''),
+  OPENAI_BASE_URL: z.string().url().default('https://api.openai.com/v1'),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
