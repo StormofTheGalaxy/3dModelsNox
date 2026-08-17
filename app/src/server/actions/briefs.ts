@@ -64,6 +64,64 @@ export async function createBrief(
 }
 
 /**
+ * «Заказать похожее» с карточки работы (§4.5): создаёт ТЗ, где работа уже
+ * приложена референсом, а тип и стиль подставлены из неё.
+ */
+export async function createBriefFromWork(
+  workId: string,
+): Promise<{ briefId: string } | { error: string }> {
+  const user = await getCurrentUser();
+  if (!user?.emailVerifiedAt) return { error: 'errors.forbidden' };
+
+  const work = await prisma.portfolioWork.findUnique({
+    where: { id: workId },
+    select: {
+      id: true,
+      title: true,
+      assetType: true,
+      styles: true,
+      software: true,
+      engines: true,
+      isHidden: true,
+      visibility: true,
+      media: {
+        where: { type: 'image' },
+        orderBy: { order: 'asc' },
+        take: 1,
+        select: { url: true },
+      },
+    },
+  });
+
+  if (!work || work.isHidden || work.visibility !== 'public') return { error: 'errors.notFound' };
+
+  const sections = emptyBriefSections();
+  sections.general.assetType = work.assetType;
+  sections.style.styleTags = work.styles;
+  // В ТЗ движок один, а в работе их может быть несколько — берём первый
+  // как отправную точку, остальное заказчик уточнит в конструкторе.
+  sections.tech.engine = work.engines[0] ?? '';
+
+  const cover = work.media[0]?.url;
+  if (cover) {
+    sections.style.references = [{ kind: 'image', url: cover, note: work.title }];
+  }
+
+  const brief = await prisma.brief.create({
+    data: {
+      ownerId: user.id,
+      ownerRole: 'customer',
+      title: '',
+      sections: sections as unknown as Prisma.InputJsonValue,
+      sourceLocale: user.locale,
+    },
+    select: { id: true },
+  });
+
+  return { briefId: brief.id };
+}
+
+/**
  * Автосохранение. Возвращает время сохранения, чтобы конструктор показал
  * «сохранено в 14:32», а не молча притворялся, что всё в порядке.
  */

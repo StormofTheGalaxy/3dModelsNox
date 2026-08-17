@@ -1,3 +1,5 @@
+/** @jsxRuntime automatic */
+/** @jsxImportSource react */
 import type { CSSProperties } from 'react';
 
 import type { Locale } from '@polyforge/shared';

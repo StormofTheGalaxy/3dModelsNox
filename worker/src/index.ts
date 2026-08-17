@@ -4,14 +4,20 @@ import { Redis } from 'ioredis';
 import { QUEUES } from '@polyforge/shared';
 
 import { generateBriefPdf, markBriefPdfFailed, type BriefPdfPayload } from './jobs/brief-pdf';
+import {
+  archiveExpiredOrders,
+  dispatchSavedFilterMatches,
+  flagInactiveCustomers,
+} from './jobs/order-maintenance';
+import { closeNotifier } from './notify';
 import { markImageFailed, processImage, type ProcessImagePayload } from './jobs/process-image';
 import { storage } from './storage';
 
 /**
  * Фоновые задачи (§2.1).
  *
- * Фазы 1–2: сжатие изображений портфолио, экспорт ТЗ в PDF и очистка
- * осиротевших объектов. Письма, водяные знаки и дайджесты — фазы 4 и 6.
+ * Фазы 1–3: сжатие изображений портфолио, экспорт ТЗ в PDF, гигиена витрины
+ * заказов и дайджесты по сохранённым фильтрам. Водяные знаки — фаза 4.
  */
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -92,6 +98,31 @@ register(QUEUES.maintenance, async (job) => {
     return;
   }
 
+  if (job.name === 'archive-expired-orders') {
+    const count = await archiveExpiredOrders();
+    console.info(`[worker:maintenance] заказов заархивировано: ${count}`);
+    return;
+  }
+
+  if (job.name === 'flag-inactive-customers') {
+    const { prisma } = await import('@polyforge/db');
+    const setting = await prisma.platformSetting.findUnique({
+      where: { key: 'order_inactive_customer_days' },
+      select: { value: true },
+    });
+    const days = typeof setting?.value === 'number' ? setting.value : 7;
+
+    const count = await flagInactiveCustomers(days);
+    console.info(`[worker:maintenance] откликов без реакции: ${count}`);
+    return;
+  }
+
+  if (job.name === 'saved-filter-digest') {
+    const count = await dispatchSavedFilterMatches();
+    console.info(`[worker:maintenance] дайджестов отправлено: ${count}`);
+    return;
+  }
+
   if (job.name === 'delete-storage-objects') {
     const { keys } = job.data as { keys: string[] };
     // Производные webp лежат рядом с оригиналом — удаляем и их.
@@ -113,15 +144,24 @@ async function scheduleRepeatableJobs(): Promise<void> {
   const maintenance = queues.get(QUEUES.maintenance);
   if (!maintenance) return;
 
-  await maintenance.add(
-    'purge-expired-tokens',
-    {},
-    {
-      repeat: { pattern: '0 4 * * *' },
-      removeOnComplete: 20,
-      removeOnFail: 50,
-    },
-  );
+  const repeatable = [
+    // Протухшие токены — ночью, нагрузки на базу это не создаёт.
+    { name: 'purge-expired-tokens', pattern: '0 4 * * *' },
+    // Автоархив заказов (§4.5) — раз в час, чтобы срок истекал вовремя.
+    { name: 'archive-expired-orders', pattern: '15 * * * *' },
+    // Молчащие заказчики — раз в сутки, чаще это уже назойливость.
+    { name: 'flag-inactive-customers', pattern: '30 9 * * *' },
+    // Дайджест по сохранённым фильтрам — дважды в день.
+    { name: 'saved-filter-digest', pattern: '0 9,18 * * *' },
+  ];
+
+  for (const job of repeatable) {
+    await maintenance.add(
+      job.name,
+      {},
+      { repeat: { pattern: job.pattern }, removeOnComplete: 20, removeOnFail: 50 },
+    );
+  }
 }
 
 void scheduleRepeatableJobs().catch((error: unknown) => {
@@ -134,6 +174,7 @@ async function shutdown(signal: string): Promise<void> {
   console.info(`[worker] ${signal} — останавливаюсь`);
   await Promise.allSettled(workers.map((worker) => worker.close()));
   await Promise.allSettled([...queues.values()].map((queue) => queue.close()));
+  await closeNotifier();
   await connection.quit();
   process.exit(0);
 }

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ReportDialog } from '@/components/report/report-dialog';
 import { DeleteWorkButton } from '@/components/works/delete-work-button';
+import { OrderSimilarButton } from '@/components/works/order-similar-button';
 import { LikeButton } from '@/components/works/like-button';
 import { getCurrentUser } from '@/server/auth/session';
 import { getWorkForViewer, isLikedByViewer, registerWorkView } from '@/server/works';
@@ -213,10 +214,8 @@ export default async function WorkPage({
                 {shareUrl}
               </p>
 
-              {/* Кнопка «Заказать похожее» открывает конструктор ТЗ — фаза 2. */}
-              <Button disabled className="w-full" title={t('detail.orderSimilar')}>
-                {t('detail.orderSimilar')}
-              </Button>
+              {/* Открывает конструктор ТЗ с этой работой в референсах (§4.5). */}
+              <OrderSimilarButton workId={work.id} canOrder={Boolean(viewer?.emailVerifiedAt)} />
             </CardContent>
           </Card>
         </aside>

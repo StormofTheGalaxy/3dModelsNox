@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { LocaleSwitcher } from '@/components/layout/locale-switcher';
 import { RoleSwitcher } from '@/components/layout/role-switcher';
 import { UserMenu } from '@/components/layout/user-menu';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { getCurrentUser, isStaff } from '@/server/auth/session';
+import { countUnread } from '@/server/notifications';
 import { cn } from '@/lib/utils';
 
 const NAV_LINKS = [
@@ -22,6 +24,7 @@ export async function Header({ locale, theme }: { locale: Locale; theme: Theme }
   const [t, user] = await Promise.all([getTranslations('nav'), getCurrentUser()]);
 
   const roleContext: RoleContext = user?.lastRoleContext ?? 'designer';
+  const unread = user ? await countUnread(user.id) : 0;
 
   return (
     <header
@@ -53,6 +56,7 @@ export async function Header({ locale, theme }: { locale: Locale; theme: Theme }
 
         <div className="ml-auto flex items-center gap-1.5">
           {user ? <RoleSwitcher current={roleContext} /> : null}
+          {user ? <NotificationBell unread={unread} /> : null}
 
           <LocaleSwitcher current={locale} />
           <ThemeToggle current={theme} />

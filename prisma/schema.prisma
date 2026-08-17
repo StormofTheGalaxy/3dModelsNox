@@ -125,6 +125,12 @@ model User {
   briefChanges    BriefChangeRequest[] @relation("BriefChangeAuthor")
   aiCredits       AICreditLedger[] @relation("AICreditOwner")
 
+  orders          Order[]          @relation("OrderCustomer")
+  responses       OrderResponse[]  @relation("ResponseDesigner")
+  savedFilters    SavedFilter[]    @relation("SavedFilterOwner")
+  notifications   Notification[]   @relation("NotificationRecipient")
+  notificationPrefs NotificationPreference[] @relation("NotificationPrefOwner")
+
   @@index([status])
   @@index([role])
   @@index([createdAt])
@@ -659,6 +665,7 @@ model Brief {
 
   versions       BriefVersion[]
   changeRequests BriefChangeRequest[]
+  orders         Order[]              @relation("OrderBrief")
 
   @@index([ownerId, updatedAt])
   @@index([status, access])
@@ -774,4 +781,246 @@ model AICreditLedger {
   @@index([userId, period, pool])
   @@index([createdAt])
   @@map("ai_credit_ledger")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 3: витрина заказов, отклики, уведомления
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  draft
+  published
+  in_progress
+  completed
+  cancelled
+  archived
+}
+
+/// Аукцион — post-MVP (§3): схема заложена, UI не делается.
+enum OrderWorkMode {
+  fixed
+  auction
+}
+
+enum ResponseStatus {
+  new
+  viewed
+  shortlist
+  rejected
+  accepted
+}
+
+/// Шаблонные причины отказа: свободный текст здесь чаще ранит, чем помогает.
+enum ResponseRejectReason {
+  price_too_high
+  timeline_too_long
+  portfolio_mismatch
+  chose_another
+  order_cancelled
+  other
+}
+
+enum NotificationType {
+  order_new_match
+  order_response_received
+  order_customer_inactive
+  order_expiring
+  response_status_changed
+  response_accepted
+  brief_shared
+  system
+}
+
+model Order {
+  id String @id @default(cuid())
+
+  customerId String
+  customer   User   @relation("OrderCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+
+  /// ТЗ, из которого опубликован заказ. Одно ТЗ может использоваться в
+  /// нескольких заказах — сделка хранит снимок версии (§4.4).
+  briefId String
+  brief   Brief  @relation("OrderBrief", fields: [briefId], references: [id], onDelete: Restrict)
+
+  title    String
+  workMode OrderWorkMode @default(fixed)
+  status   OrderStatus   @default(draft)
+
+  /// Денормализовано из ТЗ на момент публикации: витрина не должна ходить
+  /// в JSON секций на каждой карточке.
+  assetType  AssetType?
+  styles     ArtStyle[] @default([])
+  engine     String?
+  platform   String?
+
+  budgetMode     String  @default("open")
+  budgetAmount   Int?
+  budgetCurrency String  @default("USD")
+  deadline       DateTime?
+
+  /// Превью-референс из ТЗ для карточки.
+  previewUrl String?
+
+  /// Материал для полнотекстового поиска: заголовок, описание и теги.
+  searchText String @default("")
+
+  /// Точное число видит только заказчик; публично — градация конкуренции.
+  responsesCount Int @default(0)
+
+  invitedDesignerIds String[] @default([])
+
+  publishedAt DateTime?
+  /// Автоархив через N дней без активности (§4.5). Продление в один клик.
+  expiresAt   DateTime?
+  lastActivityAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  responses OrderResponse[]
+  bids      Bid[]
+
+  @@index([status, publishedAt])
+  @@index([customerId, status])
+  @@index([status, expiresAt])
+  @@map("orders")
+}
+
+model OrderResponse {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  designerId String
+  designer   User   @relation("ResponseDesigner", fields: [designerId], references: [id], onDelete: Cascade)
+
+  coverText String
+  price     Int
+  currency  String @default("USD")
+  days      Int
+
+  /// 1–3 работы из портфолио (§3).
+  attachedWorkIds String[] @default([])
+
+  /// Приглашённые помечаются и поднимаются в списке.
+  isInvited Boolean @default(false)
+
+  status       ResponseStatus        @default(new)
+  rejectReason ResponseRejectReason?
+
+  /// Когда заказчик открыл отклик — от этого считается его отзывчивость.
+  viewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Один дизайнер — один отклик на заказ.
+  @@unique([orderId, designerId])
+  @@index([designerId, createdAt])
+  @@index([orderId, status])
+  @@map("order_responses")
+}
+
+/// Сохранённый поиск по витрине (§4.5) с уведомлениями о новых совпадениях.
+model SavedFilter {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("SavedFilterOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  title  String
+  /// Параметры фильтра по zod-схеме `orderFilterSchema`.
+  params Json
+
+  notifyEmail  Boolean @default(true)
+  notifyInApp  Boolean @default(true)
+
+  /// До какого момента совпадения уже разосланы — курсор дайджеста.
+  lastNotifiedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("saved_filters")
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  type    NotificationType
+  /// Данные для отрисовки: заголовки, идентификаторы, ссылки.
+  payload Json
+
+  readAt DateTime?
+  /// Отправлено ли письмо — чтобы дайджест не продублировал уведомление.
+  emailSentAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+/// Настройки подписок по типам уведомлений (§4.7).
+model NotificationPreference {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("NotificationPrefOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  type  NotificationType
+  inApp Boolean @default(true)
+  email Boolean @default(true)
+
+  @@unique([userId, type])
+  @@map("notification_preferences")
+}
+
+// ── Аукцион: post-MVP (§3). Схема заложена, логика и UI не делаются. ────────
+
+enum AuctionMode {
+  open_reverse
+  sealed
+}
+
+model Auction {
+  id String @id @default(cuid())
+
+  orderId String @unique
+  mode    AuctionMode @default(open_reverse)
+
+  startPrice Int?
+  currency   String @default("USD")
+  endsAt     DateTime?
+
+  /// Торги необязывающие; отказ победителя фиксируется и бьёт по метрике.
+  winnerBidId String?
+  closedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("auctions")
+}
+
+model Bid {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  designerId String
+  amount     Int
+  currency   String @default("USD")
+  days       Int?
+
+  withdrawnAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([orderId, amount])
+  @@map("bids")
 }

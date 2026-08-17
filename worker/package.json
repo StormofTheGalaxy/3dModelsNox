@@ -11,6 +11,7 @@
   "dependencies": {
     "@polyforge/ai": "*",
     "@polyforge/db": "*",
+    "@polyforge/mail": "*",
     "@polyforge/shared": "*",
     "@polyforge/storage": "*",
     "@react-pdf/renderer": "^4.3.0",

@@ -40,6 +40,12 @@ export const AUDIT_ACTIONS = [
   // ТЗ и сделки (появятся в фазах 2 и 4)
   'brief.frozen',
   'brief.shared',
+  'order.published',
+  'order.archived',
+  'order.cancelled',
+  'response.submitted',
+  'response.accepted',
+  'response.rejected',
   'brief.change_requested',
   'brief.change_resolved',
   'payment.claimed',
