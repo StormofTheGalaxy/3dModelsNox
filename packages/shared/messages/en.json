@@ -1,0 +1,521 @@
+{
+  "common": {
+    "brand": "PolyForge",
+    "tagline": "3D game asset marketplace",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "back": "Back",
+    "close": "Close",
+    "confirm": "Confirm",
+    "copy": "Copy",
+    "copied": "Copied",
+    "retry": "Retry",
+    "search": "Search",
+    "more": "Learn more",
+    "optional": "optional",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "meta": {
+    "defaultTitle": "PolyForge — 3D game asset marketplace",
+    "defaultDescription": "Where game teams and 3D artists meet: an AI brief builder, milestone-based deals, and reputation instead of middlemen."
+  },
+  "nav": {
+    "home": "Back home",
+    "works": "Works",
+    "designers": "Designers",
+    "orders": "Orders",
+    "top": "Leaderboard",
+    "dashboard": "Dashboard",
+    "invites": "Invites",
+    "settings": "Settings",
+    "admin": "Admin",
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "soon": {
+    "title": "This section is coming soon",
+    "works": "The works gallery arrives in development phase 1.",
+    "designers": "The designer catalogue arrives in development phase 1.",
+    "orders": "The order board arrives in development phase 3.",
+    "top": "Leaderboards arrive in development phase 5."
+  },
+  "footer": {
+    "product": "Product",
+    "legal": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "rules": "Platform Rules",
+    "disclaimer": "The platform is not a party to any payment. Users pay each other directly; the platform only records the confirmations they provide.",
+    "rights": "All rights reserved"
+  },
+  "theme": {
+    "label": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System",
+    "toggle": "Toggle theme"
+  },
+  "locale": {
+    "label": "Language",
+    "switch": "Change language"
+  },
+  "roleContext": {
+    "label": "Mode",
+    "designer": "Designer",
+    "customer": "Client",
+    "switchTo": "Switch to {role}",
+    "hint": "One account, two profiles. The switch changes your dashboard and menu."
+  },
+  "landing": {
+    "badge": "Closed beta",
+    "heroTitle": "3D game assets — with nobody standing between you",
+    "heroSubtitle": "An AI brief builder, milestone-based deals, and reputation you can actually trust. No commission: you pay each other directly.",
+    "ctaPrimary": "Get an invite",
+    "ctaSecondary": "I have a code",
+    "forDesigners": "For designers",
+    "forDesignersText": "Real briefs instead of “make it look cool”, milestone payments, portfolio pieces verified by the platform, and levels clients can see.",
+    "forCustomers": "For clients",
+    "forCustomersText": "AI turns your idea into a brief in minutes, milestones protect the budget, and ratings and disputes protect you from people who vanish.",
+    "howTitle": "How it works",
+    "step1Title": "Build the brief",
+    "step1Text": "Describe the task in plain words — AI turns it into a structured brief and points out what is missing.",
+    "step2Title": "Pick a designer",
+    "step2Text": "Publish an order or invite an artist from the gallery. Proposals come with price, timeline and portfolio pieces.",
+    "step3Title": "Run the deal in milestones",
+    "step3Text": "Each milestone: delivery → review → direct payment → receipt confirmation. Source files unlock once the final payment is confirmed.",
+    "noFeeTitle": "No commission, no payment processing",
+    "noFeeText": "The platform never touches the money. You settle up directly however you like, and the platform records the payment confirmations and the deal history.",
+    "waitlistTitle": "Leave your email — we'll send an invite",
+    "waitlistText": "The beta is invite-only. We'll write as soon as a seat opens up.",
+    "waitlistPlaceholder": "you@email.com",
+    "waitlistSubmit": "Join the list",
+    "waitlistSuccess": "Done! We'll write to {email} when your turn comes.",
+    "waitlistDuplicate": "This email is already on the waitlist."
+  },
+  "auth": {
+    "registerTitle": "Sign up",
+    "registerSubtitle": "Beta access is invite-only",
+    "loginTitle": "Log in",
+    "loginSubtitle": "Welcome back",
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirm": "Repeat password",
+    "nickname": "Nickname",
+    "nicknameHint": "This is how others will see you. You can change it later.",
+    "inviteCode": "Invite code",
+    "inviteCodeHint": "10 characters from your invitation",
+    "inviteCodeApplied": "Code {code} applied",
+    "acceptTerms": "I accept the <terms>Terms of Service</terms> and the <privacy>Privacy Policy</privacy>",
+    "submitRegister": "Create account",
+    "submitLogin": "Log in",
+    "orContinueWith": "or",
+    "discord": "Continue with Discord",
+    "haveAccount": "Already have an account?",
+    "noAccount": "No account yet?",
+    "forgotPassword": "Forgot your password?",
+    "forgotTitle": "Password recovery",
+    "forgotSubtitle": "We'll email you a reset link",
+    "forgotSubmit": "Send the link",
+    "forgotSent": "If that account exists, an email is on its way to {email}.",
+    "resetTitle": "New password",
+    "resetSubmit": "Save password",
+    "resetSuccess": "Password changed. You can log in now.",
+    "verifyTitle": "Confirm your email",
+    "verifySentTo": "We sent an email to {email}. Follow the link inside to activate your account.",
+    "verifySuccess": "Email confirmed. Welcome aboard!",
+    "verifyFailed": "This link is invalid or has expired.",
+    "verifyResend": "Send the email again",
+    "verifyResent": "Email sent again.",
+    "verifyRequired": "Confirm your email to continue.",
+    "logoutDone": "You have been logged out.",
+    "captchaLoading": "Verifying…",
+    "discordLinked": "Discord linked to your account."
+  },
+  "invites": {
+    "title": "My invites",
+    "subtitle": "Invite the people you would want to work with yourself.",
+    "left": "Invites left: {count}",
+    "code": "Code",
+    "status": "Status",
+    "usedBy": "Joined",
+    "statusFree": "Available",
+    "statusUsed": "Used",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "empty": "No invites yet. They will show up once an admin grants them.",
+    "invitedBy": "Invited by {nickname}"
+  },
+  "onboarding": {
+    "title": "What brings you here?",
+    "subtitle": "You can change this any time — it's one account either way.",
+    "iOrder": "Order 3D assets",
+    "iMake": "Take on work",
+    "iBoth": "Both",
+    "start": "Get started"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "greeting": "Hi, {nickname}",
+    "designerSoon": "The designer dashboard arrives in the next development phase.",
+    "customerSoon": "The client dashboard arrives in the next development phase.",
+    "myWorks": "My works",
+    "addWork": "Add a work",
+    "completeProfile": "Complete your profile",
+    "completeProfileDesigner": "Without specializations and styles nobody finds you in the catalogue.",
+    "completeProfileCustomer": "Tell people about yourself — designers respond more readily.",
+    "profileReady": "Profile complete",
+    "openProfile": "Open profile",
+    "worksCount": "Works in portfolio: {count}",
+    "ordersSoon": "Orders and deals arrive in phases 3 and 4."
+  },
+  "settings": {
+    "title": "Account settings",
+    "language": "Interface language",
+    "theme": "Appearance",
+    "account": "Account",
+    "email": "Email",
+    "emailVerified": "Verified",
+    "emailNotVerified": "Not verified",
+    "saved": "Saved"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "No connection to the server.",
+    "notFound": "Page not found",
+    "notFoundText": "We couldn't find what you were looking for.",
+    "forbidden": "Access denied",
+    "forbiddenText": "You don't have permission for this section.",
+    "serverError": "Internal error",
+    "serverErrorText": "We already know about it and are fixing it.",
+    "rateLimited": "Too many attempts. Wait {seconds}s.",
+    "required": "This field is required",
+    "email": {
+      "invalid": "Invalid email",
+      "tooLong": "Email is too long",
+      "taken": "An account with this email already exists"
+    },
+    "password": {
+      "required": "Enter your password",
+      "tooShort": "At least 8 characters",
+      "tooLong": "Password is too long",
+      "needsLetter": "Add at least one letter",
+      "needsDigit": "Add at least one digit",
+      "mismatch": "Passwords don't match"
+    },
+    "nickname": {
+      "tooShort": "At least 2 characters",
+      "tooLong": "At most 32 characters",
+      "invalidChars": "Letters, digits, hyphen and underscore only",
+      "taken": "This nickname is taken"
+    },
+    "invite": {
+      "required": "An invite code is required — the platform is in closed beta",
+      "invalidFormat": "The code is 10 characters long",
+      "notFound": "No such code",
+      "alreadyUsed": "This code has already been used",
+      "noneLeft": "You have no invites left"
+    },
+    "captcha": {
+      "required": "Confirm you're not a robot",
+      "failed": "Verification failed. Please try again."
+    },
+    "terms": {
+      "required": "You need to accept the terms"
+    },
+    "token": {
+      "invalid": "This link is invalid or has expired"
+    },
+    "credentials": "Wrong email or password",
+    "accountBanned": "Account is banned",
+    "accountBannedUntil": "Account is banned until {date}",
+    "emailNotVerified": "Confirm your email first",
+    "profile": {
+      "specializationRequired": "Pick at least one specialization",
+      "bioTooLong": "This text is too long",
+      "displayNameTooShort": "At least 2 characters",
+      "displayNameTooLong": "At most 64 characters",
+      "invalidUrl": "A full link starting with https:// is required",
+      "tooManyLinks": "No more than 5 links",
+      "tooManyTags": "Too many values"
+    },
+    "work": {
+      "titleTooShort": "At least 3 characters",
+      "titleTooLong": "At most 120 characters",
+      "descriptionTooLong": "This description is too long",
+      "mediaRequired": "Add at least one image",
+      "designerProfileRequired": "Fill in your designer profile first"
+    },
+    "upload": {
+      "unsupportedType": "This file format is not supported",
+      "tooLarge": "The file is larger than {limit} MB",
+      "failed": "Could not upload the file",
+      "tooMany": "No more than {limit} files per work"
+    }
+  },
+  "empty": {
+    "title": "Nothing here yet",
+    "genericAction": "Get started"
+  },
+  "emails": {
+    "verify": {
+      "subject": "Confirm your email on PolyForge",
+      "heading": "One step left",
+      "body": "Press the button to confirm your address and activate the account. The link is valid for 24 hours.",
+      "action": "Confirm email",
+      "ignore": "If you didn't sign up for PolyForge, just ignore this email."
+    },
+    "reset": {
+      "subject": "Password reset on PolyForge",
+      "heading": "Recover your access",
+      "body": "Press the button to set a new password. The link is valid for 1 hour.",
+      "action": "Set a new password",
+      "ignore": "If you didn't request a password reset, no action is needed."
+    },
+    "welcome": {
+      "subject": "Welcome to PolyForge",
+      "heading": "You're in the beta",
+      "body": "Your account is active. Fill in your profile and you're ready to work.",
+      "action": "Open dashboard"
+    },
+    "footer": "You received this email because you have a PolyForge account."
+  },
+  "legal": {
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "rules": "Platform Rules",
+    "draftNotice": "Draft document. The final version will be published before the beta opens."
+  },
+  "taxonomy": {
+    "specialization": {
+      "character": "Characters",
+      "environment": "Environments",
+      "props": "Props",
+      "weapons": "Weapons",
+      "vehicles": "Vehicles",
+      "animation": "Animation",
+      "rigging": "Rigging",
+      "texturing": "Texturing",
+      "other": "Other"
+    },
+    "style": {
+      "realism": "Realism",
+      "stylized": "Stylized",
+      "lowpoly": "Low poly",
+      "pixel": "Pixel",
+      "anime": "Anime",
+      "scifi": "Sci-fi",
+      "fantasy": "Fantasy",
+      "other": "Other"
+    },
+    "assetType": {
+      "character": "Character",
+      "environment": "Environment",
+      "prop": "Prop",
+      "weapon": "Weapon",
+      "vehicle": "Vehicle",
+      "building": "Building",
+      "animation": "Animation",
+      "texture": "Textures",
+      "other": "Other"
+    },
+    "availability": {
+      "open": "Open to work",
+      "busy": "Busy",
+      "closed": "Not taking work"
+    },
+    "level": {
+      "novice": "Novice",
+      "verified": "Verified",
+      "pro": "Pro",
+      "top": "Top"
+    },
+    "customerType": {
+      "indie": "Indie developer",
+      "studio": "Studio",
+      "server_project": "Game server or mod",
+      "other": "Other"
+    },
+    "visibility": {
+      "public": "Public",
+      "link_only": "Link only"
+    },
+    "reportCategory": {
+      "spam": "Spam",
+      "abuse": "Abuse",
+      "fraud": "Fraud",
+      "nsfw": "NSFW content",
+      "plagiarism": "Plagiarism",
+      "rules_evasion": "Rules evasion"
+    },
+    "language": {
+      "ru": "Русский",
+      "en": "English",
+      "uk": "Українська",
+      "kk": "Қазақша",
+      "de": "Deutsch",
+      "es": "Español",
+      "pt": "Português",
+      "zh": "中文"
+    }
+  },
+  "profile": {
+    "designerTitle": "Designer profile",
+    "customerTitle": "Client profile",
+    "editDesigner": "Edit designer profile",
+    "editCustomer": "Edit client profile",
+    "avatar": "Avatar",
+    "cover": "Cover",
+    "imageHint": "PNG, JPG or WebP",
+    "country": "Country",
+    "languages": "Spoken languages",
+    "specializations": "Specializations",
+    "styles": "Styles",
+    "software": "Software",
+    "softwareHint": "Blender, ZBrush, Substance… you can add your own",
+    "engines": "Engines",
+    "enginesHint": "Unity, Unreal, Godot… you can add your own",
+    "hourlyRate": "Hourly rate",
+    "minBudget": "Minimum budget",
+    "rateHint": "A reference for clients. The final price is agreed in the deal",
+    "currency": "Currency",
+    "availability": "Status",
+    "bio": "About you",
+    "bioHint": "What you do, what you enjoy working on, how you run a project",
+    "displayName": "Name or studio",
+    "type": "Client type",
+    "projectLinks": "Project links",
+    "projectLinksHint": "Website, Steam, Discord server — one link per line",
+    "save": "Save profile",
+    "portfolio": "Portfolio",
+    "reviews": "Reviews",
+    "reviewsSoon": "Reviews arrive together with deals — development phase 5.",
+    "noWorks": "No works yet",
+    "noWorksOwn": "Upload your first piece — a portfolio sells better than words.",
+    "invite": "Invite to an order",
+    "message": "Message",
+    "soonPhase": "Coming in a later phase",
+    "memberSince": "On the platform since {date}",
+    "emptyDesignerTitle": "Designer profile is not filled in yet",
+    "emptyDesignerText": "Add specializations and styles — without them nobody finds you in the catalogue.",
+    "emptyCustomerTitle": "Client profile is not filled in yet",
+    "emptyCustomerText": "Say who you are and what you're building — designers respond more readily.",
+    "createProfile": "Fill in the profile",
+    "metrics": {
+      "ordersCompleted": "Orders completed",
+      "rating": "Rating",
+      "onTime": "On time",
+      "disputes": "Disputes lost",
+      "repeatClients": "Repeat clients",
+      "ordersCreated": "Orders created",
+      "dealsCompleted": "Deals completed",
+      "responsiveness": "Responsiveness",
+      "noData": "no data"
+    }
+  },
+  "works": {
+    "title": "Works",
+    "mine": "My works",
+    "new": "Add a work",
+    "edit": "Edit",
+    "delete": "Delete work",
+    "deleteConfirm": "Delete this work and all its files? This cannot be undone.",
+    "deleted": "Work deleted",
+    "loadMore": "Show more",
+    "likes": "Likes",
+    "views": "Views",
+    "badgeOnPlatform": "Made on the platform",
+    "linkOnly": "Link only",
+    "form": {
+      "title": "Title",
+      "titleHint": "Short and specific: “Stylized orc for a mobile RPG”",
+      "description": "Description",
+      "descriptionHint": "The task, your approach, what was tricky",
+      "assetType": "Asset type",
+      "styles": "Styles",
+      "software": "Software",
+      "engines": "Engines",
+      "tech": "Technical details",
+      "techHint": "Every field is optional",
+      "polycount": "Poly count",
+      "textureInfo": "Textures",
+      "textureHint": "For example: 4K PBR, Albedo/Normal/Roughness",
+      "formats": "Formats",
+      "timeSpent": "Hours spent",
+      "visibility": "Visibility",
+      "visibilityHint": "“Link only” keeps the work out of the gallery and catalogue",
+      "media": "Media",
+      "mediaHint": "Drag files in or pick them. The first image becomes the cover",
+      "dropzone": "Drop files here",
+      "dropzoneAction": "or choose from disk",
+      "processing": "Processing…",
+      "failed": "Processing failed",
+      "remove": "Remove",
+      "cover": "Cover",
+      "submit": "Publish work",
+      "submitEdit": "Save changes"
+    },
+    "detail": {
+      "tech": "Technical details",
+      "polycount": "Poly count",
+      "textures": "Textures",
+      "formats": "Formats",
+      "timeSpent": "Time spent",
+      "hours": "{count} h",
+      "author": "Author",
+      "share": "Share",
+      "copyLink": "Copy link",
+      "linkCopied": "Link copied",
+      "orderSimilar": "Order something similar",
+      "moreByAuthor": "More by this author"
+    },
+    "filters": {
+      "all": "All",
+      "style": "Style",
+      "assetType": "Type",
+      "software": "Software",
+      "sort": "Sort",
+      "new": "Newest",
+      "popularWeek": "Popular this week",
+      "popularAll": "Popular all time",
+      "reset": "Reset"
+    },
+    "empty": {
+      "title": "No works yet",
+      "text": "Works by platform designers will show up here.",
+      "filtered": "Nothing matched these filters. Try loosening them."
+    },
+    "needProfile": "Fill in your designer profile first — works are attached to it."
+  },
+  "designers": {
+    "title": "Designers",
+    "subtitle": "Catalogue of 3D artists on the platform",
+    "filters": {
+      "specialization": "Specialization",
+      "style": "Style",
+      "availability": "Status",
+      "verifiedOnly": "Verified only"
+    },
+    "empty": "No designers matched these filters.",
+    "perHour": "{amount} {currency}/h",
+    "from": "from {amount} {currency}",
+    "noRate": "Rate not specified",
+    "orders": "{count} orders"
+  },
+  "report": {
+    "button": "Report",
+    "title": "Send a report",
+    "description": "A moderator will review it and decide. False reports are also recorded.",
+    "category": "Reason",
+    "text": "What happened",
+    "textHint": "Describe the problem — it helps the moderator act faster",
+    "submit": "Send report",
+    "sent": "Report sent. Thank you.",
+    "alreadySent": "You have already reported this."
+  }
+}

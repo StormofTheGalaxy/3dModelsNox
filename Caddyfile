@@ -1,0 +1,35 @@
+# Reverse proxy + автоматический TLS (§2.2).
+# Домен и email для ACME приходят из .env.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Заголовки безопасности. CSP появится вместе с реальным набором
+	# внешних источников (S3, Turnstile, аналитика) в фазе 7.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Реалтайм-сервис: socket.io ходит и по websocket, и по long-polling.
+	handle /socket.io/* {
+		reverse_proxy ws:4000
+	}
+
+	handle {
+		reverse_proxy app:3000
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# HTTP → HTTPS редирект Caddy делает сам.

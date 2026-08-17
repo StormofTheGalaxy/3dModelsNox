@@ -1,0 +1,10 @@
+import { createNavigation } from 'next-intl/navigation';
+
+import { routing } from './routing';
+
+/**
+ * Локале-осведомлённые обёртки. В приложении используем только их —
+ * обычный next/link потерял бы префикс языка.
+ */
+export const { Link, redirect, usePathname, useRouter, getPathname } =
+  createNavigation(routing);

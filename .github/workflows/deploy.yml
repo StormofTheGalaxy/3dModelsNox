@@ -1,0 +1,47 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Деплоим только после зелёного CI на том же коммите.
+    needs: []
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ждём CI
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: check
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+      - name: Развернуть на VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            git fetch --all
+            git reset --hard origin/main
+            # Образы собираются на сервере: отдельный registry для беты избыточен.
+            docker compose --env-file .env build
+            docker compose --env-file .env up -d --remove-orphans
+            docker image prune -f
+            # Миграции применяет entrypoint контейнера app.
+            docker compose --env-file .env exec -T app node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>r.json()).then(console.log)"

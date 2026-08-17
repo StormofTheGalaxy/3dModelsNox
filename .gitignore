@@ -1,0 +1,31 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+
+.env
+.env.local
+.env.*.local
+!.env.example
+
+packages/db/generated/
+prisma/generated/
+
+*.log
+npm-debug.log*
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+.turbo/
+*.tsbuildinfo
+
+# локальные тома docker
+.docker-data/
+backups/
+
+# локальное файловое хранилище (STORAGE_DRIVER=local)
+.data/

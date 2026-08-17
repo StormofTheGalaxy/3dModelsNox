@@ -1,0 +1,47 @@
+{
+  "name": "polyforge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PolyForge — маркетплейс 3D-моделей для игр",
+  "workspaces": [
+    "packages/*",
+    "app",
+    "ws",
+    "worker"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=app",
+    "dev:ws": "npm run dev --workspace=ws",
+    "dev:worker": "npm run dev --workspace=worker",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspace=app",
+    "test": "npm run test --workspaces --if-present",
+    "db:generate": "prisma generate --schema=prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
+    "db:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "db:push": "prisma db push --schema=prisma/schema.prisma",
+    "db:studio": "prisma studio --schema=prisma/schema.prisma",
+    "db:seed": "tsx prisma/seed.ts",
+    "docker:dev": "docker compose -f docker-compose.dev.yml up -d",
+    "docker:dev:down": "docker compose -f docker-compose.dev.yml down"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.1.0",
+    "@polyforge/db": "*",
+    "@polyforge/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "prisma": "^6.19.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
