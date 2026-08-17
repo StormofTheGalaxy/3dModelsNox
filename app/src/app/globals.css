@@ -1,0 +1,180 @@
+@import 'tailwindcss';
+
+/*
+ * Дизайн-система PolyForge (§5 ТЗ).
+ * Тёмная тема — основная; светлая переопределяет те же семантические токены,
+ * поэтому компоненты никогда не знают, какая тема активна.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Светлая тема */
+  --pf-bg: #f7f8fb;
+  --pf-surface: #ffffff;
+  --pf-surface-2: #f0f2f7;
+  --pf-border: #dfe3ec;
+  --pf-text: #12151d;
+  --pf-text-muted: #5b6376;
+
+  --pf-accent: #7c5cff;
+  --pf-accent-hover: #9078ff;
+  --pf-accent-contrast: #ffffff;
+  --pf-accent-soft: color-mix(in oklab, #7c5cff 12%, transparent);
+  --pf-gradient-from: #7c5cff;
+  --pf-gradient-to: #4cc9f0;
+
+  --pf-success: #10b981;
+  --pf-warning: #d97706;
+  --pf-danger: #dc2626;
+
+  --pf-glow: 0 0 0 1px color-mix(in oklab, #7c5cff 35%, transparent),
+    0 8px 32px -8px color-mix(in oklab, #7c5cff 45%, transparent);
+}
+
+.dark {
+  --pf-bg: #0b0d12;
+  --pf-surface: #12151d;
+  --pf-surface-2: #1a1e29;
+  --pf-border: #262b38;
+  --pf-text: #e8eaf0;
+  --pf-text-muted: #9aa1b2;
+
+  --pf-accent: #7c5cff;
+  --pf-accent-hover: #9078ff;
+  --pf-accent-contrast: #ffffff;
+  --pf-accent-soft: color-mix(in oklab, #7c5cff 18%, transparent);
+  --pf-gradient-from: #7c5cff;
+  --pf-gradient-to: #4cc9f0;
+
+  --pf-success: #34d399;
+  --pf-warning: #fbbf24;
+  --pf-danger: #f87171;
+
+  --pf-glow: 0 0 0 1px color-mix(in oklab, #7c5cff 45%, transparent),
+    0 8px 40px -8px color-mix(in oklab, #7c5cff 55%, transparent);
+}
+
+@theme inline {
+  --color-bg: var(--pf-bg);
+  --color-surface: var(--pf-surface);
+  --color-surface-2: var(--pf-surface-2);
+  --color-border-subtle: var(--pf-border);
+  --color-fg: var(--pf-text);
+  --color-fg-muted: var(--pf-text-muted);
+
+  --color-accent: var(--pf-accent);
+  --color-accent-hover: var(--pf-accent-hover);
+  --color-accent-contrast: var(--pf-accent-contrast);
+  --color-accent-soft: var(--pf-accent-soft);
+
+  --color-success: var(--pf-success);
+  --color-warning: var(--pf-warning);
+  --color-danger: var(--pf-danger);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --radius-card: 16px;
+  --radius-control: 12px;
+
+  --shadow-glow: var(--pf-glow);
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.25);
+
+  --ease-out-quick: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  * {
+    border-color: var(--pf-border);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--pf-bg);
+    color: var(--pf-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Фокус виден всегда — доступность важнее эстетики. */
+  :focus-visible {
+    outline: 2px solid var(--pf-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--pf-accent) 35%, transparent);
+  }
+}
+
+@layer components {
+  /* Градиент акцента для CTA и прогресс-баров (§5.2). */
+  .pf-gradient {
+    background-image: linear-gradient(
+      100deg,
+      var(--pf-gradient-from),
+      var(--pf-gradient-to)
+    );
+  }
+
+  /* Мягкое свечение фоном под hero-секцией. */
+  .pf-aurora::before {
+    content: '';
+    position: absolute;
+    inset: -30% -10% auto -10%;
+    height: 520px;
+    pointer-events: none;
+    background:
+      radial-gradient(40% 60% at 20% 30%, color-mix(in oklab, var(--pf-gradient-from) 28%, transparent), transparent 70%),
+      radial-gradient(35% 55% at 80% 20%, color-mix(in oklab, var(--pf-gradient-to) 22%, transparent), transparent 70%);
+    filter: blur(40px);
+    z-index: 0;
+  }
+}
+
+/* Ключевые кадры для модалок, тостов и скелетонов (§5.3). */
+@keyframes pf-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pf-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes pf-modal-in {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes pf-modal-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+}
+
+@keyframes pf-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* §5.3: ничего дольше 400 мс и уважение к prefers-reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

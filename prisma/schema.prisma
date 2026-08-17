@@ -1,0 +1,269 @@
+// PolyForge — схема данных.
+//
+// Фаза 0 покрывает аккаунты, инвайт-гейт, сессии, реестр настроек и аудит-лог.
+// Сущности профилей, ТЗ, заказов и сделок приходят в фазах 1–5; поля, которые
+// им понадобятся (organizationId, deletedAt), заложены здесь заранее — §1.2.2.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Перечисления
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  user
+  moderator
+  arbiter
+  admin
+}
+
+enum UserStatus {
+  active
+  shadow_banned
+  temp_banned
+  banned
+  deleted
+}
+
+enum Locale {
+  ru
+  en
+}
+
+enum ThemePreference {
+  dark
+  light
+  system
+}
+
+/// Какой профиль пользователь открыл последним — переключатель в шапке.
+enum RoleContext {
+  designer
+  customer
+}
+
+enum AuthTokenType {
+  email_verification
+  password_reset
+  email_change
+}
+
+enum OAuthProvider {
+  discord
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Аккаунты
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String?
+
+  /// Аккаунт-хэндл. Профили дизайнера и заказчика (фаза 1) могут показывать
+  /// собственные отображаемые имена, но адресуемся к пользователю по нику.
+  nickname       String  @unique
+  nicknameLower  String  @unique
+
+  locale Locale          @default(ru)
+  theme  ThemePreference @default(dark)
+
+  role   UserRole   @default(user)
+  status UserStatus @default(active)
+
+  emailVerifiedAt DateTime?
+  banUntil        DateTime?
+  banReason       String?
+
+  /// Последний выбранный контекст интерфейса (дизайнер/заказчик).
+  lastRoleContext RoleContext @default(designer)
+
+  invitedById String?
+  invitedBy   User?   @relation("UserInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitedUsers User[] @relation("UserInvitedBy")
+
+  invitesLeft Int @default(0)
+
+  /// Задел на команды/студии — фаза 2 (§1.4).
+  organizationId String?
+
+  lastSeenAt DateTime?
+  lastIp     String?
+
+  /// Обезличивание при самоудалении (§2.4): запись остаётся, данные стираются.
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invitesOwned    Invite[]        @relation("InviteOwner")
+  inviteUsed      Invite?         @relation("InviteUsedBy")
+  authTokens      AuthToken[]
+  sessions        RefreshSession[]
+  oauthAccounts   OAuthAccount[]
+  auditLogs       AuditLog[]      @relation("AuditActor")
+  settingsChanged PlatformSetting[] @relation("SettingUpdatedBy")
+
+  @@index([status])
+  @@index([role])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model OAuthAccount {
+  id String @id @default(cuid())
+
+  provider          OAuthProvider
+  providerAccountId String
+  /// Кэш профиля провайдера для отображения и повторной привязки.
+  username          String?
+  avatarUrl         String?
+  email             String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@unique([userId, provider])
+  @@map("oauth_accounts")
+}
+
+/// Одноразовые токены: подтверждение email, сброс пароля, смена email.
+/// В базе лежит только HMAC-хэш — исходный токен уходит пользователю в письме.
+model AuthToken {
+  id        String        @id @default(cuid())
+  type      AuthTokenType
+  tokenHash String        @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Для email_change — новый адрес, ожидающий подтверждения.
+  payload Json?
+
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, type])
+  @@index([expiresAt])
+  @@map("auth_tokens")
+}
+
+/// Refresh-сессия. Access-токен живёт 15 минут и в базе не хранится.
+model RefreshSession {
+  id        String @id @default(cuid())
+  tokenHash String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  userAgent String?
+  ip        String?
+
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_sessions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Закрытая бета: инвайты и лист ожидания
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Invite {
+  id   String @id @default(cuid())
+  code String @unique
+
+  ownerId String?
+  owner   User?   @relation("InviteOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  /// Один инвайт — один вошедший пользователь.
+  usedById String?   @unique
+  usedBy   User?     @relation("InviteUsedBy", fields: [usedById], references: [id], onDelete: SetNull)
+  usedAt   DateTime?
+
+  /// Инвайты, выданные админом напрямую в лист ожидания.
+  sentToEmail String?
+  note        String?
+
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([ownerId])
+  @@index([usedAt])
+  @@map("invites")
+}
+
+model WaitlistEntry {
+  id     String  @id @default(cuid())
+  email  String  @unique
+  note   String?
+  locale Locale  @default(ru)
+  source String?
+
+  invitedAt DateTime?
+  inviteId  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([invitedAt])
+  @@map("waitlist_entries")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Настройки платформы и аудит
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Реестр ключей типизирован в `@polyforge/shared/settings`. Здесь — только
+/// хранилище: всё, что помечено в ТЗ как «настройка», живёт тут (§1.2.6).
+model PlatformSetting {
+  key   String @id
+  value Json
+
+  updatedById String?
+  updatedBy   User?   @relation("SettingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("platform_settings")
+}
+
+/// Append-only. Записи не редактируются и не удаляются (§2.4).
+model AuditLog {
+  id String @id @default(cuid())
+
+  actorId String?
+  actor   User?   @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  action     String
+  targetType String?
+  targetId   String?
+
+  payload Json?
+  ip      String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}

@@ -1,0 +1,263 @@
+{
+  "common": {
+    "brand": "PolyForge",
+    "tagline": "3D game asset marketplace",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "back": "Back",
+    "close": "Close",
+    "confirm": "Confirm",
+    "copy": "Copy",
+    "copied": "Copied",
+    "retry": "Retry",
+    "search": "Search",
+    "more": "Learn more",
+    "optional": "optional",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "meta": {
+    "defaultTitle": "PolyForge — 3D game asset marketplace",
+    "defaultDescription": "Where game teams and 3D artists meet: an AI brief builder, milestone-based deals, and reputation instead of middlemen."
+  },
+  "nav": {
+    "home": "Back home",
+    "works": "Works",
+    "designers": "Designers",
+    "orders": "Orders",
+    "top": "Leaderboard",
+    "dashboard": "Dashboard",
+    "invites": "Invites",
+    "settings": "Settings",
+    "admin": "Admin",
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "soon": {
+    "title": "This section is coming soon",
+    "works": "The works gallery arrives in development phase 1.",
+    "designers": "The designer catalogue arrives in development phase 1.",
+    "orders": "The order board arrives in development phase 3.",
+    "top": "Leaderboards arrive in development phase 5."
+  },
+  "footer": {
+    "product": "Product",
+    "legal": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "rules": "Platform Rules",
+    "disclaimer": "The platform is not a party to any payment. Users pay each other directly; the platform only records the confirmations they provide.",
+    "rights": "All rights reserved"
+  },
+  "theme": {
+    "label": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System",
+    "toggle": "Toggle theme"
+  },
+  "locale": {
+    "label": "Language",
+    "switch": "Change language"
+  },
+  "roleContext": {
+    "label": "Mode",
+    "designer": "Designer",
+    "customer": "Client",
+    "switchTo": "Switch to {role}",
+    "hint": "One account, two profiles. The switch changes your dashboard and menu."
+  },
+  "landing": {
+    "badge": "Closed beta",
+    "heroTitle": "3D game assets — with nobody standing between you",
+    "heroSubtitle": "An AI brief builder, milestone-based deals, and reputation you can actually trust. No commission: you pay each other directly.",
+    "ctaPrimary": "Get an invite",
+    "ctaSecondary": "I have a code",
+    "forDesigners": "For designers",
+    "forDesignersText": "Real briefs instead of “make it look cool”, milestone payments, portfolio pieces verified by the platform, and levels clients can see.",
+    "forCustomers": "For clients",
+    "forCustomersText": "AI turns your idea into a brief in minutes, milestones protect the budget, and ratings and disputes protect you from people who vanish.",
+    "howTitle": "How it works",
+    "step1Title": "Build the brief",
+    "step1Text": "Describe the task in plain words — AI turns it into a structured brief and points out what is missing.",
+    "step2Title": "Pick a designer",
+    "step2Text": "Publish an order or invite an artist from the gallery. Proposals come with price, timeline and portfolio pieces.",
+    "step3Title": "Run the deal in milestones",
+    "step3Text": "Each milestone: delivery → review → direct payment → receipt confirmation. Source files unlock once the final payment is confirmed.",
+    "noFeeTitle": "No commission, no payment processing",
+    "noFeeText": "The platform never touches the money. You settle up directly however you like, and the platform records the payment confirmations and the deal history.",
+    "waitlistTitle": "Leave your email — we'll send an invite",
+    "waitlistText": "The beta is invite-only. We'll write as soon as a seat opens up.",
+    "waitlistPlaceholder": "you@email.com",
+    "waitlistSubmit": "Join the list",
+    "waitlistSuccess": "Done! We'll write to {email} when your turn comes.",
+    "waitlistDuplicate": "This email is already on the waitlist."
+  },
+  "auth": {
+    "registerTitle": "Sign up",
+    "registerSubtitle": "Beta access is invite-only",
+    "loginTitle": "Log in",
+    "loginSubtitle": "Welcome back",
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirm": "Repeat password",
+    "nickname": "Nickname",
+    "nicknameHint": "This is how others will see you. You can change it later.",
+    "inviteCode": "Invite code",
+    "inviteCodeHint": "10 characters from your invitation",
+    "inviteCodeApplied": "Code {code} applied",
+    "acceptTerms": "I accept the <terms>Terms of Service</terms> and the <privacy>Privacy Policy</privacy>",
+    "submitRegister": "Create account",
+    "submitLogin": "Log in",
+    "orContinueWith": "or",
+    "discord": "Continue with Discord",
+    "haveAccount": "Already have an account?",
+    "noAccount": "No account yet?",
+    "forgotPassword": "Forgot your password?",
+    "forgotTitle": "Password recovery",
+    "forgotSubtitle": "We'll email you a reset link",
+    "forgotSubmit": "Send the link",
+    "forgotSent": "If that account exists, an email is on its way to {email}.",
+    "resetTitle": "New password",
+    "resetSubmit": "Save password",
+    "resetSuccess": "Password changed. You can log in now.",
+    "verifyTitle": "Confirm your email",
+    "verifySentTo": "We sent an email to {email}. Follow the link inside to activate your account.",
+    "verifySuccess": "Email confirmed. Welcome aboard!",
+    "verifyFailed": "This link is invalid or has expired.",
+    "verifyResend": "Send the email again",
+    "verifyResent": "Email sent again.",
+    "verifyRequired": "Confirm your email to continue.",
+    "logoutDone": "You have been logged out.",
+    "captchaLoading": "Verifying…",
+    "discordLinked": "Discord linked to your account."
+  },
+  "invites": {
+    "title": "My invites",
+    "subtitle": "Invite the people you would want to work with yourself.",
+    "left": "Invites left: {count}",
+    "code": "Code",
+    "status": "Status",
+    "usedBy": "Joined",
+    "statusFree": "Available",
+    "statusUsed": "Used",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "empty": "No invites yet. They will show up once an admin grants them.",
+    "invitedBy": "Invited by {nickname}"
+  },
+  "onboarding": {
+    "title": "What brings you here?",
+    "subtitle": "You can change this any time — it's one account either way.",
+    "iOrder": "Order 3D assets",
+    "iMake": "Take on work",
+    "iBoth": "Both",
+    "start": "Get started"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "greeting": "Hi, {nickname}",
+    "designerSoon": "The designer dashboard arrives in the next development phase.",
+    "customerSoon": "The client dashboard arrives in the next development phase."
+  },
+  "settings": {
+    "title": "Account settings",
+    "language": "Interface language",
+    "theme": "Appearance",
+    "account": "Account",
+    "email": "Email",
+    "emailVerified": "Verified",
+    "emailNotVerified": "Not verified",
+    "saved": "Saved"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "No connection to the server.",
+    "notFound": "Page not found",
+    "notFoundText": "We couldn't find what you were looking for.",
+    "forbidden": "Access denied",
+    "forbiddenText": "You don't have permission for this section.",
+    "serverError": "Internal error",
+    "serverErrorText": "We already know about it and are fixing it.",
+    "rateLimited": "Too many attempts. Wait {seconds}s.",
+    "required": "This field is required",
+    "email": {
+      "invalid": "Invalid email",
+      "tooLong": "Email is too long",
+      "taken": "An account with this email already exists"
+    },
+    "password": {
+      "required": "Enter your password",
+      "tooShort": "At least 8 characters",
+      "tooLong": "Password is too long",
+      "needsLetter": "Add at least one letter",
+      "needsDigit": "Add at least one digit",
+      "mismatch": "Passwords don't match"
+    },
+    "nickname": {
+      "tooShort": "At least 2 characters",
+      "tooLong": "At most 32 characters",
+      "invalidChars": "Letters, digits, hyphen and underscore only",
+      "taken": "This nickname is taken"
+    },
+    "invite": {
+      "required": "An invite code is required — the platform is in closed beta",
+      "invalidFormat": "The code is 10 characters long",
+      "notFound": "No such code",
+      "alreadyUsed": "This code has already been used",
+      "noneLeft": "You have no invites left"
+    },
+    "captcha": {
+      "required": "Confirm you're not a robot",
+      "failed": "Verification failed. Please try again."
+    },
+    "terms": {
+      "required": "You need to accept the terms"
+    },
+    "token": {
+      "invalid": "This link is invalid or has expired"
+    },
+    "credentials": "Wrong email or password",
+    "accountBanned": "Account is banned",
+    "accountBannedUntil": "Account is banned until {date}",
+    "emailNotVerified": "Confirm your email first"
+  },
+  "empty": {
+    "title": "Nothing here yet",
+    "genericAction": "Get started"
+  },
+  "emails": {
+    "verify": {
+      "subject": "Confirm your email on PolyForge",
+      "heading": "One step left",
+      "body": "Press the button to confirm your address and activate the account. The link is valid for 24 hours.",
+      "action": "Confirm email",
+      "ignore": "If you didn't sign up for PolyForge, just ignore this email."
+    },
+    "reset": {
+      "subject": "Password reset on PolyForge",
+      "heading": "Recover your access",
+      "body": "Press the button to set a new password. The link is valid for 1 hour.",
+      "action": "Set a new password",
+      "ignore": "If you didn't request a password reset, no action is needed."
+    },
+    "welcome": {
+      "subject": "Welcome to PolyForge",
+      "heading": "You're in the beta",
+      "body": "Your account is active. Fill in your profile and you're ready to work.",
+      "action": "Open dashboard"
+    },
+    "footer": "You received this email because you have a PolyForge account."
+  },
+  "legal": {
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "rules": "Platform Rules",
+    "draftNotice": "Draft document. The final version will be published before the beta opens."
+  }
+}

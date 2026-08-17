@@ -1,0 +1,42 @@
+# Локальная разработка: только инфраструктура.
+# Приложение, ws и worker запускаются на хосте через `npm run dev`,
+# чтобы работал hot reload.
+#
+# Запуск: docker compose -f docker-compose.dev.yml up -d
+
+name: polyforge-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-polyforge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-polyforge}
+      POSTGRES_DB: ${POSTGRES_DB:-polyforge}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-polyforge}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-dev-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-dev-data:
+  redis-dev-data:
