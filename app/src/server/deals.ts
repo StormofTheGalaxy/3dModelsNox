@@ -167,6 +167,8 @@ export async function listDealMessages(dealId: string, limit = 200) {
       pinned: true,
       authorId: true,
       createdAt: true,
+      /// Кэш машинного перевода по языкам (§4.7).
+      translatedText: true,
       author: { select: { nickname: true } },
       attachments: {
         select: { id: true, fileName: true, mimeType: true, sizeBytes: true, previewUrl: true },

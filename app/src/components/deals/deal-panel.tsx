@@ -58,6 +58,7 @@ export function DealPanel({
   messages,
   changeRequests,
   sourcesUnlocked,
+  translation,
   review,
 }: {
   locale: string;
@@ -72,6 +73,8 @@ export function DealPanel({
   messages: DealMessageView[];
   changeRequests: DealChangeRequest[];
   sourcesUnlocked: boolean;
+  /** Настройка автоперевода читателя и уже посчитанные переводы (§4.7). */
+  translation: { incoming: boolean; cached: Record<string, string> };
   review: {
     blindDays: number;
     targetRole: 'designer' | 'customer';
@@ -255,6 +258,8 @@ export function DealPanel({
                   locale={locale}
                   initialMessages={messages}
                   readOnly={role === 'staff'}
+                  translateIncoming={translation.incoming}
+                  cachedTranslations={translation.cached}
                 />
               ) : null}
 

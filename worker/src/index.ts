@@ -9,6 +9,7 @@ import {
   remindMilestoneDeadlines,
   remindStuckPayments,
 } from './jobs/deal-maintenance';
+import { sendWeeklyDigests } from './jobs/digest';
 import { summarizeDisputeJob, type DisputeSummaryPayload } from './jobs/dispute-summary';
 import {
   grantAchievementsBatch,
@@ -210,6 +211,12 @@ register(QUEUES.maintenance, async (job) => {
     return;
   }
 
+  if (job.name === 'weekly-digest') {
+    const count = await sendWeeklyDigests();
+    console.info(`[worker:maintenance] дайджестов отправлено: ${count}`);
+    return;
+  }
+
   if (job.name === 'expire-strikes') {
     const { expireStrikesAndBans } = await import('./jobs/strikes');
     const result = await expireStrikesAndBans();
@@ -264,6 +271,8 @@ async function scheduleRepeatableJobs(): Promise<void> {
     { name: 'grant-achievements', pattern: '40 3 * * *' },
     // Истечение страйков и снятие временных банов — ежедневно.
     { name: 'expire-strikes', pattern: '10 1 * * *' },
+    // Еженедельный дайджест (§4.7) — утро понедельника.
+    { name: 'weekly-digest', pattern: '0 8 * * 1' },
   ];
 
   for (const job of repeatable) {

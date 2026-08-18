@@ -86,6 +86,13 @@ model User {
   /// Последний выбранный контекст интерфейса (дизайнер/заказчик).
   lastRoleContext RoleContext @default(designer)
 
+  /// Переводить входящие сообщения чата на язык интерфейса (§4.7).
+  translateIncoming Boolean @default(false)
+  /// Отправлять свои сообщения вместе с переводом — виден и оригинал.
+  translateOutgoing Boolean @default(false)
+  /// Показывать заказы, ТЗ и описания работ на языке интерфейса (§4.7).
+  translateContent  Boolean @default(true)
+
   invitedById String?
   invitedBy   User?   @relation("UserInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
   invitedUsers User[] @relation("UserInvitedBy")
@@ -138,6 +145,7 @@ model User {
   disputesOpened  Dispute[]             @relation("DisputeAuthor")
   disputesArbitrated Dispute[]          @relation("DisputeArbiter")
 
+  contentTranslations ContentTranslation[] @relation("TranslationRequester")
   reviewsWritten   Review[]             @relation("ReviewAuthor")
   reviewsReceived  Review[]             @relation("ReviewTarget")
   reviewsHidden    Review[]             @relation("ReviewModerator")
@@ -1627,4 +1635,64 @@ model VerificationImage {
 
   @@index([requestId])
   @@map("verification_images")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 6: ИИ-слой и языки
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum TranslatableEntity {
+  order
+  brief
+  work
+  response
+  review
+}
+
+/// Кэш автоперевода контента (§4.7).
+///
+/// Перевод считается один раз на (объект, поле, язык) и переиспользуется всеми
+/// зрителями: платить кредитами за один и тот же заказ каждому читателю
+/// бессмысленно. `sourceHash` ловит правку оригинала — при несовпадении
+/// перевод считается устаревшим и пересчитывается.
+model ContentTranslation {
+  id String @id @default(cuid())
+
+  entity   TranslatableEntity
+  entityId String
+  /// Поле объекта: у заказа переводятся и заголовок, и описание.
+  field    String
+
+  targetLocale Locale
+  text         String
+
+  /// Хэш исходного текста на момент перевода.
+  sourceHash String
+
+  /// Кто первым запросил перевод — для разбора расхода кредитов.
+  requestedById String?
+  requestedBy   User?   @relation("TranslationRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@unique([entity, entityId, field, targetLocale])
+  @@index([entity, entityId])
+  @@map("content_translations")
+}
+
+/// Саммари переписки сделки (§4.7). Хранится, чтобы кнопка не пересчитывала
+/// одно и то же: до новых сообщений результат не меняется.
+model ChatSummary {
+  id String @id @default(cuid())
+
+  dealId String @unique
+
+  text String
+  /// Сколько сообщений было учтено — по нему видно, что саммари устарело.
+  messageCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chat_summaries")
 }

@@ -130,6 +130,19 @@ export default async function DealPage({
         ...request,
         createdAt: request.createdAt.toISOString(),
       }))}
+      translation={{
+        incoming: user.translateIncoming,
+        // Уже переведённое отдаём сразу: повторный вызов модели за тот же
+        // текст ничего не меняет, а кредиты тратит.
+        cached: Object.fromEntries(
+          messages
+            .map((message) => {
+              const cache = (message.translatedText ?? {}) as Record<string, string>;
+              return [message.id, cache[locale]] as const;
+            })
+            .filter((entry): entry is readonly [string, string] => Boolean(entry[1])),
+        ),
+      }}
       sourcesUnlocked={sourcesUnlocked(deal.milestones)}
       review={{
         blindDays,

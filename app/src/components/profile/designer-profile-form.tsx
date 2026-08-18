@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 
 import {
   ART_STYLES,
@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChipSelect } from '@/components/ui/chip-select';
+import { ProfileAiImport } from '@/components/profile/profile-ai-import';
 import { Field, Input, Label } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { TagInput } from '@/components/ui/tag-input';
@@ -23,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FormMessage } from '@/components/forms/form-message';
 import { ImagePicker } from '@/components/profile/image-picker';
 import { saveDesignerProfile } from '@/server/actions/profile';
+import type { ParsedProfileDraft } from '@/server/actions/onboarding';
 import { idleState } from '@/server/actions/types';
 
 export interface DesignerProfileValues {
@@ -42,6 +44,22 @@ export interface DesignerProfileValues {
 }
 
 export function DesignerProfileForm({ values }: { values: DesignerProfileValues }) {
+  // Черновик из ИИ-разбора накладывается на исходные значения, а форма
+  // перемонтируется по `key`: поля неуправляемые, и иначе новые значения
+  // в них не попадут.
+  const [draft, setDraft] = useState<ParsedProfileDraft | null>(null);
+
+  const current: DesignerProfileValues = draft
+    ? {
+        ...values,
+        specializations: draft.specializations.length ? draft.specializations : values.specializations,
+        styles: draft.styles.length ? draft.styles : values.styles,
+        software: draft.software.length ? draft.software : values.software,
+        engines: draft.engines.length ? draft.engines : values.engines,
+        bio: draft.bio || values.bio,
+      }
+    : values;
+
   const t = useTranslations('profile');
   const tTax = useTranslations('taxonomy');
   const tRoot = useTranslations();
@@ -56,7 +74,14 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
     Object.fromEntries(keys.map((key) => [key, tTax(`${namespace}.${key}`)]));
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form
+      action={formAction}
+      // Смена ключа перемонтирует форму с новыми значениями по умолчанию.
+      key={draft ? 'ai-draft' : 'original'}
+      className="flex flex-col gap-5"
+    >
+      <ProfileAiImport onApply={setDraft} />
+
       <Card>
         <CardHeader>
           <CardTitle>{t('designerTitle')}</CardTitle>
@@ -67,13 +92,13 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
               name="avatar"
               label={t('avatar')}
               hint={t('imageHint')}
-              currentUrl={values.avatarUrl}
+              currentUrl={current.avatarUrl}
             />
             <ImagePicker
               name="cover"
               label={t('cover')}
               hint={t('imageHint')}
-              currentUrl={values.coverUrl}
+              currentUrl={current.coverUrl}
               aspect="cover"
             />
           </div>
@@ -84,7 +109,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
                 <Input
                   id={id}
                   name="country"
-                  defaultValue={values.country ?? ''}
+                  defaultValue={current.country ?? ''}
                   maxLength={64}
                   invalid={invalid}
                   aria-describedby={describedBy}
@@ -94,7 +119,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
 
             <div className="flex flex-col gap-1.5">
               <Label>{t('availability')}</Label>
-              <Select name="availability" defaultValue={values.availability}>
+              <Select name="availability" defaultValue={current.availability}>
                 {AVAILABILITY_STATES.map((state_) => (
                   <option key={state_} value={state_}>
                     {tTax(`availability.${state_}`)}
@@ -110,7 +135,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
               name="languages"
               options={SPOKEN_LANGUAGES}
               labels={labelsFor('language', SPOKEN_LANGUAGES)}
-              defaultValue={values.languages as (typeof SPOKEN_LANGUAGES)[number][]}
+              defaultValue={current.languages as (typeof SPOKEN_LANGUAGES)[number][]}
             />
           </div>
         </CardContent>
@@ -126,7 +151,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
               name="specializations"
               options={SPECIALIZATIONS}
               labels={labelsFor('specialization', SPECIALIZATIONS)}
-              defaultValue={values.specializations as (typeof SPECIALIZATIONS)[number][]}
+              defaultValue={current.specializations as (typeof SPECIALIZATIONS)[number][]}
               invalid={Boolean(fieldError('specializations'))}
             />
             {fieldError('specializations') ? (
@@ -140,7 +165,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
               name="styles"
               options={ART_STYLES}
               labels={labelsFor('style', ART_STYLES)}
-              defaultValue={values.styles as (typeof ART_STYLES)[number][]}
+              defaultValue={current.styles as (typeof ART_STYLES)[number][]}
             />
           </div>
 
@@ -149,7 +174,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
             <TagInput
               name="software"
               presets={SOFTWARE_PRESETS}
-              defaultValue={values.software}
+              defaultValue={current.software}
               placeholder={t('softwareHint')}
             />
           </div>
@@ -159,7 +184,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
             <TagInput
               name="engines"
               presets={ENGINE_PRESETS}
-              defaultValue={values.engines}
+              defaultValue={current.engines}
               max={10}
               placeholder={t('enginesHint')}
             />
@@ -181,7 +206,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
                   type="number"
                   min={0}
                   inputMode="numeric"
-                  defaultValue={values.hourlyRate ?? ''}
+                  defaultValue={current.hourlyRate ?? ''}
                   invalid={invalid}
                 />
               )}
@@ -195,7 +220,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
                   type="number"
                   min={0}
                   inputMode="numeric"
-                  defaultValue={values.minBudget ?? ''}
+                  defaultValue={current.minBudget ?? ''}
                   invalid={invalid}
                 />
               )}
@@ -203,7 +228,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
 
             <div className="flex flex-col gap-1.5">
               <Label>{t('currency')}</Label>
-              <Select name="currency" defaultValue={values.currency}>
+              <Select name="currency" defaultValue={current.currency}>
                 {CURRENCIES.map((currency) => (
                   <option key={currency} value={currency}>
                     {currency}
@@ -224,7 +249,7 @@ export function DesignerProfileForm({ values }: { values: DesignerProfileValues 
         <CardContent className="flex flex-col gap-2">
           <Textarea
             name="bio"
-            defaultValue={values.bio ?? ''}
+            defaultValue={current.bio ?? ''}
             maxLength={2000}
             placeholder={t('bioHint')}
             invalid={Boolean(fieldError('bio'))}

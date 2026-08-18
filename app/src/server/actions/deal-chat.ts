@@ -82,12 +82,26 @@ export async function sendDealMessage(
     stored.push(result.file);
   }
 
+  // Автоперевод исходящих (§4.7): собеседник получает перевод сразу,
+  // а оригинал остаётся рядом — так видно, что именно было сказано.
+  let translatedText: Prisma.InputJsonValue | undefined;
+
+  if (text && user.translateOutgoing) {
+    const otherLocale = await counterpartLocale(dealId, user.id);
+
+    if (otherLocale && otherLocale !== user.locale) {
+      const translation = await translateOutgoing(text, otherLocale, user.id, user.locale);
+      if (translation) translatedText = { [otherLocale]: translation };
+    }
+  }
+
   const message = await prisma.dealMessage.create({
     data: {
       dealId,
       kind: 'user',
       authorId: user.id,
       text: text || '',
+      ...(translatedText ? { translatedText } : {}),
       quotedMessageId: parsed.data.quotedMessageId ?? null,
       // Своё сообщение автор прочитал по определению.
       ...(access.role === 'customer'
@@ -131,6 +145,42 @@ export async function sendDealMessage(
 
   revalidatePath(`/deals/${dealId}`);
   return successState();
+}
+
+/** Язык второй стороны сделки — на него переводятся исходящие. */
+async function counterpartLocale(dealId: string, authorId: string): Promise<Locale | null> {
+  const deal = await prisma.deal.findUnique({
+    where: { id: dealId },
+    select: {
+      customer: { select: { id: true, locale: true } },
+      designer: { select: { id: true, locale: true } },
+    },
+  });
+
+  if (!deal) return null;
+
+  const other = deal.customer.id === authorId ? deal.designer : deal.customer;
+  return other.locale as Locale;
+}
+
+/** Перевод исходящего сообщения. Ошибка модели не должна отменять отправку. */
+async function translateOutgoing(
+  text: string,
+  targetLocale: Locale,
+  userId: string,
+  viewerLocale: Locale,
+): Promise<string | null> {
+  const spend = await spendCredits(userId, 'translate_msg', { type: 'message', id: 'outgoing' });
+  if (!spend.ok) return null;
+
+  try {
+    const provider = await aiProvider();
+    return await provider.translate({ text, targetLocale }, { locale: viewerLocale, userId });
+  } catch (error) {
+    console.error('[deal-chat] автоперевод исходящего не удался', error);
+    await refundCredits(userId, 'translate_msg', spend.cost);
+    return null;
+  }
 }
 
 /** Отметка прочтения: двигает только свою сторону. */
@@ -227,6 +277,147 @@ export async function translateDealMessage(
   } catch (error) {
     console.error('[deal-chat] перевод не удался', error);
     await refundCredits(user.id, 'translate_msg', spend.cost, { type: 'message', id: message.id });
+    return { ok: false, error: 'errors.ai.unavailable' };
+  }
+}
+
+/**
+ * Пакетный перевод входящих сообщений (§4.7).
+ *
+ * Вызывается, когда у читателя включено «Переводить входящие»: переводить
+ * по одному сообщению значило бы дёргать модель на каждый рендер ленты.
+ * Уже переведённое берётся из кэша в самом сообщении и кредитов не стоит.
+ */
+export async function translateIncomingMessages(
+  dealId: string,
+  targetLocale: Locale,
+): Promise<{ ok: boolean; translations?: Record<string, string>; error?: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: 'errors.forbidden' };
+
+  const access = await getDealForUser(dealId, user.id);
+  if (!access) return { ok: false, error: 'errors.forbidden' };
+
+  const messages = await prisma.dealMessage.findMany({
+    where: { dealId, kind: 'user', authorId: { not: user.id }, text: { not: '' } },
+    orderBy: { createdAt: 'desc' },
+    // Хвост ленты: старые реплики читатель уже видел переведёнными.
+    take: 50,
+    select: { id: true, text: true, translatedText: true },
+  });
+
+  const translations: Record<string, string> = {};
+  const pending: { id: string; text: string; cache: Record<string, string> }[] = [];
+
+  for (const message of messages) {
+    const cache = (message.translatedText ?? {}) as Record<string, string>;
+    const cached = cache[targetLocale];
+
+    if (cached) {
+      translations[message.id] = cached;
+      continue;
+    }
+
+    pending.push({ id: message.id, text: message.text, cache });
+  }
+
+  if (pending.length === 0) return { ok: true, translations };
+
+  const provider = await aiProvider();
+
+  for (const message of pending) {
+    const spend = await spendCredits(user.id, 'translate_msg', {
+      type: 'message',
+      id: message.id,
+    });
+    // Кредиты кончились — отдаём, что успели: часть ленты лучше, чем ничего.
+    if (!spend.ok) break;
+
+    try {
+      const text = await provider.translate(
+        { text: message.text, targetLocale },
+        { locale: user.locale, userId: user.id },
+      );
+
+      await prisma.dealMessage.update({
+        where: { id: message.id },
+        data: {
+          translatedText: { ...message.cache, [targetLocale]: text } as Prisma.InputJsonValue,
+        },
+      });
+
+      translations[message.id] = text;
+    } catch (error) {
+      console.error('[deal-chat] перевод входящего не удался', error);
+      await refundCredits(user.id, 'translate_msg', spend.cost, {
+        type: 'message',
+        id: message.id,
+      });
+      break;
+    }
+  }
+
+  return { ok: true, translations };
+}
+
+/**
+ * «✨ Саммари чата» (§4.7): договорённости и решения из переписки.
+ *
+ * Результат сохраняется: пока новых сообщений нет, повторное нажатие ничего
+ * не меняет, а кредиты тратит.
+ */
+export async function summarizeDealChat(
+  dealId: string,
+): Promise<{ ok: boolean; summary?: string; error?: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: 'errors.forbidden' };
+
+  const access = await getDealForUser(dealId, user.id);
+  if (!access) return { ok: false, error: 'errors.forbidden' };
+
+  const messages = await prisma.dealMessage.findMany({
+    where: { dealId, kind: 'user', text: { not: '' } },
+    orderBy: { createdAt: 'asc' },
+    take: 300,
+    select: { text: true, author: { select: { nickname: true } } },
+  });
+
+  if (messages.length < 2) return { ok: false, error: 'errors.ai.notEnoughMessages' };
+
+  const existing = await prisma.chatSummary.findUnique({
+    where: { dealId },
+    select: { text: true, messageCount: true },
+  });
+
+  if (existing && existing.messageCount === messages.length) {
+    return { ok: true, summary: existing.text };
+  }
+
+  const spend = await spendCredits(user.id, 'chat_summary', { type: 'deal', id: dealId });
+  if (!spend.ok) return { ok: false, error: spend.error };
+
+  try {
+    const provider = await aiProvider();
+    const summary = await provider.summarizeChat(
+      {
+        messages: messages.map((message) => ({
+          author: message.author?.nickname ?? 'user',
+          text: message.text,
+        })),
+      },
+      { locale: user.locale, userId: user.id },
+    );
+
+    await prisma.chatSummary.upsert({
+      where: { dealId },
+      create: { dealId, text: summary, messageCount: messages.length },
+      update: { text: summary, messageCount: messages.length },
+    });
+
+    return { ok: true, summary };
+  } catch (error) {
+    console.error('[deal-chat] саммари чата не собралось', error);
+    await refundCredits(user.id, 'chat_summary', spend.cost, { type: 'deal', id: dealId });
     return { ok: false, error: 'errors.ai.unavailable' };
   }
 }

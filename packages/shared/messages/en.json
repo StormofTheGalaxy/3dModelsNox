@@ -192,7 +192,23 @@
     "email": "Email",
     "emailVerified": "Verified",
     "emailNotVerified": "Not verified",
-    "saved": "Saved"
+    "saved": "Saved",
+    "translation": {
+      "title": "Languages and translation",
+      "incoming": {
+        "label": "Translate incoming messages",
+        "hint": "A translation into your interface language appears under the other side's message, marked as AI-translated."
+      },
+      "outgoing": {
+        "label": "Send my messages with a translation",
+        "hint": "The other side sees both the translation and your original text."
+      },
+      "content": {
+        "label": "Translate orders, briefs and work descriptions",
+        "hint": "Other people's content is shown in your interface language; the original is always one click away."
+      },
+      "disclaimer": "Translation is machine-made: check the original where wording matters. Credit cost is set by platform settings — translation is free during the beta."
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -281,7 +297,8 @@
       "failed": "AI could not process the request. Please try again.",
       "unavailable": "The AI service is temporarily unavailable",
       "rateLimited": "Too many AI requests. Please wait a moment.",
-      "noCredits": "You are out of AI credits this month. Left: {left}"
+      "noCredits": "You are out of AI credits this month. Left: {left}",
+      "notEnoughMessages": "There is nothing to summarize in this conversation yet"
     },
     "order": {
       "titleTooShort": "At least 5 characters",
@@ -367,6 +384,9 @@
     },
     "report": {
       "alreadyResolved": "The report has already been handled"
+    },
+    "onboarding": {
+      "textTooShort": "Paste more text — at least 80 characters"
     }
   },
   "empty": {
@@ -394,7 +414,16 @@
       "body": "Your account is active. Fill in your profile and you're ready to work.",
       "action": "Open dashboard"
     },
-    "footer": "You received this email because you have a PolyForge account."
+    "footer": "You received this email because you have a PolyForge account.",
+    "digest": {
+      "subject": "Your week on PolyForge",
+      "heading": "Hello, {nickname}",
+      "messages": "Unread messages in deals: {count}",
+      "responses": "New responses to your orders: {count}",
+      "reviews": "Deals awaiting your review: {count}",
+      "orders": "New orders on the board: {count}",
+      "action": "Open dashboard"
+    }
   },
   "legal": {
     "terms": "Terms of Service",
@@ -526,6 +555,15 @@
       "dealsCompleted": "Deals completed",
       "responsiveness": "Responsiveness",
       "noData": "no data"
+    },
+    "aiImport": {
+      "button": "✨ Fill from portfolio",
+      "label": "Text from your portfolio page",
+      "hint": "Copy the description from ArtStation, Behance or your own site — AI will lay it out into profile fields.",
+      "placeholder": "Paste the text: about you, specialization, software, engines…",
+      "draftNote": "This is a draft: fields get filled in, but nothing is saved until you press “Save profile”.",
+      "parse": "Parse",
+      "applied": "Fields filled in — review and save"
     }
   },
   "works": {
@@ -1254,7 +1292,11 @@
       "pinned": "Pinned",
       "translate": "Translate",
       "typing": "The other side is typing…",
-      "offline": "Realtime is unavailable — messages will appear after a page refresh."
+      "offline": "Realtime is unavailable — messages will appear after a page refresh.",
+      "machineTranslated": "translated by AI",
+      "translating": "Translating incoming…",
+      "summary": "✨ Summary",
+      "summaryTitle": "Agreements from the conversation"
     },
     "history": {
       "empty": "No events yet"
@@ -1512,5 +1554,10 @@
     "decisionNote": "Comment for the designer",
     "approve": "Approve",
     "reject": "Reject"
+  },
+  "translation": {
+    "machineTranslated": "translated by AI",
+    "showOriginal": "show original",
+    "showTranslation": "show translation"
   }
 }

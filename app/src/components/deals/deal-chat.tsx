@@ -1,8 +1,8 @@
 'use client';
 
-import { Languages, Paperclip, Pin, Reply, Send } from 'lucide-react';
+import { Languages, Paperclip, Pin, Reply, Send, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
 
 import type { Locale } from '@polyforge/shared';
 
@@ -16,8 +16,10 @@ import type { DealMessageView } from '@/components/deals/types';
 import {
   markDealRead,
   sendDealMessage,
+  summarizeDealChat,
   toggleMessagePin,
   translateDealMessage,
+  translateIncomingMessages,
 } from '@/server/actions/deal-chat';
 import { idleState, type ActionState } from '@/server/actions/types';
 import { cn, formatDate } from '@/lib/utils';
@@ -37,12 +39,18 @@ export function DealChat({
   locale,
   initialMessages,
   readOnly,
+  translateIncoming,
+  cachedTranslations,
 }: {
   dealId: string;
   viewerId: string;
   locale: string;
   initialMessages: DealMessageView[];
   readOnly: boolean;
+  /** Включён ли автоперевод входящих в настройках (§4.7). */
+  translateIncoming: boolean;
+  /** Уже посчитанные переводы: показываются сразу, без обращения к модели. */
+  cachedTranslations: Record<string, string>;
 }) {
   const t = useTranslations('deals.chat');
   const tSystem = useTranslations('deals.system');
@@ -51,7 +59,13 @@ export function DealChat({
   const router = useRouter();
 
   const [quoted, setQuoted] = useState<DealMessageView | null>(null);
-  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [translations, setTranslations] = useState<Record<string, string>>(cachedTranslations);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summarizing, startSummary] = useTransition();
+  const [autoTranslating, startAutoTranslate] = useTransition();
+  // Автоперевод запускается один раз на монтирование ленты: повторные
+  // рендеры не должны заново дёргать модель.
+  const autoTranslated = useRef(false);
   const [typing, setTyping] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -76,6 +90,18 @@ export function DealChat({
     if (readOnly) return;
     void markDealRead(dealId);
   }, [dealId, readOnly, messages.length]);
+
+  useEffect(() => {
+    if (!translateIncoming || readOnly || autoTranslated.current) return;
+    autoTranslated.current = true;
+
+    startAutoTranslate(async () => {
+      const result = await translateIncomingMessages(dealId, locale as Locale);
+      if (result.ok && result.translations) {
+        setTranslations((current) => ({ ...current, ...result.translations }));
+      }
+    });
+  }, [dealId, locale, readOnly, translateIncoming]);
 
   const [state, action, pending] = useActionState(
     async (previous: ActionState, formData: FormData) => {
@@ -114,8 +140,41 @@ export function DealChat({
 
   const pinned = messages.filter((message) => message.pinned);
 
+  function requestSummary() {
+    startSummary(async () => {
+      const result = await summarizeDealChat(dealId);
+      if (!result.ok) {
+        toast.error(tRoot(result.error ?? 'errors.generic'));
+        return;
+      }
+      setSummary(result.summary ?? null);
+    });
+  }
+
   return (
     <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {autoTranslating ? (
+          <span className="text-xs text-fg-muted">{t('translating')}</span>
+        ) : (
+          <span />
+        )}
+
+        <Button size="sm" variant="ghost" loading={summarizing} onClick={requestSummary}>
+          <Sparkles aria-hidden className="size-4" />
+          {t('summary')}
+        </Button>
+      </div>
+
+      {summary ? (
+        <div className="rounded-[var(--radius-control)] border border-accent/40 bg-accent-soft/40 p-3">
+          <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-accent">
+            <Sparkles aria-hidden className="size-3.5" />
+            {t('summaryTitle')}
+          </p>
+          <p className="text-sm whitespace-pre-line">{summary}</p>
+        </div>
+      ) : null}
       {pinned.length > 0 ? (
         <div className="rounded-[var(--radius-control)] bg-surface-2 p-3">
           <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-fg-muted">
@@ -176,9 +235,15 @@ export function DealChat({
                 {message.text ? <p className="whitespace-pre-line">{message.text}</p> : null}
 
                 {translations[message.id] ? (
-                  <p className="mt-1.5 border-t border-[var(--pf-border)] pt-1.5 text-fg-muted">
-                    {translations[message.id]}
-                  </p>
+                  <div className="mt-1.5 border-t border-[var(--pf-border)] pt-1.5">
+                    <p className="text-fg-muted">{translations[message.id]}</p>
+                    {/* Машинный перевод помечается всегда (§4.7): читатель
+                        должен понимать, что формулировка не авторская. */}
+                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-fg-muted">
+                      <Languages aria-hidden className="size-3" />
+                      {t('machineTranslated')}
+                    </p>
+                  </div>
                 ) : null}
 
                 {message.attachments.length > 0 ? (

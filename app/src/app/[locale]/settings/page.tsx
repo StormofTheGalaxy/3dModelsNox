@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TranslationSettings } from '@/components/settings/translation-settings';
 import { requireUser } from '@/server/auth/guards';
 
 export async function generateMetadata({
@@ -60,6 +61,12 @@ export default async function SettingsPage({
           </div>
         </CardContent>
       </Card>
+
+      <TranslationSettings
+        incoming={user.translateIncoming}
+        outgoing={user.translateOutgoing}
+        content={user.translateContent}
+      />
     </div>
   );
 }
