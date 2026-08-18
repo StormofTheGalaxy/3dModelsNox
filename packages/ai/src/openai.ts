@@ -5,6 +5,7 @@ import { parseBriefSections } from '@polyforge/shared';
 import {
   briefClarificationSchema,
   briefEstimateSchema,
+  matchRankingSchema,
   briefReviewSchema,
   fieldSuggestionSchema,
   generatedBriefSchema,
@@ -16,6 +17,8 @@ import {
   type BriefEstimate,
   type BriefReview,
   type ClarifyBriefInput,
+  type MatchRanking,
+  type RankMatchesInput,
   type EstimateBudgetInput,
   type FieldSuggestion,
   type GenerateBriefInput,
@@ -33,6 +36,7 @@ import {
   improveTextPrompt,
   parseProfilePrompt,
   clarifyBriefPrompt,
+  rankMatchesPrompt,
   reviewBriefPrompt,
   suggestFieldPrompt,
   summarizePrompt,
@@ -193,6 +197,47 @@ export class OpenAIProvider implements AIProvider {
     );
 
     return this.parseJson(raw, briefClarificationSchema);
+  }
+
+  async rankMatches(input: RankMatchesInput, context: AIContext): Promise<MatchRanking> {
+    const raw = await this.complete(
+      [
+        this.system(),
+        {
+          role: 'user',
+          content: rankMatchesPrompt(
+            input.title,
+            input.sections,
+            { amount: input.budgetAmount, currency: input.currency },
+            input.candidates,
+            context.locale,
+          ),
+        },
+      ],
+      { model: this.config.strongModel, json: true, maxTokens: 1500 },
+    );
+
+    const ranking = await this.parseJson(raw, matchRankingSchema);
+
+    // Модель может вернуть выдуманный id или потерять кандидата. Список
+    // кандидатов — наш, поэтому и правда о нём наша: чужое отбрасываем,
+    // забытых дописываем в конец.
+    const known = new Map(input.candidates.map((candidate) => [candidate.id, candidate]));
+    const seen = new Set<string>();
+
+    const items = ranking.items.filter((item) => {
+      if (!known.has(item.id) || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+
+    for (const candidate of input.candidates) {
+      if (!seen.has(candidate.id)) {
+        items.push({ id: candidate.id, score: 0, reason: '' });
+      }
+    }
+
+    return { items };
   }
 
   async estimateBudget(input: EstimateBudgetInput, context: AIContext): Promise<BriefEstimate> {

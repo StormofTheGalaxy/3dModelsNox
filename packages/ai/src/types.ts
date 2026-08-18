@@ -134,6 +134,53 @@ export interface ClarifyBriefInput {
   answer: string;
 }
 
+// ── Подбор исполнителей (post-MVP №4) ───────────────────────────────────────
+
+export const matchRankingSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        /** Идентификатор кандидата из переданного списка. */
+        id: z.string().trim().min(1).max(64),
+        /** Насколько кандидат подходит: 0..100. */
+        score: z.number().int().min(0).max(100),
+        /** Одна фраза «почему именно он» — показывается заказчику. */
+        reason: z.string().trim().min(3).max(300),
+      }),
+    )
+    .max(20),
+});
+
+export type MatchRanking = z.infer<typeof matchRankingSchema>;
+
+/** Кандидат для ранжирования. Собирается запросом, а не моделью. */
+export interface MatchCandidate {
+  id: string;
+  nickname: string;
+  level: string;
+  rating: number;
+  ratingCount: number;
+  ordersCompleted: number;
+  onTimePct: number | null;
+  specializations: string[];
+  styles: string[];
+  engines: string[];
+  software: string[];
+  minBudget: number | null;
+  currency: string;
+  bio: string;
+}
+
+export interface RankMatchesInput {
+  /** Чего хочет заказчик: заголовок и ключевые требования заказа. */
+  title: string;
+  sections: BriefSections;
+  budgetAmount: number | null;
+  currency: string;
+  /** Кандидаты, уже отобранные по тегам. Модель их только упорядочивает. */
+  candidates: MatchCandidate[];
+}
+
 // ── Текстовые операции (фазы 3 и 6) ─────────────────────────────────────────
 
 export interface TranslateInput {
@@ -177,6 +224,7 @@ export interface AIProvider {
   estimateBudget(input: EstimateBudgetInput, context: AIContext): Promise<BriefEstimate>;
   suggestField(input: SuggestFieldInput, context: AIContext): Promise<FieldSuggestion>;
   clarifyBrief(input: ClarifyBriefInput, context: AIContext): Promise<BriefClarification>;
+  rankMatches(input: RankMatchesInput, context: AIContext): Promise<MatchRanking>;
 
   translate(input: TranslateInput, context: AIContext): Promise<string>;
   improveText(input: ImproveTextInput, context: AIContext): Promise<string>;

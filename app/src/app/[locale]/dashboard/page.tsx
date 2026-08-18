@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
-import { Images, Plus, UserCog } from 'lucide-react';
+import { CalendarDays, Images, Plus, Target, UserCog } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 
 import { prisma } from '@polyforge/db';
 
 import { Link } from '@/i18n/navigation';
-import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +14,8 @@ import { WorkCard } from '@/components/works/work-card';
 import { requireVerifiedUser } from '@/server/auth/guards';
 import { getProfileState } from '@/server/profiles';
 import { listDesignerWorks } from '@/server/works';
+import { matchingOrders } from '@/server/matching';
+import { formatDate } from '@/lib/utils';
 
 export async function generateMetadata({
   params,
@@ -42,11 +43,13 @@ export default async function DashboardPage({
     redirect(`/${locale}/onboarding`);
   }
 
-  const [t, tRole, tWorks, tProfile] = await Promise.all([
+  const [t, tRole, tWorks, tProfile, tOrders, tTax] = await Promise.all([
     getTranslations('dashboard'),
     getTranslations('roleContext'),
     getTranslations('works'),
     getTranslations('profile'),
+    getTranslations('orders'),
+    getTranslations('taxonomy'),
   ]);
 
   // Контекст показываем тот, что выбран в шапке, но только если такой профиль есть.
@@ -55,8 +58,11 @@ export default async function DashboardPage({
 
   const isDesigner = context === 'designer' && profileState.hasDesigner;
 
-  const [works, ordersCount] = await Promise.all([
+  const [works, matched, ordersCount] = await Promise.all([
     isDesigner ? listDesignerWorks(user.id, true) : Promise.resolve([]),
+    // «Подходящие заказы» (§4.2): подбор по тегам профиля, порядок — по
+    // свежести, как требует ТЗ.
+    isDesigner ? matchingOrders(user.id) : Promise.resolve([]),
     isDesigner
       ? Promise.resolve(0)
       : prisma.customerProfile
@@ -97,6 +103,62 @@ export default async function DashboardPage({
       ) : null}
 
       {isDesigner ? (
+        <>
+          {matched.length > 0 ? (
+            <section className="mb-8 flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="flex items-center gap-2 text-xl font-bold">
+                  <Target aria-hidden className="size-5 text-accent" />
+                  {t('matchedOrders')}
+                </h2>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/orders">{t('allOrders')}</Link>
+                </Button>
+              </div>
+
+              <ul className="flex flex-col gap-2">
+                {matched.map((order) => (
+                  <li key={order.id}>
+                    <Link
+                      href={`/orders/${order.id}`}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--pf-border)] bg-surface-2 px-4 py-3 transition-colors hover:border-accent/50"
+                    >
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="truncate font-medium">{order.title}</span>
+                          {order.invited ? (
+                            <Badge variant="accent">{tOrders('invitedBadge')}</Badge>
+                          ) : null}
+                        </span>
+
+                        <span className="flex flex-wrap items-center gap-3 text-xs text-fg-muted">
+                          {order.assetType ? (
+                            <span>{tTax(`assetType.${order.assetType}`)}</span>
+                          ) : null}
+                          {order.deadline ? (
+                            <span className="inline-flex items-center gap-1">
+                              <CalendarDays className="size-3" aria-hidden />
+                              {formatDate(order.deadline, locale)}
+                            </span>
+                          ) : null}
+                        </span>
+                      </div>
+
+                      {/* Моноширинный — для сумм, а не для фразы «жду предложений». */}
+                      {order.budgetMode === 'fixed' && order.budgetAmount !== null ? (
+                        <span className="font-mono text-sm font-semibold">
+                          {order.budgetAmount.toLocaleString(locale)} {order.budgetCurrency}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-fg-muted">{tOrders('budgetOpen')}</span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
         <section className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-baseline gap-3">
@@ -151,12 +213,19 @@ export default async function DashboardPage({
             </div>
           )}
         </section>
+        </>
       ) : (
         <section className="flex flex-col gap-4">
           <h2 className="text-xl font-bold">{tProfile('metrics.ordersCreated')}</h2>
           <p className="font-mono text-3xl font-bold">{ordersCount}</p>
-          {/* Заказы, отклики и сделки приходят в фазах 3 и 4. */}
-          <Alert tone="info">{t('ordersSoon')}</Alert>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm">
+              <Link href="/orders/new">{tOrders('publish')}</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/orders/mine">{tOrders('mine')}</Link>
+            </Button>
+          </div>
         </section>
       )}
     </div>

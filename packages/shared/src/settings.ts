@@ -225,6 +225,7 @@ export const SETTINGS_REGISTRY = {
       brief_generate: 1,
       brief_review: 1,
       brief_clarify: 1,
+      match_designers: 1,
       translate_msg: 0,
       improve_text: 1,
       estimate: 1,
@@ -384,6 +385,16 @@ export const SETTINGS_REGISTRY = {
     default: false,
     schema: z.boolean(),
     label: { ru: 'Аукцион заказов', en: 'Order auction' },
+  },
+  feature_ai_matching: {
+    group: 'features',
+    default: false,
+    schema: z.boolean(),
+    label: { ru: 'ИИ-подбор исполнителей', en: 'AI designer matching' },
+    hint: {
+      ru: 'Без флага подбор работает по тегам, без объяснений от модели',
+      en: 'With the flag off, matching runs on tags alone, without model explanations',
+    },
   },
   feature_brief_chat: {
     group: 'features',

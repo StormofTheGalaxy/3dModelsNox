@@ -5,6 +5,8 @@ import type {
   AIProvider,
   BriefClarification,
   ClarifyBriefInput,
+  MatchRanking,
+  RankMatchesInput,
   BriefEstimate,
   BriefIssue,
   BriefReview,
@@ -501,6 +503,77 @@ export class StubAIProvider implements AIProvider {
     }
 
     return Promise.resolve({ message: next.question, suggestions, done: false });
+  }
+
+  /**
+   * Ранжирование кандидатов (post-MVP №4).
+   *
+   * Заглушка считает совпадение по тегам и репутации теми же правилами, что
+   * и отбор: смысл не в «умности», а в том, чтобы вся дорожка — отбор,
+   * ранжирование, объяснение, приглашение — работала без ключа.
+   */
+  rankMatches(input: RankMatchesInput, context: AIContext): Promise<MatchRanking> {
+    const ru = context.locale === 'ru';
+    const wantedStyles = new Set<string>(input.sections.style.styleTags);
+    const engine = input.sections.tech.engine.trim().toLowerCase();
+
+    const items = input.candidates.map((candidate) => {
+      const styleHits = candidate.styles.filter((style) => wantedStyles.has(style));
+      const engineHit =
+        engine.length > 0 &&
+        candidate.engines.some((item) => item.toLowerCase().includes(engine));
+
+      // Репутация весит меньше совпадения по профилю: подходящий новичок
+      // полезнее неподходящего «топа».
+      const styleScore = wantedStyles.size > 0 ? (styleHits.length / wantedStyles.size) * 40 : 20;
+      const engineScore = engineHit ? 20 : engine.length > 0 ? 0 : 10;
+      const ratingScore = candidate.ratingCount > 0 ? (candidate.rating / 5) * 20 : 8;
+      const onTimeScore = candidate.onTimePct === null ? 6 : (candidate.onTimePct / 100) * 12;
+      const experienceScore = Math.min(candidate.ordersCompleted, 10);
+
+      const score = Math.round(
+        Math.min(100, styleScore + engineScore + ratingScore + onTimeScore + experienceScore),
+      );
+
+      const reasons: string[] = [];
+      // Названия стилей — ключи перечисления, и словаря подписей здесь нет:
+      // заглушка живёт вне React и вне i18n. Говорим о числе совпадений.
+      if (styleHits.length > 0) {
+        reasons.push(
+          ru
+            ? `совпадает по стилю (${styleHits.length} из ${wantedStyles.size})`
+            : `matches the style (${styleHits.length} of ${wantedStyles.size})`,
+        );
+      }
+      if (engineHit) {
+        reasons.push(ru ? `знает ${input.sections.tech.engine}` : `knows ${input.sections.tech.engine}`);
+      }
+      if (candidate.ratingCount > 0) {
+        reasons.push(
+          ru
+            ? `рейтинг ${candidate.rating.toFixed(1)} по ${candidate.ratingCount} отзывам`
+            : `rated ${candidate.rating.toFixed(1)} across ${candidate.ratingCount} reviews`,
+        );
+      }
+      if (candidate.ordersCompleted > 0) {
+        reasons.push(
+          ru ? `${candidate.ordersCompleted} закрытых заказов` : `${candidate.ordersCompleted} completed orders`,
+        );
+      }
+
+      return {
+        id: candidate.id,
+        score,
+        reason:
+          reasons.length > 0
+            ? `${reasons.join(', ')}.`
+            : ru
+              ? 'Профиль заполнен, но пересечений с этим заказом немного.'
+              : 'The profile is filled in, but it overlaps little with this order.',
+      };
+    });
+
+    return Promise.resolve({ items: items.sort((a, b) => b.score - a.score) });
   }
 
   async parsePortfolioProfile(

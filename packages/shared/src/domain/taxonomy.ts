@@ -49,6 +49,27 @@ export type AssetType = (typeof ASSET_TYPES)[number];
 export const PLATFORMS = ['pc', 'mobile', 'console', 'vr', 'web', 'any'] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
+/**
+ * Какие специализации закрывают какой тип ассета (post-MVP №4, матчинг).
+ *
+ * Два справочника разошлись исторически: у профиля специализации во
+ * множественном числе и своими словами («props», «texturing»), у заказа —
+ * типы ассетов в единственном («prop», «texture»). Сопоставление написано
+ * здесь один раз, чтобы подбор не угадывал его строковым сравнением.
+ */
+export const ASSET_TYPE_SPECIALIZATIONS: Record<AssetType, readonly Specialization[]> = {
+  character: ['character'],
+  environment: ['environment'],
+  prop: ['props'],
+  weapon: ['weapons'],
+  vehicle: ['vehicles'],
+  /// Отдельной специализации под здания нет: их делают те же, кто окружение.
+  building: ['environment'],
+  animation: ['animation', 'rigging'],
+  texture: ['texturing'],
+  other: [],
+};
+
 export const AVAILABILITY_STATES = ['open', 'busy', 'closed'] as const;
 export type Availability = (typeof AVAILABILITY_STATES)[number];
 

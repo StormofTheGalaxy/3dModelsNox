@@ -211,6 +211,50 @@ ${JSON.stringify(sections)}
 `.trim();
 }
 
+export function rankMatchesPrompt(
+  title: string,
+  sections: BriefSections,
+  budget: { amount: number | null; currency: string },
+  candidates: unknown[],
+  locale: Locale,
+): string {
+  return `
+${BRIEF_DOMAIN_CONTEXT}
+
+Заказчику нужно выбрать исполнителя. Список кандидатов уже отобран по тегам —
+твоя работа упорядочить его и объяснить выбор.
+
+Правила:
+1. Работай ТОЛЬКО с переданными кандидатами. Не добавляй никого от себя и не
+   выдумывай их свойств: всё, что известно, есть в JSON ниже.
+2. Возвращай каждого кандидата ровно один раз, с его id из списка.
+3. score — насколько человек подходит ЭТОМУ заказу, а не насколько он хорош
+   вообще. Подходящий новичок полезнее неподходящего «топа».
+4. reason — одна фраза о том, что в его профиле отвечает этому заказу.
+   Без воды и без похвалы ради похвалы.
+${languageRule(locale)}
+
+Заказ: ${title}
+Бюджет: ${budget.amount === null ? 'не указан' : `${budget.amount} ${budget.currency}`}
+ТЗ (JSON):
+"""
+${JSON.stringify(sections)}
+"""
+
+Кандидаты (JSON):
+"""
+${JSON.stringify(candidates)}
+"""
+
+Верни JSON:
+{
+  "items": [
+    { "id": "id кандидата", "score": число 0..100, "reason": "одна фраза" }
+  ]
+}
+`.trim();
+}
+
 export function translatePrompt(text: string, targetLocale: Locale): string {
   return `
 Переведи текст на ${LANGUAGE_NAME[targetLocale]}. Сохрани смысл, тон и

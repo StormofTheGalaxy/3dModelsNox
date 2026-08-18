@@ -19,6 +19,7 @@ export type AIFeature =
   | 'brief_generate'
   | 'brief_review'
   | 'brief_clarify'
+  | 'match_designers'
   | 'estimate'
   | 'field_hint'
   | 'improve_text'

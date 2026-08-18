@@ -20,6 +20,12 @@ import {
   type BriefChatTurn,
 } from '../brief-chat';
 import { writeAuditLog } from '../audit';
+import {
+  candidateDesigners,
+  matchingEnabled,
+  orderSections,
+  type RankedDesigner,
+} from '../matching';
 import { refundCredits, spendCredits, type AIFeature } from '../ai/credits';
 import { aiIsLive, aiProvider } from '../ai/provider';
 import { checkRateLimit } from '../ratelimit';
@@ -303,6 +309,104 @@ export async function loadBriefChat(
   if (brief?.ownerId !== user.id) return { ok: false };
 
   return { ok: true, turns: await listBriefChat(briefId) };
+}
+
+// ── «✨ Подобрать исполнителей» (post-MVP №4) ───────────────────────────────
+
+/**
+ * Подбор дизайнеров под заказ.
+ *
+ * Кандидатов отбирает запрос по тегам — модель только упорядочивает готовый
+ * список и объясняет выбор. Без флага и без кредитов подбор всё равно
+ * работает: возвращается тот же список, отсортированный баллом совпадения.
+ */
+export async function matchDesignersForOrder(
+  orderId: string,
+): Promise<
+  | { ok: true; designers: RankedDesigner[]; explained: boolean; meta?: AIActionMeta }
+  | { ok: false; error: string; values?: Record<string, string | number> }
+> {
+  const user = await getCurrentUser();
+  if (!user?.emailVerifiedAt) return { ok: false, error: 'errors.forbidden' };
+
+  const owner = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { customerId: true },
+  });
+
+  if (owner?.customerId !== user.id) return { ok: false, error: 'errors.forbidden' };
+
+  const found = await candidateDesigners(orderId);
+  if (!found) return { ok: false, error: 'errors.notFound' };
+
+  const byTags: RankedDesigner[] = found.candidates.map((candidate) => ({
+    ...candidate,
+    score: candidate.tagScore,
+    reason: '',
+  }));
+
+  // Флаг выключен или кандидатов нет — отдаём подбор по тегам. Он не хуже
+  // пустого экрана и не стоит кредитов.
+  if (!(await matchingEnabled()) || byTags.length === 0) {
+    return { ok: true, designers: byTags, explained: false };
+  }
+
+  const access = await guard('match_designers', { type: 'order', id: orderId });
+  if (!access.ok) {
+    // Кредиты кончились — это не повод не показать подбор по тегам.
+    return { ok: true, designers: byTags, explained: false };
+  }
+
+  try {
+    const provider = await aiProvider();
+    const ranking = await provider.rankMatches(
+      {
+        title: found.order.title,
+        sections: orderSections(found.order.sections),
+        budgetAmount: found.order.budgetAmount,
+        currency: found.order.currency,
+        candidates: found.candidates.map((candidate) => ({
+          id: candidate.id,
+          nickname: candidate.nickname,
+          level: candidate.level,
+          rating: candidate.rating,
+          ratingCount: candidate.ratingCount,
+          ordersCompleted: candidate.ordersCompleted,
+          onTimePct: candidate.onTimePct,
+          specializations: candidate.specializations,
+          styles: candidate.styles,
+          engines: candidate.engines,
+          software: candidate.software,
+          minBudget: candidate.minBudget,
+          currency: candidate.currency,
+          // Длинное био раздувает запрос, а решает первая пара фраз.
+          bio: candidate.bio.slice(0, 300),
+        })),
+      },
+      { locale: access.locale, userId: access.userId },
+    );
+
+    const byId = new Map(byTags.map((candidate) => [candidate.id, candidate]));
+    const designers = ranking.items.flatMap((item) => {
+      const candidate = byId.get(item.id);
+      return candidate ? [{ ...candidate, score: item.score, reason: item.reason }] : [];
+    });
+
+    return {
+      ok: true,
+      designers,
+      explained: true,
+      meta: { cost: access.cost, left: access.left, isLive: aiIsLive() },
+    };
+  } catch (error) {
+    await refundCredits(access.userId, 'match_designers', access.cost, {
+      type: 'order',
+      id: orderId,
+    });
+    // Модель не ответила — подбор по тегам всё равно есть.
+    console.error('[ai] подбор исполнителей не удался', error);
+    return { ok: true, designers: byTags, explained: false };
+  }
 }
 
 // ── «✨ Оценка бюджета и сроков» ────────────────────────────────────────────

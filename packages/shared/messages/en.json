@@ -183,7 +183,8 @@
     "profileReady": "Profile complete",
     "openProfile": "Open profile",
     "worksCount": "Works in portfolio: {count}",
-    "ordersSoon": "Orders and deals arrive in phases 3 and 4."
+    "matchedOrders": "Matching orders",
+    "allOrders": "All orders"
   },
   "settings": {
     "title": "Account settings",
@@ -1145,6 +1146,19 @@
         "declined": "The winner declined the deal. Pick another bidder.",
         "expired": "The winner did not respond in time. Pick another bidder."
       }
+    },
+    "match": {
+      "title": "Find designers",
+      "hint": "Candidates are picked by your brief’s tags: specialization, style, engine. An invitation binds neither you nor the designer.",
+      "run": "Find designers",
+      "byTags": "By profile tags",
+      "byAI": "Ranked by AI",
+      "empty": "There is nobody to suggest for this order yet. Try later or widen the requirements in the brief.",
+      "invite": "Invite",
+      "invited": "@{nickname} was invited to the order",
+      "alreadyInvited": "Invited",
+      "scoreHint": "How well the profile matches this order, 0–100",
+      "footer": "Candidates shown: {count}. The score is a hint, not a verdict — look at the portfolio."
     }
   },
   "notifications": {

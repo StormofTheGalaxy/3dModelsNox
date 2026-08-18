@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { BriefContent } from '@/components/briefs/brief-content';
 import { TranslatedText } from '@/components/translation/translated-text';
 import { AuctionPanel } from '@/components/orders/auction-panel';
+import { MatchPanel } from '@/components/orders/match-panel';
 import { OrderOwnerActions } from '@/components/orders/order-owner-actions';
 import { ResponseForm } from '@/components/orders/response-form';
 import { ReportDialog } from '@/components/report/report-dialog';
@@ -165,6 +166,9 @@ export default async function OrderPage({
               maxBidsPerDesigner={maxBidsPerDesigner}
             />
           ) : null}
+
+          {/* Подбор исполнителей — инструмент владельца заказа (§4.5). */}
+          {isOwner && order.status === 'published' ? <MatchPanel orderId={order.id} /> : null}
 
           {isGuest ? (
             <>
