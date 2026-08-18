@@ -10,6 +10,7 @@ import { getBalances } from '@/server/ai/credits';
 import { aiIsLive } from '@/server/ai/provider';
 import { requireVerifiedUser } from '@/server/auth/guards';
 import { getOwnBrief } from '@/server/briefs';
+import { briefChatEnabled } from '@/server/brief-chat';
 
 export async function generateMetadata({
   params,
@@ -68,6 +69,7 @@ export default async function EditBriefPage({
           initialSections={brief.sections}
           isFrozen={brief.status === 'frozen'}
           aiIsLive={aiIsLive()}
+          chatEnabled={await briefChatEnabled()}
         />
       </div>
     </div>

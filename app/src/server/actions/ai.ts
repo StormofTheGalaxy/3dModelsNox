@@ -1,11 +1,25 @@
 'use server';
 
-import { AIError, type BriefEstimate, type BriefReview } from '@polyforge/ai';
+import {
+  AIError,
+  type BriefClarification,
+  type BriefEstimate,
+  type BriefReview,
+} from '@polyforge/ai';
 import { prisma, type Prisma } from '@polyforge/db';
 import { briefGenerateSchema, parseBriefSections } from '@polyforge/shared';
 
 import { getCurrentUser } from '../auth/session';
 import { getOwnBrief } from '../briefs';
+import {
+  briefChatEnabled,
+  chatHistoryFor,
+  listBriefChat,
+  recordTurn,
+  suggestionKey,
+  type BriefChatTurn,
+} from '../brief-chat';
+import { writeAuditLog } from '../audit';
 import { refundCredits, spendCredits, type AIFeature } from '../ai/credits';
 import { aiIsLive, aiProvider } from '../ai/provider';
 import { checkRateLimit } from '../ratelimit';
@@ -158,6 +172,137 @@ export async function reviewBriefWithAI(
     const state = aiErrorState(error);
     return { ok: false, error: state.message ?? 'errors.ai.failed' };
   }
+}
+
+// ── «✨ Чат уточнений» (post-MVP №3) ────────────────────────────────────────
+
+/**
+ * Ход диалога: реплика пользователя (может быть пустой на первом ходе) —
+ * и ответ модели с подсказками для полей.
+ *
+ * Кредиты списываются за ход модели, а не за символ: считать по репликам
+ * человеку понятнее, чем по токенам, которых он не видит.
+ */
+export async function askBriefClarification(
+  briefId: string,
+  answer: string,
+  draft?: { title: string; sections: unknown },
+): Promise<
+  | { ok: true; turns: BriefChatTurn[]; meta: AIActionMeta; done: boolean }
+  | { ok: false; error: string; values?: Record<string, string | number> }
+> {
+  if (!(await briefChatEnabled())) return { ok: false, error: 'errors.brief.chatDisabled' };
+
+  const text = answer.trim().slice(0, 2000);
+
+  const access = await guard('brief_clarify', { type: 'brief', id: briefId });
+  if (!access.ok) {
+    return {
+      ok: false,
+      error: access.state.message ?? 'errors.generic',
+      values: access.state.values,
+    };
+  }
+
+  const brief = await getOwnBrief(briefId, access.userId);
+  if (!brief) {
+    await refundCredits(access.userId, 'brief_clarify', access.cost);
+    return { ok: false, error: 'errors.forbidden' };
+  }
+
+  // Как и у проверки ТЗ: смотрим то, что сейчас на экране, а не последнее
+  // сохранённое — иначе чат спрашивает про поле, которое только что заполнили.
+  const title = draft?.title ?? brief.title;
+  const sections = draft ? parseBriefSections(draft.sections) : brief.sections;
+
+  const history = await chatHistoryFor(briefId);
+
+  let clarification: BriefClarification;
+  try {
+    const provider = await aiProvider();
+    clarification = await provider.clarifyBrief(
+      { title, sections, history, answer: text },
+      { locale: access.locale, userId: access.userId },
+    );
+  } catch (error) {
+    await refundCredits(access.userId, 'brief_clarify', access.cost, {
+      type: 'brief',
+      id: briefId,
+    });
+    const state = aiErrorState(error);
+    return { ok: false, error: state.message ?? 'errors.ai.failed' };
+  }
+
+  // Реплики записываются после успешного ответа: половина диалога в истории
+  // хуже, чем его отсутствие.
+  const turns: BriefChatTurn[] = [];
+  if (text) turns.push(await recordTurn({ briefId, role: 'user', text }));
+  turns.push(
+    await recordTurn({
+      briefId,
+      role: 'assistant',
+      text: clarification.message,
+      clarification,
+    }),
+  );
+
+  await writeAuditLog({
+    action: 'brief.clarified',
+    actorId: access.userId,
+    targetType: 'brief',
+    targetId: briefId,
+  });
+
+  return {
+    ok: true,
+    turns,
+    done: clarification.done,
+    meta: { cost: access.cost, left: access.left, isLive: aiIsLive() },
+  };
+}
+
+/** Пометить подсказку применённой, чтобы кнопка не предлагала её снова. */
+export async function markClarificationApplied(
+  messageId: string,
+  section: string,
+  field: string,
+): Promise<{ ok: boolean }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false };
+
+  const message = await prisma.briefChatMessage.findUnique({
+    where: { id: messageId },
+    select: { id: true, appliedFields: true, brief: { select: { ownerId: true } } },
+  });
+
+  if (!message || message.brief.ownerId !== user.id) return { ok: false };
+
+  const key = suggestionKey({ section, field });
+  if (message.appliedFields.includes(key)) return { ok: true };
+
+  await prisma.briefChatMessage.update({
+    where: { id: message.id },
+    data: { appliedFields: { push: key } },
+  });
+
+  return { ok: true };
+}
+
+/** История диалога для первой отрисовки панели. */
+export async function loadBriefChat(
+  briefId: string,
+): Promise<{ ok: true; turns: BriefChatTurn[] } | { ok: false }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false };
+
+  const brief = await prisma.brief.findUnique({
+    where: { id: briefId },
+    select: { ownerId: true },
+  });
+
+  if (brief?.ownerId !== user.id) return { ok: false };
+
+  return { ok: true, turns: await listBriefChat(briefId) };
 }
 
 // ── «✨ Оценка бюджета и сроков» ────────────────────────────────────────────

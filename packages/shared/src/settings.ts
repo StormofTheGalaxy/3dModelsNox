@@ -224,6 +224,7 @@ export const SETTINGS_REGISTRY = {
     default: {
       brief_generate: 1,
       brief_review: 1,
+      brief_clarify: 1,
       translate_msg: 0,
       improve_text: 1,
       estimate: 1,
@@ -383,6 +384,12 @@ export const SETTINGS_REGISTRY = {
     default: false,
     schema: z.boolean(),
     label: { ru: 'Аукцион заказов', en: 'Order auction' },
+  },
+  feature_brief_chat: {
+    group: 'features',
+    default: false,
+    schema: z.boolean(),
+    label: { ru: 'ИИ-чат уточнений ТЗ', en: 'AI brief clarification chat' },
   },
   feature_telegram: {
     group: 'features',

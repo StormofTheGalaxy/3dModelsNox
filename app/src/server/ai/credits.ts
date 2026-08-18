@@ -18,6 +18,7 @@ import { getSettings } from '../settings';
 export type AIFeature =
   | 'brief_generate'
   | 'brief_review'
+  | 'brief_clarify'
   | 'estimate'
   | 'field_hint'
   | 'improve_text'

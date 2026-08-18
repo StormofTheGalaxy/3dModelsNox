@@ -710,6 +710,7 @@ model Brief {
 
   versions       BriefVersion[]
   changeRequests BriefChangeRequest[]
+  clarifications BriefChatMessage[]
   orders         Order[]              @relation("OrderBrief")
 
   @@index([ownerId, updatedAt])
@@ -719,6 +720,38 @@ model Brief {
 
 /// Снимок ТЗ. Сделка замораживает конкретную версию (§4.4), поэтому снимки
 /// неизменяемы: правка ТЗ создаёт новую запись, а не переписывает старую.
+/// Чат уточнений по ТЗ (post-MVP №3). Живёт рядом с ТЗ, а не в сделке:
+/// это черновая работа заказчика над формулировкой, исполнителю её не видно.
+model BriefChatMessage {
+  id String @id @default(cuid())
+
+  briefId String
+  brief   Brief  @relation(fields: [briefId], references: [id], onDelete: Cascade)
+
+  /// Реплика человека или модели. Автор всегда владелец ТЗ, поэтому
+  /// отдельного userId нет — чат приватный по определению.
+  role BriefChatRole
+
+  text String
+
+  /// Что модель предложила подставить в поля: массив {section, field, value, label}.
+  /// JSON, потому что состав подсказок меняется вместе с моделью.
+  suggestions Json?
+
+  /// Какую из подсказок применили — чтобы кнопка не предлагала это снова.
+  appliedFields String[] @default([])
+
+  createdAt DateTime @default(now())
+
+  @@index([briefId, createdAt])
+  @@map("brief_chat_messages")
+}
+
+enum BriefChatRole {
+  user
+  assistant
+}
+
 model BriefVersion {
   id String @id @default(cuid())
 

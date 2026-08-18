@@ -3,6 +3,8 @@ import { emptyBriefSections, type BriefSections, type Locale } from '@polyforge/
 import type {
   AIContext,
   AIProvider,
+  BriefClarification,
+  ClarifyBriefInput,
   BriefEstimate,
   BriefIssue,
   BriefReview,
@@ -320,6 +322,185 @@ export class StubAIProvider implements AIProvider {
   async summarizeDispute(input: SummarizeInput, context: AIContext): Promise<string> {
     const header = context.locale === 'ru' ? 'Материалы спора:' : 'Dispute materials:';
     return [header, ...input.messages.map((m) => `— ${m.author}: ${m.text}`)].join('\n');
+  }
+
+  /**
+   * Чат уточнений (post-MVP №3).
+   *
+   * Заглушка ведёт его по очереди пробелов: берёт первый незаполненный
+   * пункт, задаёт про него вопрос и, если человек уже ответил, предлагает
+   * подставить разобранное из ответа значение. Это не модель — это правила,
+   * но путь фичи (списание кредитов, история, применение подсказки) она
+   * проходит целиком.
+   */
+  clarifyBrief(input: ClarifyBriefInput, context: AIContext): Promise<BriefClarification> {
+    const ru = context.locale === 'ru';
+    const { sections } = input;
+    const answer = input.answer.trim();
+
+    // О чём последний раз спрашивали — на это и пытаемся разобрать ответ.
+    const asked = [...input.history].reverse().find((turn) => turn.role === 'assistant');
+
+    const gaps: {
+      key: string;
+      question: string;
+      parse?: (text: string) => BriefClarification['suggestions'];
+    }[] = [];
+
+    if (!sections.general.assetType) {
+      gaps.push({
+        key: 'assetType',
+        question: ru
+          ? 'Что нужно сделать: персонажа, оружие, окружение, технику или что-то другое?'
+          : 'What do you need: a character, a weapon, an environment, a vehicle, or something else?',
+        parse: (text) => {
+          const found = firstMatch(text, KEYWORDS.assetType);
+          return found
+            ? [
+                {
+                  section: 'general' as const,
+                  field: 'assetType',
+                  value: found,
+                  label: ru ? `Тип ассета: ${found}` : `Asset type: ${found}`,
+                },
+              ]
+            : [];
+        },
+      });
+    }
+
+    if (sections.general.description.trim().length < 40) {
+      gaps.push({
+        key: 'description',
+        question: ru
+          ? 'Опишите задачу подробнее: для какой игры, что модель должна делать, чем она отличается от похожих.'
+          : 'Describe the task in more detail: which game it is for, what the model does, how it differs from similar ones.',
+        parse: (text) =>
+          text.length >= 40
+            ? [
+                {
+                  section: 'general' as const,
+                  field: 'description',
+                  value: text.slice(0, 200),
+                  label: ru ? 'Дополнить описание' : 'Extend the description',
+                },
+              ]
+            : [],
+      });
+    }
+
+    if (!sections.tech.platform) {
+      gaps.push({
+        key: 'platform',
+        question: ru
+          ? 'На какой платформе это будет работать: мобильные, ПК, консоли, VR или веб?'
+          : 'Which platform is this for: mobile, PC, console, VR or web?',
+        parse: (text) => {
+          const found = firstMatch(text, KEYWORDS.platform);
+          return found
+            ? [
+                {
+                  section: 'tech' as const,
+                  field: 'platform',
+                  value: found,
+                  label: ru ? `Платформа: ${found}` : `Platform: ${found}`,
+                },
+              ]
+            : [];
+        },
+      });
+    }
+
+    if (sections.tech.polyBudget === null) {
+      const suggested = POLY_BUDGET[sections.tech.platform ?? 'any'] ?? 30_000;
+      gaps.push({
+        key: 'polyBudget',
+        question: ru
+          ? `Какой полигонаж закладываем? Для вашей платформы обычно берут около ${suggested.toLocaleString('ru-RU')} треугольников.`
+          : `What poly budget should we assume? For your platform around ${suggested.toLocaleString('en-US')} triangles is typical.`,
+        parse: (text) => {
+          const digits = text.replace(/[\s ,]/gu, '').match(/\d{3,8}/u)?.[0];
+          const value = digits ?? String(suggested);
+          return [
+            {
+              section: 'tech' as const,
+              field: 'polyBudget',
+              value,
+              label: ru ? `Полигонаж: ${value}` : `Poly budget: ${value}`,
+            },
+          ];
+        },
+      });
+    }
+
+    if (sections.style.styleTags.length === 0) {
+      gaps.push({
+        key: 'style',
+        question: ru
+          ? 'В каком стиле: реализм, стилизация, лоуполи, аниме?'
+          : 'Which style: realistic, stylized, low poly, anime?',
+        parse: (text) => {
+          const found = firstMatch(text, KEYWORDS.style);
+          return found
+            ? [
+                {
+                  section: 'style' as const,
+                  field: 'styleTags',
+                  value: found,
+                  label: ru ? `Стиль: ${found}` : `Style: ${found}`,
+                },
+              ]
+            : [];
+        },
+      });
+    }
+
+    if (sections.tech.formats.length === 0) {
+      gaps.push({
+        key: 'formats',
+        question: ru
+          ? 'В каких форматах сдавать файлы: FBX, OBJ, glTF, blend?'
+          : 'Which file formats should the delivery use: FBX, OBJ, glTF, blend?',
+        parse: (text) => {
+          const found = ['FBX', 'OBJ', 'glTF', 'blend'].find((format) =>
+            new RegExp(format, 'iu').test(text),
+          );
+          return found
+            ? [
+                {
+                  section: 'tech' as const,
+                  field: 'formats',
+                  value: found,
+                  label: ru ? `Формат: ${found}` : `Format: ${found}`,
+                },
+              ]
+            : [];
+        },
+      });
+    }
+
+    // Ответ относится к последнему заданному вопросу, а не к первому пробелу:
+    // человек мог заполнить поле руками, пока чат ждал.
+    const answered = asked
+      ? gaps.find((gap) => asked.text.startsWith(gap.question.slice(0, 24)))
+      : undefined;
+
+    const suggestions = answer && answered?.parse ? answered.parse(answer) : [];
+
+    // Следующий вопрос — про пробел, отличный от только что закрытого.
+    const next = gaps.find((gap) => gap.key !== answered?.key);
+
+    if (!next) {
+      return Promise.resolve({
+        message: ru
+          ? 'Пробелов, которые я вижу, не осталось. Проверьте ТЗ целиком и публикуйте заказ.'
+          : 'I do not see any gaps left. Give the brief a final read and publish the order.',
+        suggestions,
+        done: true,
+      });
+    }
+
+    return Promise.resolve({ message: next.question, suggestions, done: false });
   }
 
   async parsePortfolioProfile(

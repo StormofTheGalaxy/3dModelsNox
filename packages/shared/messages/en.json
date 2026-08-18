@@ -307,7 +307,8 @@
       "revisionRoundsRequired": "Set the number of revision rounds",
       "promptTooShort": "Describe the task in more detail — at least 20 characters",
       "promptTooLong": "This description is too long",
-      "frozen": "The brief is frozen by a deal"
+      "frozen": "The brief is frozen by a deal",
+      "chatDisabled": "The clarification chat is switched off on this platform"
     },
     "ai": {
       "failed": "AI could not process the request. Please try again.",
@@ -880,6 +881,18 @@
       "respondCta": "Respond to this order",
       "respondHint": "Proposals arrive in the next development phase.",
       "registerCta": "Sign up and respond"
+    },
+    "chat": {
+      "title": "Clarification chat",
+      "hint": "Answer in your own words — the AI puts what it parses into the builder fields. One question at a time, so this does not turn into a form.",
+      "start": "Start the conversation",
+      "send": "Reply",
+      "startPlaceholder": "Describe the task right away — or just press “Start the conversation”",
+      "answerPlaceholder": "Your answer",
+      "answerLabel": "Answer to the AI question",
+      "applied": "{label} — applied",
+      "done": "No gaps left. Give the brief a final read and save the version.",
+      "creditsLeft": "Credits left: {credits}"
     }
   },
   "briefTemplates": {

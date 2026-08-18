@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import { parseBriefSections } from '@polyforge/shared';
 
 import {
+  briefClarificationSchema,
   briefEstimateSchema,
   briefReviewSchema,
   fieldSuggestionSchema,
@@ -11,8 +12,10 @@ import {
   AIError,
   type AIContext,
   type AIProvider,
+  type BriefClarification,
   type BriefEstimate,
   type BriefReview,
+  type ClarifyBriefInput,
   type EstimateBudgetInput,
   type FieldSuggestion,
   type GenerateBriefInput,
@@ -29,6 +32,7 @@ import {
   generateBriefPrompt,
   improveTextPrompt,
   parseProfilePrompt,
+  clarifyBriefPrompt,
   reviewBriefPrompt,
   suggestFieldPrompt,
   summarizePrompt,
@@ -167,6 +171,28 @@ export class OpenAIProvider implements AIProvider {
     );
 
     return this.parseJson(raw, briefReviewSchema);
+  }
+
+  async clarifyBrief(input: ClarifyBriefInput, context: AIContext): Promise<BriefClarification> {
+    const raw = await this.complete(
+      [
+        this.system(),
+        {
+          role: 'user',
+          content: clarifyBriefPrompt(
+            input.title,
+            input.sections,
+            input.history,
+            input.answer,
+            context.locale,
+          ),
+        },
+      ],
+      // Дешёвая модель: это диалог из коротких реплик, а не разбор спора.
+      { model: this.config.cheapModel, json: true, maxTokens: 700 },
+    );
+
+    return this.parseJson(raw, briefClarificationSchema);
   }
 
   async estimateBudget(input: EstimateBudgetInput, context: AIContext): Promise<BriefEstimate> {

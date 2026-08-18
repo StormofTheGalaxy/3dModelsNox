@@ -101,6 +101,61 @@ ${JSON.stringify(sections)}
 `.trim();
 }
 
+export function clarifyBriefPrompt(
+  title: string,
+  sections: BriefSections,
+  history: { role: 'assistant' | 'user'; text: string }[],
+  answer: string,
+  locale: Locale,
+): string {
+  const dialogue = history
+    .map((turn) => `${turn.role === 'assistant' ? 'Ты' : 'Заказчик'}: ${turn.text}`)
+    .join('\n');
+
+  return `
+${BRIEF_DOMAIN_CONTEXT}
+
+Ты помогаешь заказчику дособрать ТЗ разговором. Правила:
+
+1. Ровно один вопрос за ход. Список из пяти вопросов человек пролистывает
+   не отвечая, а на один отвечает.
+2. Спрашивай про то, без чего исполнитель не сможет взяться: тип ассета,
+   суть задачи, платформа, полигонаж, стиль, форматы сдачи. Необязательные
+   поля не трогай.
+3. Не выдумывай за заказчика. Если из ответа следует конкретное значение
+   поля — положи его в suggestions, интерфейс подставит его по нажатию.
+4. Если пробелов не осталось — done: true и короткое завершающее слово.
+${languageRule(locale)}
+
+Название: ${title}
+ТЗ (JSON):
+"""
+${JSON.stringify(sections)}
+"""
+
+Разговор:
+"""
+${dialogue || '(пусто, чат только открыли)'}
+"""
+
+Последний ответ заказчика: ${answer || '(его ещё нет)'}
+
+Верни JSON:
+{
+  "message": "твоя реплика — один вопрос либо завершающее слово",
+  "done": true|false,
+  "suggestions": [
+    {
+      "section": "general"|"style"|"tech"|"delivery"|"terms",
+      "field": "имя поля",
+      "value": "значение для подстановки",
+      "label": "короткая подпись кнопки"
+    }
+  ]
+}
+`.trim();
+}
+
 export function estimateBudgetPrompt(
   title: string,
   sections: BriefSections,

@@ -44,6 +44,7 @@ export const AUDIT_ACTIONS = [
 
   // ТЗ и сделки (появятся в фазах 2 и 4)
   'brief.frozen',
+  'brief.clarified',
   'brief.shared',
   'order.published',
   'order.archived',

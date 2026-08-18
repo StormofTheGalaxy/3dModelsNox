@@ -4,7 +4,13 @@ import { Check, LayoutList, Loader2, Rows3, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
 
-import { BRIEF_SECTION_KEYS, type BriefSections } from '@polyforge/shared';
+import {
+  ART_STYLES,
+  ASSET_TYPES,
+  BRIEF_SECTION_KEYS,
+  PLATFORMS,
+  type BriefSections,
+} from '@polyforge/shared';
 
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -13,6 +19,7 @@ import { Input, Label } from '@/components/ui/input';
 import { FormMessage } from '@/components/forms/form-message';
 import { useActionRedirect } from '@/components/forms/use-action-redirect';
 import { BriefAITools } from '@/components/briefs/ai-panels';
+import { BriefClarifyChat } from '@/components/briefs/clarify-chat';
 import { FieldHint } from '@/components/briefs/field-hint';
 import {
   DeliverySection,
@@ -49,12 +56,15 @@ export function BriefEditor({
   initialSections,
   isFrozen,
   aiIsLive,
+  chatEnabled,
 }: {
   briefId: string;
   initialTitle: string;
   initialSections: BriefSections;
   isFrozen: boolean;
   aiIsLive: boolean;
+  /** Чат уточнений — post-MVP за флагом feature_brief_chat. */
+  chatEnabled: boolean;
 }) {
   const t = useTranslations('brief');
   const tSections = useTranslations('brief.sections');
@@ -148,6 +158,47 @@ export function BriefEditor({
       }
       if (section === 'terms' && field === 'budgetAmount') {
         return { ...current, terms: { ...current.terms, budgetAmount: Number(value) || null } };
+      }
+
+      // Поля, которые предлагает чат уточнений. Значения из перечислений
+      // сверяются со справочником: модель может назвать несуществующий тип,
+      // и подставить его в секцию — значит сломать её схему.
+      if (section === 'general' && field === 'assetType') {
+        return (ASSET_TYPES as readonly string[]).includes(value)
+          ? {
+              ...current,
+              general: { ...current.general, assetType: value as BriefSections['general']['assetType'] },
+            }
+          : current;
+      }
+      if (section === 'general' && field === 'description') {
+        // Дополняем, а не затираем: человек мог уже что-то написать.
+        const existing = current.general.description.trim();
+        return {
+          ...current,
+          general: {
+            ...current.general,
+            description: existing ? `${existing}\n${value}` : value,
+          },
+        };
+      }
+      if (section === 'tech' && field === 'platform') {
+        return (PLATFORMS as readonly string[]).includes(value)
+          ? { ...current, tech: { ...current.tech, platform: value as BriefSections['tech']['platform'] } }
+          : current;
+      }
+      if (section === 'style' && field === 'styleTags') {
+        return (ART_STYLES as readonly string[]).includes(value)
+          ? {
+              ...current,
+              style: {
+                ...current.style,
+                styleTags: [
+                  ...new Set([...current.style.styleTags, value as BriefSections['style']['styleTags'][number]]),
+                ],
+              },
+            }
+          : current;
       }
 
       // Для остальных полей замечание остаётся текстом: подставлять наугад хуже,
@@ -308,6 +359,16 @@ export function BriefEditor({
         onApplySuggestion={applySuggestion}
         isLive={aiIsLive}
       />
+
+      {/* Замороженное ТЗ правят только через BriefChangeRequest, и уточнять
+          в нём нечего: подсказки некуда подставлять. */}
+      {chatEnabled && !isFrozen ? (
+        <BriefClarifyChat
+          briefId={briefId}
+          getDraft={getDraft}
+          onApplySuggestion={applySuggestion}
+        />
+      ) : null}
 
       {/* Сохранение версии */}
       <form action={formAction} className="flex flex-col gap-3">

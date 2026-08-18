@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ART_STYLES, ASSET_TYPES, CURRENCIES, ENGINE_PRESETS } from '../domain/taxonomy';
+import { ART_STYLES, ASSET_TYPES, CURRENCIES, ENGINE_PRESETS, PLATFORMS } from '../domain/taxonomy';
 
 /**
  * Схема технического задания (§3, §4.4) — флагманский модуль платформы.
@@ -36,7 +36,7 @@ export const briefStyleSchema = z.object({
 
 export const briefTechSchema = z.object({
   engine: trimmedString(64).default(''),
-  platform: z.enum(['pc', 'mobile', 'console', 'vr', 'web', 'any']).nullable().default(null),
+  platform: z.enum(PLATFORMS).nullable().default(null),
   polyBudget: z.number().int().min(0).max(100_000_000).nullable().default(null),
   formats: z.array(trimmedString(24)).max(10).default([]),
   textures: z

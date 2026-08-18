@@ -98,6 +98,42 @@ export interface SuggestFieldInput {
   sections: BriefSections;
 }
 
+// ── Чат уточнений по ТЗ (post-MVP №3) ───────────────────────────────────────
+
+export const briefClarificationSchema = z.object({
+  /**
+   * Реплика модели: один вопрос за ход. Список из пяти вопросов человек
+   * пролистывает не отвечая, а на один отвечает.
+   */
+  message: z.string().trim().min(3).max(800),
+  /** Конкретные значения полей, которые модель предлагает подставить. */
+  suggestions: z
+    .array(
+      z.object({
+        section: z.enum(['general', 'style', 'tech', 'delivery', 'terms']),
+        field: z.string().trim().max(64),
+        value: z.string().trim().max(200),
+        /** Что именно подставится — показывается на кнопке. */
+        label: z.string().trim().max(120),
+      }),
+    )
+    .max(4)
+    .default([]),
+  /** Пробелов не осталось — чат предлагает закончить. */
+  done: z.boolean().default(false),
+});
+
+export type BriefClarification = z.infer<typeof briefClarificationSchema>;
+
+export interface ClarifyBriefInput {
+  title: string;
+  sections: BriefSections;
+  /** История в порядке появления: чем отвечал человек и что спрашивала модель. */
+  history: { role: 'assistant' | 'user'; text: string }[];
+  /** Последняя реплика пользователя; пусто — значит чат только открыли. */
+  answer: string;
+}
+
 // ── Текстовые операции (фазы 3 и 6) ─────────────────────────────────────────
 
 export interface TranslateInput {
@@ -140,6 +176,7 @@ export interface AIProvider {
   reviewBrief(input: ReviewBriefInput, context: AIContext): Promise<BriefReview>;
   estimateBudget(input: EstimateBudgetInput, context: AIContext): Promise<BriefEstimate>;
   suggestField(input: SuggestFieldInput, context: AIContext): Promise<FieldSuggestion>;
+  clarifyBrief(input: ClarifyBriefInput, context: AIContext): Promise<BriefClarification>;
 
   translate(input: TranslateInput, context: AIContext): Promise<string>;
   improveText(input: ImproveTextInput, context: AIContext): Promise<string>;

@@ -44,6 +44,11 @@ export const ASSET_TYPES = [
 ] as const;
 export type AssetType = (typeof ASSET_TYPES)[number];
 
+/// Целевые платформы из секции tech (§3). Отдельной константой, потому что
+/// список нужен и схеме ТЗ, и подстановке подсказок ИИ в конструкторе.
+export const PLATFORMS = ['pc', 'mobile', 'console', 'vr', 'web', 'any'] as const;
+export type Platform = (typeof PLATFORMS)[number];
+
 export const AVAILABILITY_STATES = ['open', 'busy', 'closed'] as const;
 export type Availability = (typeof AVAILABILITY_STATES)[number];
 
