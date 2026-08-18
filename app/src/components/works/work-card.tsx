@@ -18,7 +18,10 @@ export interface WorkCardData {
 
 /**
  * Карточка работы в галерее. Продукт визуально-первый (§5.1): картинка
- * занимает всё, подписи проявляются при наведении.
+ * занимает всё, подпись лежит поверх неё узкой плашкой.
+ *
+ * Подпись видна всегда, а не только при наведении: на тач-экране наведения
+ * нет, и в сетке из похожих превью работу было не отличить одну от другой.
  *
  * Клиентский компонент — его дорисовывает бесконечный скролл галереи.
  */
@@ -66,9 +69,8 @@ export function WorkCard({ work }: { work: WorkCardData }) {
       <div
         className={cn(
           'absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-3 pt-10',
-          'bg-gradient-to-t from-black/80 to-transparent',
-          'translate-y-1 opacity-0 transition-all duration-200',
-          'group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:opacity-100',
+          // Градиент на треть кадра: подпись читается, картинка не закрыта.
+          'bg-gradient-to-t from-black/85 via-black/45 to-transparent',
         )}
       >
         <div className="min-w-0">
@@ -76,7 +78,14 @@ export function WorkCard({ work }: { work: WorkCardData }) {
           <p className="truncate text-xs text-white/70">@{work.designer.nickname}</p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2.5 text-xs text-white/80">
+        {/* Счётчики второстепенны — проявляются при наведении. */}
+        <div
+          className={cn(
+            'flex shrink-0 items-center gap-2.5 text-xs text-white/80',
+            'opacity-0 transition-opacity duration-200',
+            'group-hover:opacity-100 group-focus-visible:opacity-100',
+          )}
+        >
           <span className="inline-flex items-center gap-1" title={t('likes')}>
             <Heart className="size-3.5" aria-hidden />
             {work.likesCount}

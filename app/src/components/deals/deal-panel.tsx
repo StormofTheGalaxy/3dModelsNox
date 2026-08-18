@@ -147,10 +147,13 @@ export function DealPanel({
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* min-w-0 обязателен: без него колонка грида растягивается по самому
-            широкому потомку и страница едет вбок на телефоне. */}
-        <section className="flex min-w-0 flex-col gap-4">
+            широкому потомку и страница едет вбок на телефоне.
+
+            Колонка липкая на широком экране: этапы и управление сделкой нужны
+            под рукой, пока читаешь ТЗ или листаешь чат в правой колонке. */}
+        <section className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-20">
           {deal.status === 'plan_agreement' && role !== 'staff' ? (
             <MilestonePlan
               dealId={deal.id}

@@ -85,7 +85,9 @@ export default async function DesignerProfilePage({
         )}
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      {/* relative обязателен: обложка выше — позиционированный элемент, и без
+          этого она рисуется поверх аватара, который заезжает на неё отступом. */}
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="-mt-12 flex flex-col gap-6 sm:-mt-14">
           <div className="flex flex-wrap items-end gap-4">
             <span className="size-24 shrink-0 overflow-hidden rounded-2xl border-4 border-[var(--pf-bg)] bg-surface-2 sm:size-28">
