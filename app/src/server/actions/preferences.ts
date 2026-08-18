@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 import { prisma } from '@polyforge/db';
 import { COOKIES, LOCALES, ROLE_CONTEXTS, THEMES, type RoleContext } from '@polyforge/shared';
@@ -57,4 +58,33 @@ export async function setRoleContext(role: string): Promise<void> {
       data: { lastRoleContext: role as RoleContext },
     });
   }
+}
+
+/**
+ * Языковые предпочтения (§4.7): перевод входящих, исходящих и контента.
+ *
+ * Три отдельных переключателя, а не один «включить ИИ-перевод»: это разные
+ * по последствиям вещи. Перевод входящих читает только владелец аккаунта,
+ * перевод исходящих видит собеседник, а перевод контента влияет на то, в
+ * каком виде человек читает чужие заказы и ТЗ.
+ */
+export async function setTranslationPreferences(input: {
+  incoming?: boolean;
+  outgoing?: boolean;
+  content?: boolean;
+}): Promise<{ ok: boolean }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false };
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      ...(input.incoming === undefined ? {} : { translateIncoming: input.incoming }),
+      ...(input.outgoing === undefined ? {} : { translateOutgoing: input.outgoing }),
+      ...(input.content === undefined ? {} : { translateContent: input.content }),
+    },
+  });
+
+  revalidatePath('/settings');
+  return { ok: true };
 }

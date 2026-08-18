@@ -10,9 +10,13 @@ import { REALTIME_CHANNELS } from '@polyforge/shared';
 /**
  * Реалтайм-сервис (§2.1): чат, уведомления, статусы.
  *
- * В фазе 0 поднят каркас: авторизация по JWT от основного приложения,
- * персональные комнаты и ретрансляция событий из Redis pub/sub.
- * Логика чата и присутствия приходит в фазе 4.
+ * Авторизация по JWT от основного приложения, персональные комнаты и
+ * ретрансляция событий из Redis pub/sub. С фазы 4 добавлены комнаты сделок:
+ * чат, «печатает…» и присутствие собеседника.
+ *
+ * Право входа в комнату сервис не проверяет сам — у него нет доступа к БД.
+ * Событие уходит только тем участникам, которых назвало приложение в поле
+ * `userIds`, поэтому попадание в комнату по чужому id ничего не даёт.
  */
 
 const PORT = Number(process.env.WS_PORT ?? 4000);
@@ -83,8 +87,30 @@ io.on('connection', (socket) => {
   // Персональная комната: приложение шлёт событие по userId, не зная сокетов.
   void socket.join(`user:${userId}`);
 
+  socket.on('deal:join', (dealId: unknown) => {
+    if (typeof dealId !== 'string' || !dealId) return;
+    void socket.join(`deal:${dealId}`);
+    socket.to(`deal:${dealId}`).emit('presence', { userId, online: true });
+  });
+
+  socket.on('deal:leave', (dealId: unknown) => {
+    if (typeof dealId !== 'string' || !dealId) return;
+    void socket.leave(`deal:${dealId}`);
+    socket.to(`deal:${dealId}`).emit('presence', { userId, online: false });
+  });
+
+  socket.on('deal:typing', (payload: unknown) => {
+    const dealId = (payload as { dealId?: unknown } | null)?.dealId;
+    if (typeof dealId !== 'string' || !socket.rooms.has(`deal:${dealId}`)) return;
+    socket.to(`deal:${dealId}`).emit('typing', { userId });
+  });
+
   socket.on('disconnect', () => {
-    // Присутствие и «печатает…» появятся вместе с чатом в фазе 4.
+    for (const room of socket.rooms) {
+      if (room.startsWith('deal:')) {
+        socket.to(room).emit('presence', { userId, online: false });
+      }
+    }
   });
 });
 
@@ -98,10 +124,23 @@ async function subscribeToAppEvents(): Promise<void> {
 
   eventsClient.on('message', (channel: string, raw: string) => {
     try {
-      const event = JSON.parse(raw) as { userId?: string; type?: string; payload?: unknown };
-      if (!event.userId || !event.type) return;
+      const event = JSON.parse(raw) as {
+        userId?: string;
+        userIds?: string[];
+        type?: string;
+        payload?: unknown;
+      };
 
-      io.to(`user:${event.userId}`).emit(event.type, event.payload ?? null);
+      if (!event.type) return;
+
+      // Адресаты всегда персональные: комната сделки нужна только для
+      // «печатает…» и присутствия, где утечки содержимого нет.
+      const recipients = event.userIds ?? (event.userId ? [event.userId] : []);
+      if (recipients.length === 0) return;
+
+      for (const recipient of recipients) {
+        io.to(`user:${recipient}`).emit(event.type, event.payload ?? null);
+      }
     } catch (error) {
       console.error('[ws] некорректное событие в канале', channel, error);
     }

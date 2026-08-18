@@ -3,7 +3,7 @@ import { CalendarDays, FileText, Lock, Users } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { parseBriefSections } from '@polyforge/shared';
+import { parseBriefSections, type Locale } from '@polyforge/shared';
 
 import { Link } from '@/i18n/navigation';
 import { Alert } from '@/components/ui/alert';
@@ -11,12 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BriefContent } from '@/components/briefs/brief-content';
+import { TranslatedText } from '@/components/translation/translated-text';
 import { OrderOwnerActions } from '@/components/orders/order-owner-actions';
 import { ResponseForm } from '@/components/orders/response-form';
 import { ReportDialog } from '@/components/report/report-dialog';
 import { getCurrentUser } from '@/server/auth/session';
 import { getOrder } from '@/server/orders';
 import { getProfileState } from '@/server/profiles';
+import { translateField } from '@/server/translation';
 import { getOwnResponse, responsesLeftToday } from '@/server/responses';
 import { listDesignerWorks } from '@/server/works';
 import { formatDate } from '@/lib/utils';
@@ -48,6 +50,21 @@ export default async function OrderPage({
 
   const [t, tTax] = await Promise.all([getTranslations('orders'), getTranslations('taxonomy')]);
 
+  // Автоперевод контента (§4.7): заказ читается на языке интерфейса зрителя.
+  // Гостю не переводим — за это списываются кредиты, а платить за анонимов
+  // платформе незачем.
+  const title =
+    viewer?.translateContent && viewer.id !== order.customerId
+      ? await translateField({
+          entity: 'order',
+          entityId: order.id,
+          field: 'title',
+          text: order.title,
+          targetLocale: locale as Locale,
+          viewerId: viewer.id,
+        })
+      : { text: order.title, original: order.title, translated: false };
+
   const isOwner = viewer?.id === order.customerId;
   const competition =
     order.responsesCount <= 3 ? 'low' : order.responsesCount <= 10 ? 'medium' : 'high';
@@ -77,7 +94,13 @@ export default async function OrderPage({
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold sm:text-3xl">{order.title}</h1>
+          <TranslatedText
+            as="h1"
+            className="text-2xl font-bold sm:text-3xl"
+            text={title.text}
+            original={title.original}
+            translated={title.translated}
+          />
 
           <div className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
             <Badge variant={order.status === 'published' ? 'success' : 'neutral'}>

@@ -5,7 +5,10 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { LOCALES, isLocale } from '@polyforge/shared';
 
 import { Alert } from '@/components/ui/alert';
-import { LEGAL_CONTENT, LEGAL_DOCS, isLegalDoc } from '@/content/legal';
+import { LEGAL_DOCS, isLegalDoc } from '@/content/legal';
+import { LegalMarkdown } from '@/components/legal/markdown';
+import { getLegalDocument } from '@/server/legal';
+import { formatDate } from '@/lib/utils';
 
 export function generateStaticParams() {
   return LOCALES.flatMap((locale) => LEGAL_DOCS.map((doc) => ({ locale, doc })));
@@ -35,30 +38,44 @@ export default async function LegalPage({
     notFound();
   }
 
-  const t = await getTranslations('legal');
-  const sections = LEGAL_CONTENT[doc][locale];
+  const [t, document] = await Promise.all([
+    getTranslations('legal'),
+    getLegalDocument(doc, locale),
+  ]);
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <h1 className="mb-6 text-3xl font-bold">{t(doc)}</h1>
+      <h1 className="mb-2 text-3xl font-bold">{document.title ?? t(doc)}</h1>
 
-      {/* До открытия беты документы вычитывает человек — §8.2. */}
-      <Alert tone="warning" className="mb-8">
-        {t('draftNotice')}
-      </Alert>
+      {document.effectiveAt ? (
+        <p className="mb-6 text-sm text-fg-muted">
+          {t('effectiveAt', { date: formatDate(document.effectiveAt, locale) })}
+        </p>
+      ) : null}
 
-      <div className="flex flex-col gap-8">
-        {sections.map((section) => (
-          <section key={section.heading} className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold">{section.heading}</h2>
-            {section.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="text-sm leading-relaxed text-fg-muted">
-                {paragraph}
-              </p>
-            ))}
-          </section>
-        ))}
-      </div>
+      {/* Драфт из кода помечается: утверждённый текст заводится в админке. */}
+      {document.markdown ? null : (
+        <Alert tone="warning" className="mb-8">
+          {t('draftNotice')}
+        </Alert>
+      )}
+
+      {document.markdown ? (
+        <LegalMarkdown source={document.markdown} />
+      ) : (
+        <div className="flex flex-col gap-8">
+          {document.sections.map((section) => (
+            <section key={section.heading} className="flex flex-col gap-3">
+              <h2 className="text-xl font-semibold">{section.heading}</h2>
+              {section.paragraphs.map((paragraph) => (
+                <p key={paragraph} className="text-sm leading-relaxed text-fg-muted">
+                  {paragraph}
+                </p>
+              ))}
+            </section>
+          ))}
+        </div>
+      )}
     </article>
   );
 }

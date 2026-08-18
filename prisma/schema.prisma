@@ -86,6 +86,13 @@ model User {
   /// Последний выбранный контекст интерфейса (дизайнер/заказчик).
   lastRoleContext RoleContext @default(designer)
 
+  /// Переводить входящие сообщения чата на язык интерфейса (§4.7).
+  translateIncoming Boolean @default(false)
+  /// Отправлять свои сообщения вместе с переводом — виден и оригинал.
+  translateOutgoing Boolean @default(false)
+  /// Показывать заказы, ТЗ и описания работ на языке интерфейса (§4.7).
+  translateContent  Boolean @default(true)
+
   invitedById String?
   invitedBy   User?   @relation("UserInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
   invitedUsers User[] @relation("UserInvitedBy")
@@ -130,6 +137,26 @@ model User {
   savedFilters    SavedFilter[]    @relation("SavedFilterOwner")
   notifications   Notification[]   @relation("NotificationRecipient")
   notificationPrefs NotificationPreference[] @relation("NotificationPrefOwner")
+
+  dealsAsCustomer Deal[]                @relation("DealCustomer")
+  dealsAsDesigner Deal[]                @relation("DealDesigner")
+  paymentsUploaded PaymentConfirmation[] @relation("PaymentUploader")
+  dealMessages    DealMessage[]         @relation("MessageAuthor")
+  disputesOpened  Dispute[]             @relation("DisputeAuthor")
+  disputesArbitrated Dispute[]          @relation("DisputeArbiter")
+
+  contentTranslations ContentTranslation[] @relation("TranslationRequester")
+  legalEdits       LegalDocument[]      @relation("LegalEditor")
+  broadcasts       Broadcast[]          @relation("BroadcastAuthor")
+  reviewsWritten   Review[]             @relation("ReviewAuthor")
+  reviewsReceived  Review[]             @relation("ReviewTarget")
+  reviewsHidden    Review[]             @relation("ReviewModerator")
+  achievements     UserAchievement[]    @relation("AchievementOwner")
+  strikes          Strike[]             @relation("StrikeTarget")
+  strikesIssued    Strike[]             @relation("StrikeIssuer")
+  verifications    VerificationRequest[] @relation("VerificationAuthor")
+  verificationsReviewed VerificationRequest[] @relation("VerificationReviewer")
+  testTasksCreated TestTask[]           @relation("TestTaskAuthor")
 
   @@index([status])
   @@index([role])
@@ -691,6 +718,8 @@ model BriefVersion {
 
   createdAt DateTime @default(now())
 
+  deals Deal[] @relation("DealBriefVersion")
+
   @@unique([briefId, version])
   @@index([briefId, createdAt])
   @@map("brief_versions")
@@ -828,6 +857,27 @@ enum NotificationType {
   response_status_changed
   response_accepted
   brief_shared
+  deal_started
+  deal_plan_changed
+  deal_milestone_submitted
+  deal_revision_requested
+  deal_milestone_accepted
+  deal_payment_claimed
+  deal_payment_confirmed
+  deal_payment_stuck
+  deal_deadline_soon
+  deal_message
+  deal_completed
+  deal_brief_change
+  dispute_opened
+  dispute_resolved
+  review_received
+  review_published
+  review_replied
+  achievement_granted
+  level_changed
+  verification_decided
+  strike_issued
   system
 }
 
@@ -879,6 +929,7 @@ model Order {
 
   responses OrderResponse[]
   bids      Bid[]
+  deal      Deal?           @relation("DealOrder")
 
   @@index([status, publishedAt])
   @@index([customerId, status])
@@ -1023,4 +1074,705 @@ model Bid {
 
   @@index([orderId, amount])
   @@map("bids")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 4: сделки, этапы, чеки, сдачи, чат, споры
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum DealStatus {
+  /// План этапов согласуется: сделка ещё не в работе (§4.6).
+  plan_agreement
+  active
+  paused
+  in_dispute
+  completed
+  cancelled
+}
+
+enum MilestoneStatus {
+  pending
+  in_work
+  submitted
+  revision
+  accepted
+  /// Заказчик заявил об оплате и приложил чек.
+  paid_claimed
+  /// Дизайнер подтвердил получение денег — этап закрыт.
+  paid_confirmed
+}
+
+enum PaymentMethod {
+  card
+  crypto
+  paypal
+  sbp
+  other
+}
+
+enum PaymentStatus {
+  pending
+  confirmed
+  /// Дизайнер молчит: чек висит, админ видит флаг (§4.6).
+  stuck
+}
+
+/// Выборочная проверка чеков админом (§4.10).
+enum PaymentAdminCheck {
+  none
+  random_ok
+  flagged
+  verified
+}
+
+enum DealMessageKind {
+  user
+  /// Системные события ленты: «этап сдан», «чек загружен», «спор открыт».
+  system
+}
+
+enum DisputeStatus {
+  open
+  resolved
+}
+
+enum DisputeVerdict {
+  designer_right
+  customer_right
+  mutual
+}
+
+/// Сделка. Хранит снимок версии ТЗ: изменения после старта идут через
+/// BriefChangeRequest с подтверждением второй стороны (§4.4, §4.6).
+model Deal {
+  id String @id @default(cuid())
+
+  orderId String? @unique
+  order   Order?  @relation("DealOrder", fields: [orderId], references: [id], onDelete: SetNull)
+
+  briefVersionId String
+  briefVersion   BriefVersion @relation("DealBriefVersion", fields: [briefVersionId], references: [id], onDelete: Restrict)
+
+  customerId String
+  customer   User   @relation("DealCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+
+  designerId String
+  designer   User   @relation("DealDesigner", fields: [designerId], references: [id], onDelete: Restrict)
+
+  title    String
+  price    Int
+  currency String @default("USD")
+
+  /// Раунды правок из принятого отклика: расходуются по этапам.
+  revisionRoundsIncluded Int @default(2)
+
+  status DealStatus @default(plan_agreement)
+
+  /// План подтверждают обе стороны — только после этого сделка активна.
+  planConfirmedByCustomerAt DateTime?
+  planConfirmedByDesignerAt DateTime?
+
+  pausedAt    DateTime?
+  pauseReason String?
+
+  completedAt DateTime?
+  cancelledAt DateTime?
+  cancelReason String?
+
+  /// Согласие заказчика на публикацию работы в портфолио (§4.6).
+  portfolioAllowed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  milestones Milestone[]
+  messages   DealMessage[]
+  dispute    Dispute?
+  /// По одному отзыву с каждой стороны (§4.8).
+  reviews    Review[]
+
+  @@index([customerId, status])
+  @@index([designerId, status])
+  @@map("deals")
+}
+
+model Milestone {
+  id String @id @default(cuid())
+
+  dealId String
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  /// Порядковый номер в плане: 1..10 (§3).
+  position    Int
+  title       String
+  description String?
+
+  amount   Int
+  currency String @default("USD")
+  dueDate  DateTime?
+
+  status MilestoneStatus @default(pending)
+
+  /// Сколько раундов правок уже израсходовано на этом этапе.
+  revisionRoundsUsed Int @default(0)
+
+  submittedAt DateTime?
+  acceptedAt  DateTime?
+  /// Сдан ли этап в срок — из этого считается onTimePct дизайнера (§4.6).
+  wasLate     Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries Delivery[]
+  payments   PaymentConfirmation[]
+
+  @@unique([dealId, position])
+  @@index([dealId, status])
+  @@index([status, dueDate])
+  @@map("milestones")
+}
+
+/// Сдача этапа. Версии накапливаются: v1, v2… — история правок видна обеим
+/// сторонам и нужна при разборе спора.
+model Delivery {
+  id String @id @default(cuid())
+
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  version Int
+  note    String?
+
+  createdAt DateTime @default(now())
+
+  files DeliveryFile[]
+
+  @@unique([milestoneId, version])
+  @@map("deliveries")
+}
+
+model DeliveryFile {
+  id String @id @default(cuid())
+
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  /// Исходники лежат в приватном бакете и открываются заказчику только
+  /// после подтверждения оплаты финального этапа (§4.6).
+  isSource Boolean @default(true)
+
+  storageKey String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+
+  /// Публичное превью: для финала воркер накладывает водяной знак.
+  previewUrl        String?
+  watermarkedUrl    String?
+  watermarkPending  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([deliveryId])
+  @@map("delivery_files")
+}
+
+/// Подтверждение оплаты (§3). Платформа денег не проводит — только фиксирует
+/// то, что стороны предоставили сами.
+model PaymentConfirmation {
+  id String @id @default(cuid())
+
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User   @relation("PaymentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  amount   Int
+  currency String        @default("USD")
+  method   PaymentMethod @default(other)
+  txHash   String?
+  note     String?
+
+  customerClaimedAt   DateTime  @default(now())
+  designerConfirmedAt DateTime?
+
+  status     PaymentStatus     @default(pending)
+  adminCheck PaymentAdminCheck @default(none)
+
+  /// Когда уходили напоминания дизайнеру — чтобы не слать их повторно.
+  remindedAt DateTime?
+  reminderCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  files PaymentFile[]
+
+  @@index([milestoneId])
+  @@index([status, customerClaimedAt])
+  @@map("payment_confirmations")
+}
+
+model PaymentFile {
+  id String @id @default(cuid())
+
+  paymentId String
+  payment   PaymentConfirmation @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  /// Чеки всегда в приватном бакете: доступ только участникам и админу.
+  storageKey String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+
+  createdAt DateTime @default(now())
+
+  @@index([paymentId])
+  @@map("payment_files")
+}
+
+/// Сообщение чата сделки (§4.7). Пре-сделочный тред привязан к отклику
+/// и продолжается в сделке.
+model DealMessage {
+  id String @id @default(cuid())
+
+  dealId String?
+  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  /// Пре-сделочный чат: тред по отклику до старта сделки.
+  responseId String?
+
+  kind DealMessageKind @default(user)
+
+  authorId String?
+  author   User?   @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  text String
+
+  /// Для системных сообщений — ключ словаря и подстановки.
+  systemKey     String?
+  systemPayload Json?
+
+  quotedMessageId String?
+  pinned          Boolean @default(false)
+
+  /// Кэш ИИ-перевода: {lang, text}. Наполняется в фазе 6.
+  translatedText Json?
+
+  readByCustomerAt DateTime?
+  readByDesignerAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  attachments MessageAttachment[]
+
+  @@index([dealId, createdAt])
+  @@index([responseId, createdAt])
+  @@map("deal_messages")
+}
+
+model MessageAttachment {
+  id String @id @default(cuid())
+
+  messageId String
+  message   DealMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  storageKey String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  /// Для картинок — публичное превью, чтобы не подписывать ссылку на каждый рендер.
+  previewUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+  @@map("message_attachments")
+}
+
+/// Спор (§4.6). Сделка при открытии замораживается; последствия
+/// репутационные — деньги платформа не возвращает.
+model Dispute {
+  id String @id @default(cuid())
+
+  dealId String @unique
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  openedById String
+  openedBy   User   @relation("DisputeAuthor", fields: [openedById], references: [id], onDelete: Restrict)
+
+  reason String
+
+  status  DisputeStatus   @default(open)
+  verdict DisputeVerdict?
+
+  arbiterId String?
+  arbiter   User?   @relation("DisputeArbiter", fields: [arbiterId], references: [id], onDelete: SetNull)
+
+  /// Саммари переписки, которое арбитр запрашивает кнопкой.
+  aiSummary      String?
+  resolutionNote String?
+  resolvedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("disputes")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 5: репутация
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ReviewStatus {
+  /// Написан, но ещё не опубликован: ждём вторую сторону или срок (§4.8).
+  hidden_pending
+  published
+  hidden_by_moderator
+}
+
+enum ReviewTargetRole {
+  designer
+  customer
+}
+
+/// Отзыв по завершённой сделке (§4.8). Двойное слепое: обе стороны пишут,
+/// не видя чужого текста, и оба публикуются одновременно.
+model Review {
+  id String @id @default(cuid())
+
+  dealId String
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  targetId String
+  target   User   @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  /// Кого оценивают: набор подоценок у ролей разный.
+  targetRole ReviewTargetRole
+
+  overall Int
+  /// Дизайнеру: качество / сроки / коммуникация.
+  /// Заказчику: чёткость ТЗ / коммуникация / оплата.
+  sub1 Int
+  sub2 Int
+  sub3 Int
+
+  text  String
+  reply String?
+  repliedAt DateTime?
+
+  status ReviewStatus @default(hidden_pending)
+  publishedAt DateTime?
+
+  /// До какого момента автор может править свой отзыв (§4.8, 72 часа).
+  editableUntil DateTime
+
+  hiddenById String?
+  hiddenBy   User?   @relation("ReviewModerator", fields: [hiddenById], references: [id], onDelete: SetNull)
+  hiddenReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Одна сторона оставляет по сделке ровно один отзыв.
+  @@unique([dealId, authorId])
+  @@index([targetId, status, publishedAt])
+  @@index([status, createdAt])
+  @@map("reviews")
+}
+
+enum AchievementTier {
+  bronze
+  silver
+  gold
+}
+
+/// Выданное достижение. Сам каталог — конфиг в коде
+/// (`@polyforge/shared/achievements`), в БД лежат только факты выдачи (§3).
+model UserAchievement {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("AchievementOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Ключ из конфига достижений.
+  key  String
+  tier AchievementTier @default(bronze)
+
+  /// Прогресс на момент выдачи — показывается на полке достижений.
+  progress Int @default(0)
+
+  /// Пока не показан тост «Достижение получено!».
+  seenAt   DateTime?
+  /// Избранные достижения выводятся у ника (3–5 штук).
+  featured Boolean @default(false)
+
+  grantedAt DateTime @default(now())
+  /// Выдано вручную админом, а не триггером.
+  grantedById String?
+
+  @@unique([userId, key])
+  @@index([userId, featured])
+  @@index([key])
+  @@map("user_achievements")
+}
+
+enum StrikeStatus {
+  active
+  expired
+  revoked
+}
+
+/// Страйк (§3). Три активных — автоматический временный бан; пороги и сроки
+/// живут в настройках платформы, а не в коде.
+model Strike {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("StrikeTarget", fields: [userId], references: [id], onDelete: Cascade)
+
+  reportId String?
+
+  reason String
+  note   String?
+
+  issuedById String?
+  issuedBy   User?   @relation("StrikeIssuer", fields: [issuedById], references: [id], onDelete: SetNull)
+
+  status    StrikeStatus @default(active)
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, status])
+  @@map("strikes")
+}
+
+enum VerificationStatus {
+  draft
+  submitted
+  approved
+  rejected
+}
+
+/// Тестовое задание из пула админки (§4.9).
+model TestTask {
+  id String @id @default(cuid())
+
+  specialization Specialization
+
+  titleRu String
+  titleEn String
+  bodyRu  String
+  bodyEn  String
+
+  /// Ориентировочный срок на выполнение, часов.
+  estimateHours Int @default(8)
+
+  isActive Boolean @default(true)
+
+  authorId String?
+  author   User?   @relation("TestTaskAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  requests VerificationRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([specialization, isActive])
+  @@map("test_tasks")
+}
+
+/// Заявка на верификацию (§4.9): выбранное задание, сдача, решение модератора.
+model VerificationRequest {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("VerificationAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId String
+  task   TestTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+
+  /// Описание процесса работы — модератор смотрит на него не меньше, чем на картинки.
+  processNote String?
+
+  status VerificationStatus @default(draft)
+
+  submittedAt DateTime?
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   User?   @relation("VerificationReviewer", fields: [decidedById], references: [id], onDelete: SetNull)
+  decisionNote String?
+
+  /// Раньше этой даты повторная подача не принимается (§4.9).
+  retryAfter DateTime?
+
+  images VerificationImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, submittedAt])
+  @@index([userId, status])
+  @@map("verification_requests")
+}
+
+model VerificationImage {
+  id String @id @default(cuid())
+
+  requestId String
+  request   VerificationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  storageKey String
+  url        String
+  order      Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([requestId])
+  @@map("verification_images")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 6: ИИ-слой и языки
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum TranslatableEntity {
+  order
+  brief
+  work
+  response
+  review
+}
+
+/// Кэш автоперевода контента (§4.7).
+///
+/// Перевод считается один раз на (объект, поле, язык) и переиспользуется всеми
+/// зрителями: платить кредитами за один и тот же заказ каждому читателю
+/// бессмысленно. `sourceHash` ловит правку оригинала — при несовпадении
+/// перевод считается устаревшим и пересчитывается.
+model ContentTranslation {
+  id String @id @default(cuid())
+
+  entity   TranslatableEntity
+  entityId String
+  /// Поле объекта: у заказа переводятся и заголовок, и описание.
+  field    String
+
+  targetLocale Locale
+  text         String
+
+  /// Хэш исходного текста на момент перевода.
+  sourceHash String
+
+  /// Кто первым запросил перевод — для разбора расхода кредитов.
+  requestedById String?
+  requestedBy   User?   @relation("TranslationRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@unique([entity, entityId, field, targetLocale])
+  @@index([entity, entityId])
+  @@map("content_translations")
+}
+
+/// Саммари переписки сделки (§4.7). Хранится, чтобы кнопка не пересчитывала
+/// одно и то же: до новых сообщений результат не меняется.
+model ChatSummary {
+  id String @id @default(cuid())
+
+  dealId String @unique
+
+  text String
+  /// Сколько сообщений было учтено — по нему видно, что саммари устарело.
+  messageCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chat_summaries")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 7: админка и запуск
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Правовой документ в markdown (§4.10).
+///
+/// Тексты переезжают из кода в БД, потому что их правит юрист, а не
+/// разработчик: изменение оферты не должно требовать деплоя. Пока записи
+/// нет, страница показывает драфт из кода — платформа не может остаться
+/// вовсе без пользовательского соглашения.
+model LegalDocument {
+  id String @id @default(cuid())
+
+  /// terms | privacy | rules
+  slug   String
+  locale Locale
+
+  title    String
+  /// Markdown: заголовки, списки, ссылки. HTML не принимается.
+  body     String
+  /// Дата вступления в силу — показывается в шапке документа.
+  effectiveAt DateTime @default(now())
+
+  updatedById String?
+  updatedBy   User?   @relation("LegalEditor", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slug, locale])
+  @@map("legal_documents")
+}
+
+enum BroadcastStatus {
+  draft
+  sending
+  sent
+  failed
+}
+
+enum BroadcastSegment {
+  all
+  designers
+  customers
+  waitlist
+}
+
+/// Ручная рассылка сегменту (§4.10).
+///
+/// Отправка идёт воркером: письмо тысяче адресатов не помещается в один
+/// запрос админки, а прогресс должен быть виден после перезагрузки страницы.
+model Broadcast {
+  id String @id @default(cuid())
+
+  segment BroadcastSegment
+  locale  Locale?
+
+  subject String
+  body    String
+
+  status BroadcastStatus @default(draft)
+  /// Сколько адресатов было на момент старта и скольким ушло.
+  total  Int @default(0)
+  sent   Int @default(0)
+
+  authorId String?
+  author   User?   @relation("BroadcastAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("broadcasts")
 }

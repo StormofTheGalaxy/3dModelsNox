@@ -28,6 +28,9 @@ export type SessionUser = Pick<
   | 'emailVerifiedAt'
   | 'invitesLeft'
   | 'banUntil'
+  | 'translateIncoming'
+  | 'translateOutgoing'
+  | 'translateContent'
 >;
 
 const SESSION_USER_SELECT = {
@@ -42,6 +45,11 @@ const SESSION_USER_SELECT = {
   emailVerifiedAt: true,
   invitesLeft: true,
   banUntil: true,
+  // Языковые предпочтения нужны почти на каждом экране (§4.7), поэтому
+  // едут вместе с сессией, а не отдельным запросом на каждый рендер.
+  translateIncoming: true,
+  translateOutgoing: true,
+  translateContent: true,
 } as const;
 
 function cookieOptions(maxAgeSeconds: number) {

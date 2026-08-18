@@ -46,6 +46,14 @@ export function ResponseActions({
 
       setRejectOpen(false);
       setAcceptOpen(false);
+
+      // Принятый отклик сразу открывает сделку: следующий шаг сторон —
+      // согласовать план этапов, а не возвращаться к списку откликов.
+      if (result.dealId) {
+        router.push(`/deals/${result.dealId}`);
+        return;
+      }
+
       router.refresh();
     });
   }

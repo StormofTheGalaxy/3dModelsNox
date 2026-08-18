@@ -28,7 +28,10 @@ export const AUDIT_ACTIONS = [
   'user.role_changed',
   'user.level_changed',
   'strike.issued',
+  'strike.revoked',
   'report.created',
+  'report.confirmed',
+  'report.rejected',
   'report.resolved',
 
   // профили и портфолио
@@ -48,12 +51,23 @@ export const AUDIT_ACTIONS = [
   'response.rejected',
   'brief.change_requested',
   'brief.change_resolved',
+  'deal.created',
+  'deal.plan_confirmed',
+  'deal.paused',
+  'deal.completed',
+  'deal.cancelled',
+  'milestone.submitted',
+  'milestone.revision',
+  'milestone.accepted',
   'payment.claimed',
   'payment.confirmed',
+  'payment.flagged',
   'dispute.opened',
   'dispute.resolved',
 
   // достижения и верификация
+  'review.created',
+  'review.hidden',
   'achievement.granted_manually',
   'verification.approved',
   'verification.rejected',
@@ -61,6 +75,8 @@ export const AUDIT_ACTIONS = [
   // платформа
   'setting.changed',
   'admin.broadcast_sent',
+  'content.updated',
+  'legal.updated',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+
+import type { Locale } from '@polyforge/shared';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { Eye, Link2, Pencil } from 'lucide-react';
@@ -12,7 +14,9 @@ import { ReportDialog } from '@/components/report/report-dialog';
 import { DeleteWorkButton } from '@/components/works/delete-work-button';
 import { OrderSimilarButton } from '@/components/works/order-similar-button';
 import { LikeButton } from '@/components/works/like-button';
+import { TranslatedText } from '@/components/translation/translated-text';
 import { getCurrentUser } from '@/server/auth/session';
+import { translateField } from '@/server/translation';
 import { getWorkForViewer, isLikedByViewer, registerWorkView } from '@/server/works';
 import { publicEnv } from '@/server/env';
 
@@ -80,6 +84,21 @@ export default async function WorkPage({
       ? { label: t('detail.timeSpent'), value: t('detail.hours', { count: work.timeSpentHours }) }
       : null,
   ].filter((row): row is { label: string; value: string } => row !== null);
+
+  // Описание работы читается на языке зрителя (§4.7); автору перевод не нужен.
+  const description =
+    work.description && viewer?.translateContent && !work.isOwner
+      ? await translateField({
+          entity: 'work',
+          entityId: work.id,
+          field: 'description',
+          text: work.description,
+          targetLocale: locale as Locale,
+          viewerId: viewer.id,
+        })
+      : work.description
+        ? { text: work.description, original: work.description, translated: false }
+        : null;
 
   return (
     <article className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -159,10 +178,13 @@ export default async function WorkPage({
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-5">
-          {work.description ? (
-            <p className="text-sm leading-relaxed whitespace-pre-line text-fg-muted">
-              {work.description}
-            </p>
+          {description ? (
+            <TranslatedText
+              className="text-sm leading-relaxed whitespace-pre-line text-fg-muted"
+              text={description.text}
+              original={description.original}
+              translated={description.translated}
+            />
           ) : null}
 
           <div className="flex flex-wrap gap-1.5">

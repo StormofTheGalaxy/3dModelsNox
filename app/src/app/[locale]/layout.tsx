@@ -13,6 +13,7 @@ import '../globals.css';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { ThemeScript } from '@/components/theme/theme-script';
+import { Analytics } from '@/components/analytics/analytics';
 import { Toaster } from '@/components/ui/toast';
 import { routing } from '@/i18n/routing';
 import { publicEnv } from '@/server/env';
@@ -102,6 +103,8 @@ export default async function LocaleLayout({
           <Footer />
           <Toaster />
         </NextIntlClientProvider>
+
+        <Analytics />
       </body>
     </html>
   );

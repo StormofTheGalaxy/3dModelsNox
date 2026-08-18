@@ -4,6 +4,7 @@ import { prisma } from '@polyforge/db';
 import { SETTINGS_REGISTRY, SETTING_KEYS } from '@polyforge/shared';
 
 import { SYSTEM_BRIEF_TEMPLATES } from './brief-templates';
+import { SYSTEM_TEST_TASKS } from './test-tasks';
 
 /**
  * Идемпотентный seed: настройки платформы + суперадмин.
@@ -112,9 +113,38 @@ async function seedBriefTemplates(): Promise<void> {
   console.info(`✓ пресеты ТЗ: ${SYSTEM_BRIEF_TEMPLATES.length}`);
 }
 
+/**
+ * Пул тестовых заданий для верификации (§4.9).
+ * Заданиями управляет админ, поэтому существующие записи не перетираются.
+ */
+async function seedTestTasks(): Promise<void> {
+  for (const task of SYSTEM_TEST_TASKS) {
+    const existing = await prisma.testTask.findFirst({
+      where: { specialization: task.specialization as never, titleRu: task.titleRu },
+      select: { id: true },
+    });
+
+    if (existing) continue;
+
+    await prisma.testTask.create({
+      data: {
+        specialization: task.specialization as never,
+        titleRu: task.titleRu,
+        titleEn: task.titleEn,
+        bodyRu: task.bodyRu,
+        bodyEn: task.bodyEn,
+        estimateHours: task.estimateHours,
+      },
+    });
+  }
+
+  console.info(`✓ тестовые задания: ${SYSTEM_TEST_TASKS.length}`);
+}
+
 async function main(): Promise<void> {
   await seedSettings();
   await seedBriefTemplates();
+  await seedTestTasks();
   await seedSuperAdmin();
 }
 

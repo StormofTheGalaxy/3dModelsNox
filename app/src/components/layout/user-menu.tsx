@@ -2,8 +2,11 @@
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
+  Award,
+  BadgeCheck,
   ClipboardList,
   FileText,
+  Handshake,
   LayoutDashboard,
   LogOut,
   Send,
@@ -11,7 +14,6 @@ import {
   Shield,
   Ticket,
 } from 'lucide-react';
-import NextLink from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
@@ -88,6 +90,13 @@ export function UserMenu({
           </DropdownMenu.Item>
 
           <DropdownMenu.Item asChild className={itemClass}>
+            <Link href="/deals">
+              <Handshake className="size-4 text-fg-muted" aria-hidden />
+              {t('deals')}
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild className={itemClass}>
             <Link href="/responses">
               <Send className="size-4 text-fg-muted" aria-hidden />
               {t('myResponses')}
@@ -114,6 +123,20 @@ export function UserMenu({
           </DropdownMenu.Item>
 
           <DropdownMenu.Item asChild className={itemClass}>
+            <Link href="/achievements">
+              <Award className="size-4 text-fg-muted" aria-hidden />
+              {t('achievements')}
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild className={itemClass}>
+            <Link href="/verification">
+              <BadgeCheck className="size-4 text-fg-muted" aria-hidden />
+              {t('verification')}
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild className={itemClass}>
             <Link href="/settings">
               <Settings className="size-4 text-fg-muted" aria-hidden />
               {t('settings')}
@@ -121,13 +144,16 @@ export function UserMenu({
           </DropdownMenu.Item>
 
           {isStaff ? (
-            <DropdownMenu.Item asChild className={itemClass}>
-              {/* Админка живёт вне языковых префиксов — обычный next/link. */}
-              <NextLink href="/admin">
-                <Shield className="size-4 text-fg-muted" aria-hidden />
-                {t('admin')}
-              </NextLink>
-            </DropdownMenu.Item>
+            <>
+              {/* Админка живёт внутри языковых префиксов: её страницы
+                  переведены наравне с остальными (§9 DoD). */}
+              <DropdownMenu.Item asChild className={itemClass}>
+                <Link href="/admin">
+                  <Shield className="size-4 text-fg-muted" aria-hidden />
+                  {t('admin')}
+                </Link>
+              </DropdownMenu.Item>
+            </>
           ) : null}
 
           <DropdownMenu.Separator className="my-1 h-px bg-[var(--pf-border)]" />

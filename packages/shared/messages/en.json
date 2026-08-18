@@ -40,7 +40,13 @@
     "briefs": "My briefs",
     "myOrders": "My orders",
     "myResponses": "My proposals",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "deals": "Deals",
+    "disputes": "Disputes",
+    "achievements": "Achievements",
+    "verification": "Verification",
+    "reports": "Reports",
+    "verificationQueue": "Verification queue"
   },
   "soon": {
     "title": "This section is coming soon",
@@ -186,7 +192,23 @@
     "email": "Email",
     "emailVerified": "Verified",
     "emailNotVerified": "Not verified",
-    "saved": "Saved"
+    "saved": "Saved",
+    "translation": {
+      "title": "Languages and translation",
+      "incoming": {
+        "label": "Translate incoming messages",
+        "hint": "A translation into your interface language appears under the other side's message, marked as AI-translated."
+      },
+      "outgoing": {
+        "label": "Send my messages with a translation",
+        "hint": "The other side sees both the translation and your original text."
+      },
+      "content": {
+        "label": "Translate orders, briefs and work descriptions",
+        "hint": "Other people's content is shown in your interface language; the original is always one click away."
+      },
+      "disclaimer": "Translation is machine-made: check the original where wording matters. Credit cost is set by platform settings — translation is free during the beta."
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -275,7 +297,8 @@
       "failed": "AI could not process the request. Please try again.",
       "unavailable": "The AI service is temporarily unavailable",
       "rateLimited": "Too many AI requests. Please wait a moment.",
-      "noCredits": "You are out of AI credits this month. Left: {left}"
+      "noCredits": "You are out of AI credits this month. Left: {left}",
+      "notEnoughMessages": "There is nothing to summarize in this conversation yet"
     },
     "order": {
       "titleTooShort": "At least 5 characters",
@@ -300,6 +323,81 @@
     },
     "savedFilter": {
       "titleTooShort": "At least 2 characters"
+    },
+    "deal": {
+      "responseNotAccepted": "The response has not been accepted yet",
+      "planLocked": "The plan is already agreed and cannot be changed",
+      "planEmpty": "Add at least one milestone",
+      "planTooLong": "Too many milestones",
+      "planSumMismatch": "Milestones total ({total}) does not match the deal price ({price} {currency})",
+      "milestoneTitleTooShort": "Milestone title is too short",
+      "milestoneTitleTooLong": "Milestone title is too long",
+      "milestoneAmountRequired": "Enter the milestone amount",
+      "milestoneNotInWork": "The milestone is not in progress",
+      "milestoneNotSubmitted": "The milestone has not been submitted yet",
+      "milestoneNotAccepted": "The milestone has not been accepted yet",
+      "deliveryFilesRequired": "Attach at least one file",
+      "filesLimitReached": "Deal file limit reached ({limit} GB)",
+      "receiptRequired": "Attach a receipt",
+      "paymentAmountRequired": "Enter the payment amount",
+      "paymentNotClaimed": "The customer has not reported the payment yet",
+      "paymentAlreadyConfirmed": "The payment is already confirmed",
+      "revisionCommentRequired": "Describe what needs fixing (at least 10 characters)",
+      "notActive": "The deal is not in progress",
+      "inDispute": "There is an open dispute on this deal",
+      "alreadyClosed": "The deal is already closed",
+      "disputeExists": "A dispute on this deal is already open",
+      "disputeResolved": "The dispute is already closed",
+      "disputeReasonTooShort": "Describe the situation in more detail (at least 30 characters)",
+      "resolutionRequired": "Justify the verdict (at least 20 characters)",
+      "messageEmpty": "The message is empty",
+      "changeDescriptionTooShort": "Describe the change in more detail (at least 20 characters)",
+      "changeResolved": "The request has already been handled"
+    },
+    "review": {
+      "dealNotCompleted": "A review can only be left on a completed deal",
+      "alreadyLeft": "You have already reviewed this deal",
+      "textTooShort": "Write at least 20 characters",
+      "textTooLong": "The review is too long",
+      "scoreRequired": "Give a score",
+      "editWindowClosed": "The edit window is closed",
+      "hidden": "The review was hidden by a moderator",
+      "notPublished": "The review is not published yet",
+      "alreadyReplied": "You have already replied",
+      "replyTooShort": "The reply is too short",
+      "replyTooLong": "The reply is too long"
+    },
+    "verification": {
+      "alreadyVerified": "The profile is already verified",
+      "pending": "A request is already in review",
+      "notSubmitted": "The request has not been submitted yet",
+      "retryLater": "You cannot apply again yet",
+      "imagesRequired": "Attach at least one image",
+      "processTooShort": "Describe the process in more detail — at least 100 characters",
+      "processTooLong": "The description is too long"
+    },
+    "achievements": {
+      "tooManyFeatured": "You can show at most five achievements next to your nickname"
+    },
+    "moderation": {
+      "selfAction": "You cannot apply this action to yourself"
+    },
+    "report": {
+      "alreadyResolved": "The report has already been handled"
+    },
+    "onboarding": {
+      "textTooShort": "Paste more text — at least 80 characters"
+    },
+    "settings": {
+      "invalidValue": "The value does not fit: {message}"
+    },
+    "legal": {
+      "titleRequired": "Enter a title",
+      "bodyTooShort": "The text is too short"
+    },
+    "broadcast": {
+      "subjectRequired": "Enter a subject",
+      "bodyTooShort": "The message is too short"
     }
   },
   "empty": {
@@ -327,13 +425,29 @@
       "body": "Your account is active. Fill in your profile and you're ready to work.",
       "action": "Open dashboard"
     },
-    "footer": "You received this email because you have a PolyForge account."
+    "footer": "You received this email because you have a PolyForge account.",
+    "digest": {
+      "subject": "Your week on PolyForge",
+      "heading": "Hello, {nickname}",
+      "messages": "Unread messages in deals: {count}",
+      "responses": "New responses to your orders: {count}",
+      "reviews": "Deals awaiting your review: {count}",
+      "orders": "New orders on the board: {count}",
+      "action": "Open dashboard"
+    },
+    "invite": {
+      "subject": "Your PolyForge invitation",
+      "heading": "It's your turn",
+      "body": "We are opening access to the PolyForge closed beta. The link below creates an account with your invitation; it is valid for 30 days.",
+      "action": "Accept the invitation"
+    }
   },
   "legal": {
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "rules": "Platform Rules",
-    "draftNotice": "Draft document. The final version will be published before the beta opens."
+    "draftNotice": "Draft document. The final version will be published before the beta opens.",
+    "effectiveAt": "In effect from {date}"
   },
   "taxonomy": {
     "specialization": {
@@ -438,7 +552,6 @@
     "save": "Save profile",
     "portfolio": "Portfolio",
     "reviews": "Reviews",
-    "reviewsSoon": "Reviews arrive together with deals — development phase 5.",
     "noWorks": "No works yet",
     "noWorksOwn": "Upload your first piece — a portfolio sells better than words.",
     "invite": "Invite to an order",
@@ -460,6 +573,15 @@
       "dealsCompleted": "Deals completed",
       "responsiveness": "Responsiveness",
       "noData": "no data"
+    },
+    "aiImport": {
+      "button": "✨ Fill from portfolio",
+      "label": "Text from your portfolio page",
+      "hint": "Copy the description from ArtStation, Behance or your own site — AI will lay it out into profile fields.",
+      "placeholder": "Paste the text: about you, specialization, software, engines…",
+      "draftNote": "This is a draft: fields get filled in, but nothing is saved until you press “Save profile”.",
+      "parse": "Parse",
+      "applied": "Fields filled in — review and save"
     }
   },
   "works": {
@@ -560,7 +682,13 @@
     "textHint": "Describe the problem — it helps the moderator act faster",
     "submit": "Send report",
     "sent": "Report sent. Thank you.",
-    "alreadySent": "You have already reported this."
+    "alreadySent": "You have already reported this.",
+    "queue": "Reports",
+    "queueEmpty": "No open reports",
+    "resolutionNote": "Resolution note",
+    "confirmAndStrike": "Confirm and issue a strike",
+    "dismiss": "Dismiss the report",
+    "bannedAfterStrike": "Strike threshold reached — the account is temporarily blocked"
   },
   "brief": {
     "title": "Briefs",
@@ -939,6 +1067,701 @@
       "title": "Platform message",
       "body": "Open your notifications to read it.",
       "action": "Open"
+    },
+    "deal_started": {
+      "title": "Deal started: “{dealTitle}”",
+      "body": "Agree on the milestone plan — work starts once both sides confirm it.",
+      "action": "Open the deal"
+    },
+    "deal_plan_changed": {
+      "title": "Milestone plan changed: “{dealTitle}”",
+      "body": "The other side proposed a different set of milestones. Confirm it or propose your own.",
+      "action": "Open the deal"
+    },
+    "deal_milestone_submitted": {
+      "title": "Milestone submitted: “{milestoneTitle}”",
+      "body": "The designer submitted a milestone on the deal “{dealTitle}”. Accept it or request a revision.",
+      "action": "Review the submission"
+    },
+    "deal_revision_requested": {
+      "title": "Milestone in revision: “{milestoneTitle}”",
+      "body": "The customer sent a milestone on “{dealTitle}” back for revision. Round {round} of {included}.",
+      "action": "Open the deal"
+    },
+    "deal_milestone_accepted": {
+      "title": "Milestone accepted: “{milestoneTitle}”",
+      "body": "The customer accepted a milestone on the deal “{dealTitle}”. Expect the payment next.",
+      "action": "Open the deal"
+    },
+    "deal_payment_claimed": {
+      "title": "The customer reported a payment: {amount} {currency}",
+      "body": "A receipt was uploaded for “{milestoneTitle}” on the deal “{dealTitle}”. Confirm you received the money.",
+      "action": "Check the receipt"
+    },
+    "deal_payment_confirmed": {
+      "title": "Payment confirmed: {amount} {currency}",
+      "body": "The designer confirmed receiving the payment for “{milestoneTitle}” on “{dealTitle}”.",
+      "action": "Open the deal"
+    },
+    "deal_payment_stuck": {
+      "title": "A payment is waiting for confirmation: {amount} {currency}",
+      "body": "The customer sent a receipt for “{milestoneTitle}” on “{dealTitle}” and there is still no confirmation.",
+      "action": "Confirm receipt"
+    },
+    "deal_deadline_soon": {
+      "title": "Milestone “{milestoneTitle}” is due in {hours} h",
+      "body": "A deadline on the deal “{dealTitle}” is approaching. Submit the milestone or warn the customer.",
+      "action": "Open the deal"
+    },
+    "deal_message": {
+      "title": "New message from {author}",
+      "body": "There is a new message in the chat of the deal “{dealTitle}”.",
+      "action": "Open the chat"
+    },
+    "deal_completed": {
+      "title": "Deal completed: “{dealTitle}”",
+      "body": "All milestones are delivered and paid. Source files are available to the customer.",
+      "action": "Open the deal"
+    },
+    "deal_brief_change": {
+      "title": "Brief change request: “{dealTitle}”",
+      "body": "{author} proposes changing the frozen brief. The change takes effect once you agree.",
+      "action": "Review the request"
+    },
+    "dispute_opened": {
+      "title": "A dispute was opened on “{dealTitle}”",
+      "body": "The deal is frozen until the arbiter decides. State your side in the deal chat.",
+      "action": "Open the deal"
+    },
+    "dispute_resolved": {
+      "title": "The dispute on “{dealTitle}” is closed",
+      "body": "The arbiter issued a verdict. The decision and its reasoning are in the deal.",
+      "action": "See the decision"
+    },
+    "review_received": {
+      "title": "A new review on the deal “{dealTitle}”",
+      "body": "The other side left a review. It gets published once you write yours, or after {days} days.",
+      "action": "Leave a review"
+    },
+    "review_published": {
+      "title": "Reviews published",
+      "body": "The scores on the deal are now visible to both sides and counted in the rating.",
+      "action": "See the review"
+    },
+    "review_replied": {
+      "title": "{author} replied to your review",
+      "body": "The reply appears next to the review in the profile.",
+      "action": "Open"
+    },
+    "achievement_granted": {
+      "title": "Achievement unlocked",
+      "body": "You unlocked a new achievement. Check the shelf — it shows progress on the rest.",
+      "action": "My achievements"
+    },
+    "level_changed": {
+      "title": "Your level has changed",
+      "body": "New level: {level}. It affects your position in listings, your badge and your daily response limit.",
+      "action": "Open profile"
+    },
+    "verification_decided": {
+      "title": "Verification decision",
+      "body": "A moderator reviewed your request. The comment and the next step are on the verification page.",
+      "action": "See the decision"
+    },
+    "strike_issued": {
+      "title": "A strike was issued: {reason}",
+      "body": "Active strikes: {count}. Reaching the threshold temporarily blocks the account.",
+      "action": "Open settings"
+    }
+  },
+  "deals": {
+    "title": "Deals",
+    "empty": {
+      "title": "No deals yet",
+      "description": "A deal starts when a customer accepts a designer's response."
+    },
+    "role": {
+      "customer": "You are the customer",
+      "designer": "You are the designer"
+    },
+    "parties": "Customer: {customer} · Designer: {designer}",
+    "progress": "Progress by paid milestones",
+    "paidOf": "Paid {paid} of {total} {currency}",
+    "paymentDisclaimer": "PolyForge does not process payments and takes no commission. The parties pay each other directly; the platform only records the confirmations they submit.",
+    "briefFrozen": "Frozen brief: “{title}”, version {version}. Changes require both parties to agree.",
+    "tabsLabel": "Deal sections",
+    "tabs": {
+      "brief": "Brief",
+      "files": "Files",
+      "receipts": "Receipts",
+      "chat": "Chat",
+      "history": "History"
+    },
+    "status": {
+      "plan_agreement": "Plan agreement",
+      "active": "In progress",
+      "paused": "Paused",
+      "in_dispute": "Dispute",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "paymentMethods": {
+      "card": "Card",
+      "crypto": "Crypto",
+      "paypal": "PayPal",
+      "sbp": "SBP",
+      "other": "Other"
+    },
+    "plan": {
+      "title": "Milestone plan",
+      "description": "Split the deal amount into milestones. Work starts once both sides confirm the plan.",
+      "templates": {
+        "full": "Single milestone",
+        "half": "50 / 50",
+        "thirds": "30 / 40 / 30"
+      },
+      "stage": "Milestone {number}",
+      "stageTitle": "Milestone title",
+      "amount": "Amount, {currency}",
+      "dueDate": "Due date",
+      "addStage": "Add milestone",
+      "remove": "Remove milestone",
+      "sum": "Milestones total: {total} of {price} {currency}",
+      "save": "Save plan",
+      "confirm": "Confirm plan",
+      "bothConfirmed": "Both sides confirmed the plan.",
+      "waitingOther": "You confirmed the plan. Waiting for the other side.",
+      "otherConfirmed": "The other side confirmed the plan. Confirm it to start work."
+    },
+    "milestones": {
+      "title": "Milestones",
+      "sourcesLocked": "Source files of the final milestone unlock once its payment is confirmed.",
+      "roundsUsed": "revisions: {used} of {included}",
+      "waitingConfirmation": "Waiting for the designer to confirm the payment",
+      "dealCompleted": "Deal closed. Source files are available.",
+      "status": {
+        "pending": "Pending",
+        "in_work": "In progress",
+        "submitted": "Submitted",
+        "revision": "In revision",
+        "accepted": "Accepted",
+        "paid_claimed": "Payment claimed",
+        "paid_confirmed": "Payment confirmed"
+      },
+      "actions": {
+        "submit": "Submit milestone",
+        "accept": "Accept",
+        "revision": "Request revision ({left})",
+        "revisionOverLimit": "Request revision over limit",
+        "pay": "I have paid",
+        "confirmPayment": "Payment received"
+      },
+      "delivery": {
+        "title": "Submit milestone “{milestone}”",
+        "files": "Files",
+        "filesHint": "Every submission is stored as a separate version — earlier ones stay available.",
+        "note": "Comment",
+        "submit": "Send"
+      },
+      "revision": {
+        "title": "Revision for “{milestone}”",
+        "roundsLeft": "Revision rounds left after this one: {left}. The round is spent on send.",
+        "overLimit": "Included revision rounds are used up. This one is over the limit — agree on it with the designer separately.",
+        "comment": "What needs fixing",
+        "submit": "Send for revision"
+      },
+      "payment": {
+        "title": "Payment for “{milestone}”",
+        "disclaimer": "Pay the designer directly by any method you both accept. The platform only stores your receipt and notifies the designer.",
+        "amount": "Amount, {currency}",
+        "method": "Payment method",
+        "txHash": "Transfer reference",
+        "receipt": "Receipt or screenshot",
+        "note": "Comment",
+        "submit": "Send receipt"
+      }
+    },
+    "files": {
+      "empty": "No files yet",
+      "locked": "Until the final milestone is paid, source files stay locked — you see watermarked previews.",
+      "lockedShort": "After payment",
+      "version": "Version {version}",
+      "download": "Download"
+    },
+    "receipts": {
+      "empty": "No receipts yet",
+      "disclaimer": "A log of payments reported by the parties. The platform does not process payments and does not verify them with any bank.",
+      "claimedAt": "claimed {date}",
+      "confirmedAt": "confirmed {date}",
+      "status": {
+        "pending": "Awaiting confirmation",
+        "confirmed": "Confirmed",
+        "stuck": "Stuck"
+      }
+    },
+    "chat": {
+      "placeholder": "Write a message…",
+      "send": "Send",
+      "attach": "Attach a file",
+      "quote": "Reply",
+      "cancelQuote": "Cancel",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinned": "Pinned",
+      "translate": "Translate",
+      "typing": "The other side is typing…",
+      "offline": "Realtime is unavailable — messages will appear after a page refresh.",
+      "machineTranslated": "translated by AI",
+      "translating": "Translating incoming…",
+      "summary": "✨ Summary",
+      "summaryTitle": "Agreements from the conversation"
+    },
+    "history": {
+      "empty": "No events yet"
+    },
+    "actions": {
+      "title": "Deal controls",
+      "staffView": "Arbiter mode: the deal is read-only.",
+      "pause": "Pause the deal",
+      "resume": "Resume",
+      "pauseDescription": "A pause shifts milestone deadlines by its duration and does not affect metrics.",
+      "pausedWithReason": "Deal paused: {reason}",
+      "cancel": "Cancel the deal",
+      "cancelDescription": "Cancellation records what has been delivered and paid. Use a dispute for contested cases.",
+      "reason": "Reason",
+      "openDispute": "Open a dispute",
+      "disputeOpen": "A dispute is open on this deal: {reason}",
+      "requestChange": "Request a brief change",
+      "changeRequests": "Brief change requests",
+      "changeAccept": "Agree",
+      "changeReject": "Decline",
+      "changeStatus": {
+        "pending": "Awaiting reply",
+        "accepted": "Agreed",
+        "rejected": "Declined"
+      },
+      "portfolioQuestion": "Allow the designer to show this work in their portfolio?",
+      "portfolioAllow": "I allow publishing this work"
+    },
+    "dispute": {
+      "title": "Open a dispute",
+      "description": "A platform arbiter reviews the case.",
+      "freezeWarning": "The deal freezes while the dispute is open: submitting, accepting and paying milestones is blocked. The platform does not refund money — it never holds it; the verdict affects reputation.",
+      "reason": "What happened",
+      "submit": "Open dispute",
+      "opened": "Dispute opened. An arbiter will review it shortly.",
+      "resolved": "Dispute closed."
+    },
+    "briefChange": {
+      "title": "Brief change",
+      "description": "The brief was frozen when the deal started. The change takes effect once the other side agrees.",
+      "what": "What should change",
+      "submit": "Send request",
+      "sent": "Request sent to the other side."
+    },
+    "delivery": {
+      "submitted": "Milestone submitted. The customer has been notified."
+    },
+    "revision": {
+      "sent": "Sent for revision. Round {round} of {included} used.",
+      "overLimit": "Sent for revision beyond the included rounds ({included}). Agree on paying for it separately."
+    },
+    "payment": {
+      "claimed": "Receipt sent. Waiting for the designer to confirm."
+    },
+    "system": {
+      "deal": {
+        "created": "Deal created: “{title}”",
+        "paused": "{author} paused the deal",
+        "resumed": "{author} resumed the deal",
+        "completed": "Deal “{title}” completed",
+        "cancelled": "{author} cancelled the deal"
+      },
+      "plan": {
+        "proposed": "{author} proposed a plan of {count} milestones",
+        "confirmed": "{author} confirmed the plan"
+      },
+      "milestone": {
+        "started": "Milestone “{title}” started",
+        "submitted": "Milestone “{title}” submitted, version {version}",
+        "revision": "Milestone “{title}” sent for revision, round {round} of {included}",
+        "accepted": "Milestone “{title}” accepted"
+      },
+      "payment": {
+        "claimed": "The customer reported paying for “{title}”: {amount} {currency}",
+        "confirmed": "The designer confirmed receiving payment for “{title}”: {amount} {currency}"
+      },
+      "dispute": {
+        "opened": "{author} opened a dispute",
+        "resolved": "Dispute closed, verdict: {verdict}"
+      },
+      "brief": {
+        "changeRequested": "{author} requested a brief change",
+        "changeResolved": "{author} answered the brief change request"
+      },
+      "reviews": {
+        "published": "Reviews on the deal are published"
+      }
+    },
+    "reviewAboutYou": "Review about you"
+  },
+  "disputes": {
+    "title": "Disputes",
+    "empty": "No open disputes",
+    "reason": "What the dispute is about",
+    "milestones": "Deal milestones",
+    "conversation": "Conversation",
+    "systemAuthor": "System",
+    "openDeal": "Open the deal",
+    "late": "late",
+    "resolve": "Decision",
+    "summarize": "Generate summary",
+    "verdict": "Verdict",
+    "resolutionNote": "Reasoning",
+    "submit": "Issue verdict",
+    "status": {
+      "open": "Open",
+      "resolved": "Closed"
+    },
+    "verdicts": {
+      "designer_right": "Designer is right",
+      "customer_right": "Customer is right",
+      "mutual": "Shared responsibility"
+    }
+  },
+  "reviews": {
+    "title": "Review of {nickname}",
+    "editTitle": "Edit the review",
+    "blindHint": "Reviews are published together: yours becomes visible once the other side writes theirs, or after {days} days. Until then we do not show you theirs either.",
+    "overall": "Overall",
+    "text": "Your review",
+    "textHint": "What worked, what did not, what was missing. At least 20 characters.",
+    "submit": "Submit review",
+    "saveEdit": "Save changes",
+    "yours": "Your review",
+    "publishedNote": "The review is published, the edit window is closed.",
+    "pendingNote": "Waiting for the other side — we publish both at once, or after {days} days.",
+    "publishedNow": "Both reviews are published.",
+    "waitingOther": "Review saved. It will be published when the other side writes theirs, or after {days} days.",
+    "empty": "No reviews yet",
+    "reply": "Reply",
+    "sendReply": "Send reply",
+    "replyLabel": "Reply",
+    "subscores": {
+      "designer": {
+        "quality": "Quality of work",
+        "deadlines": "Meeting deadlines",
+        "communication": "Communication"
+      },
+      "customer": {
+        "briefClarity": "Brief clarity",
+        "communication": "Communication",
+        "payment": "Payment"
+      }
+    }
+  },
+  "achievements": {
+    "title": "Achievements",
+    "description": "Granted automatically from your activity. Up to five favourites show next to your nickname.",
+    "unlocked": "Achievement unlocked!",
+    "secret": "???",
+    "secretHint": "A hidden achievement — you learn the condition when you earn it",
+    "rarity": "{percent}% of users have this",
+    "maxed": "maxed out",
+    "feature": "Show next to nickname",
+    "unfeature": "Remove from nickname",
+    "tiers": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold"
+    },
+    "items": {
+      "first_deal": {
+        "title": "Deal closed",
+        "description": "Completed deals as a designer"
+      },
+      "portfolio_builder": {
+        "title": "Portfolio",
+        "description": "Works published in the gallery"
+      },
+      "five_stars": {
+        "title": "Five out of five",
+        "description": "Reviews with the top score"
+      },
+      "always_on_time": {
+        "title": "Right on time",
+        "description": "Milestones delivered without a delay in a row"
+      },
+      "responsive": {
+        "title": "Responsive",
+        "description": "Responses sent to orders"
+      },
+      "trusted": {
+        "title": "They come back",
+        "description": "Customers with more than one closed deal"
+      },
+      "brief_master": {
+        "title": "Brief master",
+        "description": "Briefs created"
+      },
+      "order_maker": {
+        "title": "Customer",
+        "description": "Orders published"
+      },
+      "night_shift": {
+        "title": "Night shift",
+        "description": "Milestones delivered between 23:00 and 5:00 UTC"
+      },
+      "polyglot_wallet": {
+        "title": "Multi-currency",
+        "description": "Different currencies across closed deals"
+      },
+      "first_try": {
+        "title": "First try",
+        "description": "Deals closed without a single revision round"
+      },
+      "vindicated": {
+        "title": "Vindicated",
+        "description": "Disputes resolved in your favour"
+      },
+      "marathon": {
+        "title": "Marathoner",
+        "description": "A great many closed deals"
+      }
+    }
+  },
+  "top": {
+    "title": "Designer leaderboard",
+    "description": "A weighted score with decay: recent reviews count for more than old ones.",
+    "designerOfWeek": "Designer of the week",
+    "ratingLine": "Rating {rating} from {count} reviews",
+    "periodLabel": "Period",
+    "specLabel": "Specialization",
+    "periods": {
+      "month": "This month",
+      "all": "All time"
+    },
+    "allSpecs": "All specializations",
+    "empty": "Nobody to show yet — the leaderboard fills up with the first reviews."
+  },
+  "verification": {
+    "title": "Verification",
+    "description": "Confirm the portfolio is yours: pick a test task, complete it and show your process.",
+    "needProfile": "Fill in your designer profile first.",
+    "verified": "Profile verified",
+    "choose": "Take this task",
+    "hours": "≈ {hours} h",
+    "noTasks": "No tasks for your specializations yet. Check back later.",
+    "images": "Images of the work",
+    "imagesHint": "Renders, wireframes, work-in-progress screenshots — up to ten files.",
+    "process": "Process description",
+    "processHint": "How you got there: where you started, what you changed, what you used. At least 100 characters — this text is what proves authorship.",
+    "submit": "Send for review",
+    "submitted": "Your request has been sent for review.",
+    "submittedAt": "Submitted {date}",
+    "waitingReview": "A moderator will look at it within a few days. You will get a notification with the result.",
+    "retryAfter": "You can apply again from {date}.",
+    "statuses": {
+      "draft": "Draft",
+      "submitted": "In review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "queue": "Verification queue",
+    "queueEmpty": "No requests to review",
+    "decisionNote": "Comment for the designer",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "translation": {
+    "machineTranslated": "translated by AI",
+    "showOriginal": "show original",
+    "showTranslation": "show translation"
+  },
+  "admin": {
+    "nav": {
+      "label": "Admin sections",
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "orders": "Orders",
+      "deals": "Deals",
+      "payments": "Receipts",
+      "disputes": "Disputes",
+      "reports": "Reports",
+      "verification": "Verification",
+      "invites": "Invites",
+      "content": "Content",
+      "broadcasts": "Broadcasts",
+      "settings": "Settings",
+      "audit": "Audit log"
+    },
+    "stats": {
+      "users": "Users",
+      "newInPeriod": "new in 30 days: {count}",
+      "activeToday": "Seen in 24h",
+      "banned": "blocked: {count}",
+      "orders": "Orders on the board",
+      "responses": "responses in 30 days: {count}",
+      "confirmed": "Payments confirmed",
+      "claimed": "claimed but unconfirmed: {amount}",
+      "registrations": "Registrations over 30 days",
+      "deals": "Deals by status",
+      "queues": "Queues",
+      "noData": "No data yet"
+    },
+    "users": {
+      "searchPlaceholder": "Nickname or email",
+      "empty": "Nobody found",
+      "status": {
+        "active": "Active",
+        "shadow_banned": "Shadow banned",
+        "temp_banned": "Temporarily banned",
+        "banned": "Banned",
+        "deleted": "Deleted"
+      },
+      "email": "Email",
+      "registered": "Registered",
+      "lastSeen": "Last seen",
+      "lastIp": "Last IP",
+      "locale": "Language",
+      "invitesLeft": "Invites left",
+      "deals": "Deals",
+      "orders": "Orders",
+      "responses": "Responses",
+      "works": "Works",
+      "reportsAgainst": "Reports against the user",
+      "designerProfile": "Designer profile",
+      "verified": "Verified",
+      "banReason": "Ban reason: {reason}",
+      "strikes": "Strikes",
+      "noStrikes": "No strikes",
+      "strikeStatus": {
+        "active": "active",
+        "expired": "expired",
+        "revoked": "revoked"
+      },
+      "actions": "Actions",
+      "reason": "Reason",
+      "ban": "Ban",
+      "shadowBan": "Shadow ban",
+      "unban": "Unban",
+      "shadowBanHint": "With a shadow ban the user's content and responses are invisible to others, and they are never told.",
+      "level": "Designer level",
+      "applyLevel": "Change level",
+      "invites": "Invites",
+      "grantInvites": "Grant",
+      "adminOnly": "Account actions are available to the superadmin only.",
+      "selfNotice": "This is your own account — actions on yourself are unavailable."
+    },
+    "orders": {
+      "searchPlaceholder": "Order title",
+      "empty": "No orders found",
+      "responses": "responses: {count}",
+      "unpublish": "Remove from the board",
+      "unpublishHint": "The order goes to the archive and its author gets a notification with the reason.",
+      "reason": "Reason"
+    },
+    "deals": {
+      "stuck": "Stuck payments",
+      "noStuck": "No stuck payments",
+      "overdue": "Overdue milestones",
+      "noOverdue": "No overdue milestones",
+      "reminders": "reminders: {count}"
+    },
+    "payments": {
+      "modeAll": "Beta mode: every receipt is reviewed.",
+      "modeSample": "{percent}% of receipts are sampled for review.",
+      "filterLabel": "Receipt filter",
+      "filters": {
+        "all": "All",
+        "sampled": "Sampled"
+      },
+      "empty": "No receipts yet",
+      "check": {
+        "none": "not reviewed",
+        "random_ok": "sampled",
+        "flagged": "flagged",
+        "verified": "verified"
+      },
+      "markVerified": "Mark as verified",
+      "markFlagged": "Flag as suspicious"
+    },
+    "invites": {
+      "waiting": "On the waitlist",
+      "invited": "Invited",
+      "unusedCodes": "Unused codes",
+      "usedCodes": "Codes used: {count}",
+      "empty": "The waitlist is empty",
+      "invite": "Invite ({count})",
+      "selectAll": "Select all",
+      "clearSelection": "Clear selection",
+      "sent": "Invitations sent: {count}",
+      "note": "The beta opens in batches — invite as many as the platform is ready to serve."
+    },
+    "content": {
+      "featured": "Designer of the week",
+      "featuredPlaceholder": "Designer nickname",
+      "featuredSave": "Set",
+      "featuredClear": "Clear",
+      "legal": "Legal documents",
+      "legalHint": "Until a document is created here, the public page shows the draft from code.",
+      "legalDocs": {
+        "terms": "Terms of service",
+        "privacy": "Privacy policy",
+        "rules": "Platform rules"
+      },
+      "legalStored": "Published",
+      "legalDraft": "Draft from code",
+      "legalEdit": "Edit",
+      "legalTitle": "Title",
+      "legalBody": "Body (markdown)",
+      "legalMarkdownHint": "Headings (## ), lists, **bold** and links are supported. HTML is not inserted.",
+      "legalSave": "Save document"
+    },
+    "broadcasts": {
+      "segment": "Segment",
+      "locale": "Language",
+      "anyLocale": "Any",
+      "subject": "Subject",
+      "body": "Message",
+      "warning": "A sent email cannot be recalled. Check the text and the segment.",
+      "send": "Send broadcast",
+      "queued": "The broadcast is queued",
+      "empty": "No broadcasts yet",
+      "segments": {
+        "all": "All users",
+        "designers": "Designers",
+        "customers": "Customers",
+        "waitlist": "Waitlist"
+      },
+      "status": {
+        "draft": "Queued",
+        "sending": "Sending",
+        "sent": "Sent",
+        "failed": "Failed"
+      }
+    },
+    "settings": {
+      "description": "Platform thresholds and limits. The value is JSON: a number, string, array or object.",
+      "save": "Save",
+      "reset": "Reset to default",
+      "isDefault": "default value",
+      "groups": {
+        "access": "Access and registration",
+        "orders": "Orders and responses",
+        "deals": "Deals",
+        "ai": "AI",
+        "reputation": "Reputation",
+        "moderation": "Moderation",
+        "uploads": "Uploads",
+        "features": "Feature flags"
+      }
+    },
+    "audit": {
+      "filterAction": "Filter by action",
+      "filterActor": "Filter by nickname",
+      "empty": "No entries found",
+      "system": "system"
     }
   }
 }

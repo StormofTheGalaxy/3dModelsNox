@@ -89,12 +89,17 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().catch('http://localhost:3000'),
   NEXT_PUBLIC_WS_URL: z.string().url().catch('http://localhost:4000'),
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().catch(''),
+  /// Идентификаторы аналитики (§7, фаза 7). Пусто — счётчики не подключаются.
+  NEXT_PUBLIC_YM_ID: z.string().catch(''),
+  NEXT_PUBLIC_GA_ID: z.string().catch(''),
 });
 
 export const publicEnv = publicEnvSchema.parse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+  NEXT_PUBLIC_YM_ID: process.env.NEXT_PUBLIC_YM_ID,
+  NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
 });
 
 // Режим определяем напрямую: он не требует валидации остальных секретов.
