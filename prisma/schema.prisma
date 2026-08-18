@@ -53,6 +53,8 @@ enum AuthTokenType {
   email_verification
   password_reset
   email_change
+  /// Одноразовый код в диплинке бота: /start <token> связывает чат с аккаунтом.
+  telegram_link
 }
 
 enum OAuthProvider {
@@ -92,6 +94,16 @@ model User {
   translateOutgoing Boolean @default(false)
   /// Показывать заказы, ТЗ и описания работ на языке интерфейса (§4.7).
   translateContent  Boolean @default(true)
+
+  /// Telegram как третий канал уведомлений (§3, post-MVP №2).
+  /// chatId уникален: один чат — один аккаунт, иначе уведомления двух
+  /// пользователей смешались бы в одной переписке.
+  telegramChatId        String?   @unique
+  telegramUsername      String?
+  telegramLinkedAt      DateTime?
+  /// Общий выключатель канала. Тонкая настройка — по типам в
+  /// NotificationPreference, как у почты.
+  telegramNotifications Boolean   @default(true)
 
   invitedById String?
   invitedBy   User?   @relation("UserInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
@@ -1023,6 +1035,9 @@ model Notification {
   readAt DateTime?
   /// Отправлено ли письмо — чтобы дайджест не продублировал уведомление.
   emailSentAt DateTime?
+  /// Ушло ли в Telegram. Отдельно от письма: каналы независимы и могут
+  /// сработать по-разному (бот заблокирован, почта отбита).
+  telegramSentAt DateTime?
 
   createdAt DateTime @default(now())
 
@@ -1037,9 +1052,10 @@ model NotificationPreference {
   userId String
   user   User   @relation("NotificationPrefOwner", fields: [userId], references: [id], onDelete: Cascade)
 
-  type  NotificationType
-  inApp Boolean @default(true)
-  email Boolean @default(true)
+  type     NotificationType
+  inApp    Boolean @default(true)
+  email    Boolean @default(true)
+  telegram Boolean @default(true)
 
   @@unique([userId, type])
   @@map("notification_preferences")

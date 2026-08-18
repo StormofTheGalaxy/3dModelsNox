@@ -109,7 +109,7 @@ export async function createDealFromResponse(
     type: 'response_accepted',
     payload: { orderTitle: response.order.title },
     link: `/deals/${deal.id}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -216,7 +216,7 @@ export async function createDealFromBid(
     type: 'deal_started',
     payload: { orderTitle: bid.order.title },
     link: `/deals/${deal.id}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -378,7 +378,7 @@ export async function confirmMilestonePlan(dealId: string): Promise<{ ok: boolea
     type: 'system',
     payload: { dealTitle: deal.title },
     link: `/deals/${deal.id}`,
-    withEmail: bothConfirmed,
+    push: bothConfirmed,
   });
 
   revalidatePath(`/deals/${dealId}`);
@@ -506,7 +506,7 @@ export async function cancelDeal(
     type: 'system',
     payload: { dealTitle: deal.title },
     link: `/deals/${dealId}`,
-    withEmail: true,
+    push: true,
   });
 
   revalidatePath(`/deals/${dealId}`);

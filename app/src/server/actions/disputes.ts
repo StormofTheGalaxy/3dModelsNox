@@ -64,7 +64,7 @@ export async function openDispute(
     type: 'dispute_opened',
     payload: { dealTitle: deal.title },
     link: `/deals/${deal.id}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -209,7 +209,7 @@ export async function resolveDispute(
       type: 'dispute_resolved',
       payload: { dealTitle: dispute.deal.title, verdict: parsed.data.verdict },
       link: `/deals/${dispute.deal.id}`,
-      withEmail: true,
+      push: true,
     });
   }
 

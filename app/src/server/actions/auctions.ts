@@ -323,7 +323,7 @@ export async function selectWinner(bidId: string): Promise<{ ok: boolean; error?
       hours: responseHours,
     },
     link: `/orders/${bid.orderId}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -431,7 +431,7 @@ export async function declineWin(orderId: string): Promise<{ ok: boolean; error?
     type: 'auction_winner_declined',
     payload: { orderTitle: auction.order.title, designer: user.nickname },
     link: `/orders/${orderId}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({

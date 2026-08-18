@@ -3,8 +3,12 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TelegramSettings } from '@/components/settings/telegram-settings';
 import { TranslationSettings } from '@/components/settings/translation-settings';
 import { requireUser } from '@/server/auth/guards';
+import { telegramIsLive } from '@/server/telegram';
+import { getSetting } from '@/server/settings';
+import { prisma } from '@polyforge/db';
 
 export async function generateMetadata({
   params,
@@ -28,6 +32,19 @@ export default async function SettingsPage({
   // не сможет сменить язык интерфейса, чтобы прочитать инструкцию.
   const user = await requireUser(locale);
   const t = await getTranslations('settings');
+
+  // Поля Telegram нужны только здесь, поэтому не едут в каждой сессии.
+  const [telegramOn, telegram] = await Promise.all([
+    getSetting('feature_telegram'),
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        telegramChatId: true,
+        telegramUsername: true,
+        telegramNotifications: true,
+      },
+    }),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
@@ -67,6 +84,15 @@ export default async function SettingsPage({
         outgoing={user.translateOutgoing}
         content={user.translateContent}
       />
+
+      {telegramOn ? (
+        <TelegramSettings
+          linked={Boolean(telegram?.telegramChatId)}
+          username={telegram?.telegramUsername ?? null}
+          enabled={telegram?.telegramNotifications ?? true}
+          botConfigured={telegramIsLive()}
+        />
+      ) : null}
     </div>
   );
 }

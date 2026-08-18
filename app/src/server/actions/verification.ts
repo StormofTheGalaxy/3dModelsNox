@@ -193,7 +193,7 @@ export async function decideVerification(
     type: 'verification_decided',
     payload: { approved: parsed.data.approve ? 1 : 0, days: retryDays },
     link: '/verification',
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({

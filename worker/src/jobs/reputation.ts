@@ -51,7 +51,7 @@ export async function publishExpiredReviews(): Promise<number> {
       type: 'review_published',
       payload: { days: blindDays },
       link: '/dashboard',
-      withEmail: true,
+      push: true,
     });
   }
 
@@ -161,7 +161,7 @@ export async function recomputeLevels(): Promise<number> {
       type: 'level_changed',
       payload: { level: next },
       link: '/profile/designer',
-      withEmail: true,
+      push: true,
     });
 
     changed += 1;
@@ -223,7 +223,7 @@ export async function grantAchievementsBatch(sinceDays = 8): Promise<number> {
         type: 'achievement_granted',
         payload: { key: definition.key, tier },
         link: '/achievements',
-        withEmail: false,
+        push: false,
       });
 
       granted += 1;

@@ -277,7 +277,7 @@ export async function inviteDesigner(
     type: 'order_new_match',
     payload: { orderTitle: order.title, invited: true },
     link: `/orders/${orderId}`,
-    withEmail: true,
+    push: true,
   });
 
   revalidatePath(`/orders/${orderId}`);

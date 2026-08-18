@@ -3,6 +3,11 @@ import { Redis } from 'ioredis';
 import { prisma, type Prisma } from '@polyforge/db';
 import { createMailer, getEmailTranslator, type Mailer } from '@polyforge/mail';
 import { REALTIME_CHANNELS, type Locale, type NotificationType } from '@polyforge/shared';
+import {
+  createTelegramProvider,
+  escapeHtml,
+  type TelegramProvider,
+} from '@polyforge/telegram';
 
 /**
  * Уведомления из воркера (§4.7).
@@ -23,6 +28,27 @@ function redisPublisher(): Redis {
   return publisher;
 }
 
+let telegram: TelegramProvider | null = null;
+
+function getTelegram(): TelegramProvider {
+  telegram ??= createTelegramProvider(process.env.TELEGRAM_BOT_TOKEN ?? '');
+  return telegram;
+}
+
+/**
+ * Флаг канала читается из той же таблицы настроек, что и в приложении.
+ * Воркеру недоступен кэш `@/server/settings` (он помечен server-only),
+ * поэтому здесь прямой запрос — задачи и так ходят в базу.
+ */
+async function telegramEnabled(): Promise<boolean> {
+  const setting = await prisma.platformSetting.findUnique({
+    where: { key: 'feature_telegram' },
+    select: { value: true },
+  });
+
+  return setting?.value === true;
+}
+
 function getMailer(): Mailer {
   mailer ??= createMailer({
     transport: process.env.EMAIL_TRANSPORT === 'resend' ? 'resend' : 'console',
@@ -38,7 +64,7 @@ export interface WorkerNotifyInput {
   type: NotificationType;
   payload: Record<string, string | number | boolean>;
   link: string;
-  withEmail?: boolean;
+  push?: boolean;
   /** Язык получателя, если он уже известен вызывающему коду. */
   locale?: Locale;
 }
@@ -46,15 +72,21 @@ export interface WorkerNotifyInput {
 export async function notifyUser(input: WorkerNotifyInput): Promise<void> {
   const preference = await prisma.notificationPreference.findUnique({
     where: { userId_type: { userId: input.userId, type: input.type } },
-    select: { inApp: true, email: true },
+    select: { inApp: true, email: true, telegram: true },
   });
 
-  const channels = preference ?? { inApp: true, email: true };
-  if (!channels.inApp && !channels.email) return;
+  const channels = preference ?? { inApp: true, email: true, telegram: true };
+  if (!channels.inApp && !channels.email && !channels.telegram) return;
 
   const recipient = await prisma.user.findUnique({
     where: { id: input.userId },
-    select: { email: true, locale: true, status: true },
+    select: {
+      email: true,
+      locale: true,
+      status: true,
+      telegramChatId: true,
+      telegramNotifications: true,
+    },
   });
 
   if (!recipient || recipient.status === 'banned' || recipient.status === 'deleted') return;
@@ -79,13 +111,47 @@ export async function notifyUser(input: WorkerNotifyInput): Promise<void> {
     }
   }
 
-  if (!channels.email || !input.withEmail) return;
+  // Внешние каналы — только для событий, ради которых стоит отрывать
+  // человека от дел: этот же признак решает и про письмо, и про Telegram.
+  if (!input.push) return;
 
   const locale = (input.locale ?? recipient.locale) as Locale;
   const t = getEmailTranslator(locale);
   const values = Object.fromEntries(
     Object.entries(input.payload).map(([key, value]) => [key, String(value)]),
   );
+
+  if (
+    channels.telegram &&
+    recipient.telegramChatId &&
+    recipient.telegramNotifications &&
+    (await telegramEnabled())
+  ) {
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
+    const result = await getTelegram().sendMessage(recipient.telegramChatId, {
+      text: `<b>${escapeHtml(t(`notifications.${input.type}.title`, values))}</b>\n\n${escapeHtml(
+        t(`notifications.${input.type}.body`, values),
+      )}`,
+      actionUrl: `${appUrl}/${locale}${input.link}`,
+      actionLabel: t(`notifications.${input.type}.action`),
+    });
+
+    if (result.blocked) {
+      // Бот заблокирован — отвязываем чат, чтобы не долбиться в него.
+      await prisma.user.update({
+        where: { id: input.userId },
+        data: { telegramChatId: null, telegramLinkedAt: null, telegramUsername: null },
+      });
+    } else if (result.ok) {
+      await prisma.notification.update({
+        where: { id: notification.id },
+        data: { telegramSentAt: new Date() },
+      });
+    }
+  }
+
+  if (!channels.email) return;
 
   try {
     await getMailer().send(recipient.email, locale, {

@@ -101,7 +101,7 @@ export async function submitReview(
     type: counterpart ? 'review_published' : 'review_received',
     payload: { dealTitle: deal.title, days: review_blind_days },
     link: counterpart ? `/deals/${deal.id}` : `/deals/${deal.id}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({

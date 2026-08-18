@@ -57,7 +57,7 @@ export async function setDesignerLevel(
     type: 'level_changed',
     payload: { level },
     link: '/profile/designer',
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -180,7 +180,7 @@ export async function unpublishOrder(
     type: 'system',
     payload: { orderTitle: order.title },
     link: '/orders/mine',
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({

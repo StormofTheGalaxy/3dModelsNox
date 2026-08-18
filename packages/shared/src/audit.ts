@@ -13,6 +13,8 @@ export const AUDIT_ACTIONS = [
   'user.password_reset_completed',
   'user.locale_changed',
   'user.theme_changed',
+  'telegram.linked',
+  'telegram.unlinked',
   'user.deleted',
 
   // инвайты

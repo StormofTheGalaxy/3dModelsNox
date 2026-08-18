@@ -31,7 +31,7 @@ export async function archiveExpiredOrders(): Promise<number> {
       type: 'order_expiring',
       payload: { orderTitle: order.title },
       link: `/orders/${order.id}`,
-      withEmail: true,
+      push: true,
     });
   }
 
@@ -70,7 +70,7 @@ export async function flagInactiveCustomers(inactiveDays: number): Promise<numbe
       type: 'order_customer_inactive',
       payload: { orderTitle: response.order.title, days: inactiveDays },
       link: `/orders/${response.order.id}`,
-      withEmail: false,
+      push: false,
     });
 
     // Метрику заказчика двигаем один раз за прогон, а не по числу откликов.
@@ -183,7 +183,7 @@ export async function dispatchSavedFilterMatches(): Promise<number> {
         competition: competitionLevel(first.responsesCount),
       },
       link: matches.length === 1 ? `/orders/${first.id}` : '/orders',
-      withEmail: filter.notifyEmail,
+      push: filter.notifyEmail,
       locale: filter.user.locale as Locale,
     });
 

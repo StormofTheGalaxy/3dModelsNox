@@ -87,7 +87,7 @@ export async function resolveReport(
     type: 'strike_issued',
     payload: { reason: report.category, count: outcome.activeStrikes },
     link: '/settings',
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -179,7 +179,7 @@ export async function grantStrike(
     type: 'strike_issued',
     payload: { reason: parsed.data.reason, count: outcome.activeStrikes },
     link: '/settings',
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({

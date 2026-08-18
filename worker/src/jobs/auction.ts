@@ -78,7 +78,7 @@ export async function closeExpiredAuctions(): Promise<number> {
       type: 'auction_closed',
       payload: { orderTitle: auction.order.title },
       link: `/orders/${auction.orderId}`,
-      withEmail: true,
+      push: true,
     });
   }
 
@@ -163,7 +163,7 @@ export async function expireWinnerDecisions(): Promise<number> {
       type: 'auction_winner_declined',
       payload: { orderTitle: auction.order.title, expired: true },
       link: `/orders/${auction.orderId}`,
-      withEmail: true,
+      push: true,
     });
   }
 

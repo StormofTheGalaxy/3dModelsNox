@@ -44,6 +44,12 @@ const serverEnvSchema = z.object({
   // ИИ. Без ключа поднимается детерминированная заглушка (см. packages/ai).
   OPENAI_API_KEY: z.string().default(''),
   OPENAI_BASE_URL: z.string().url().default('https://api.openai.com/v1'),
+
+  // Telegram-бот. Без токена поднимается заглушка (см. packages/telegram).
+  // Имя бота нужно для диплинка привязки, секрет — для проверки вебхука.
+  TELEGRAM_BOT_TOKEN: z.string().default(''),
+  TELEGRAM_BOT_USERNAME: z.string().default(''),
+  TELEGRAM_WEBHOOK_SECRET: z.string().default(''),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

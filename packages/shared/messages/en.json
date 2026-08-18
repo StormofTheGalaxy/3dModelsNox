@@ -209,6 +209,21 @@
         "hint": "Other people's content is shown in your interface language; the original is always one click away."
       },
       "disclaimer": "Translation is machine-made: check the original where wording matters. Credit cost is set by platform settings — translation is free during the beta."
+    },
+    "telegram": {
+      "title": "Telegram",
+      "hint": "The bot sends the same things email does: important events in your deals, orders and auctions. Conversations stay on the site, where files, quotes and history live.",
+      "connect": "Connect Telegram",
+      "openBot": "Open the bot",
+      "linkReady": "The link is valid for {minutes} minutes. Open it and press “Start” — the bot will link the chat to your account.",
+      "linkedAs": "Connected: @{username}",
+      "linkedNoUsername": "Chat connected",
+      "unlink": "Disconnect",
+      "botNotConfigured": "The bot is not configured on this server: linking will work, but no messages will arrive.",
+      "enabled": {
+        "label": "Send notifications to Telegram",
+        "hint": "Switches the whole channel off. The bell and email keep working."
+      }
     }
   },
   "errors": {
@@ -423,6 +438,9 @@
       "amountRequired": "Enter an amount",
       "daysRequired": "Enter a delivery time",
       "commentTooLong": "600 characters maximum"
+    },
+    "telegram": {
+      "disabled": "Telegram notifications are switched off on this platform"
     }
   },
   "empty": {
@@ -1887,5 +1905,14 @@
       "empty": "No entries found",
       "system": "system"
     }
+  },
+  "telegram": {
+    "help": "This is the PolyForge bot. It sends notifications about your deals and orders.\n\nTo connect your account, open the settings on the site and press “Connect Telegram”.\n/stop — turn notifications off.",
+    "linked": "Done. PolyForge notifications for @{nickname} will arrive here.\n\nTo turn them off: /stop",
+    "unlinked": "Chat disconnected. Nothing will arrive here any more — notifications stay in the bell on the site and in your email.",
+    "notLinked": "This chat is not linked to any account.",
+    "needToken": "To connect your account, open the settings on the site and press “Connect Telegram”: {url}",
+    "badToken": "That link is invalid or has expired. Request a new one in the settings on the site.",
+    "unknown": "I do not understand that command. /help — what I can do."
   }
 }

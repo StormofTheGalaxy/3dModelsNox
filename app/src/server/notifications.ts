@@ -8,6 +8,7 @@ import { getEmailTranslator } from '@polyforge/mail';
 import { absoluteUrl } from './env';
 import { sendNotificationEmail } from './mail';
 import { redis } from './redis';
+import { sendTelegramNotification } from './telegram';
 
 /**
  * Уведомления (§4.7): in-app плюс email по настройкам подписок.
@@ -28,24 +29,24 @@ export interface NotifyInput {
   /** Путь внутри приложения без языкового префикса. */
   link: string;
   /** Отправлять ли письмо. Мелкие события живут только в колокольчике. */
-  withEmail?: boolean;
+  push?: boolean;
 }
 
 async function channelsFor(
   userId: string,
   type: NotificationType,
-): Promise<{ inApp: boolean; email: boolean }> {
+): Promise<{ inApp: boolean; email: boolean; telegram: boolean }> {
   const preference = await prisma.notificationPreference.findUnique({
     where: { userId_type: { userId, type } },
-    select: { inApp: true, email: true },
+    select: { inApp: true, email: true, telegram: true },
   });
 
-  return preference ?? { inApp: true, email: true };
+  return preference ?? { inApp: true, email: true, telegram: true };
 }
 
 export async function notify(input: NotifyInput): Promise<void> {
   const channels = await channelsFor(input.userId, input.type);
-  if (!channels.inApp && !channels.email) return;
+  if (!channels.inApp && !channels.email && !channels.telegram) return;
 
   const recipient = await prisma.user.findUnique({
     where: { id: input.userId },
@@ -74,7 +75,27 @@ export async function notify(input: NotifyInput): Promise<void> {
     }
   }
 
-  if (!channels.email || !input.withEmail) return;
+  // Внешние каналы — только для событий, ради которых стоит отрывать
+  // человека от дел: этот же признак решает и про письмо, и про Telegram.
+  if (!input.push) return;
+
+  if (channels.telegram) {
+    const delivered = await sendTelegramNotification({
+      userId: input.userId,
+      type: input.type,
+      payload: input.payload,
+      link: input.link,
+    });
+
+    if (delivered) {
+      await prisma.notification.update({
+        where: { id: notification.id },
+        data: { telegramSentAt: new Date() },
+      });
+    }
+  }
+
+  if (!channels.email) return;
 
   const locale = recipient.locale as Locale;
   const t = getEmailTranslator(locale);

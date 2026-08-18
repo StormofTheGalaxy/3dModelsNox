@@ -160,7 +160,7 @@ export async function submitDelivery(
     type: 'deal_milestone_submitted',
     payload: { dealTitle: milestone.deal.title, milestoneTitle: milestone.title },
     link: `/deals/${milestone.dealId}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -222,7 +222,7 @@ export async function acceptMilestone(
     type: 'deal_milestone_accepted',
     payload: { dealTitle: milestone.deal.title, milestoneTitle: milestone.title },
     link: `/deals/${milestone.dealId}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -299,7 +299,7 @@ export async function requestRevision(
       included,
     },
     link: `/deals/${milestone.dealId}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -423,7 +423,7 @@ export async function claimPayment(
       currency: parsed.data.currency,
     },
     link: `/deals/${milestone.dealId}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -516,7 +516,7 @@ export async function confirmPayment(
       currency: payment.currency,
     },
     link: `/deals/${milestone.dealId}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -536,7 +536,7 @@ export async function confirmPayment(
         type: 'deal_completed',
         payload: { dealTitle: milestone.deal.title },
         link: `/deals/${milestone.dealId}`,
-        withEmail: true,
+        push: true,
       });
     }
 
@@ -565,7 +565,7 @@ export async function confirmPayment(
         type: 'level_changed',
         payload: { level },
         link: '/profile/designer',
-        withEmail: true,
+        push: true,
       });
     }
   }

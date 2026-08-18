@@ -466,7 +466,7 @@ export async function requestBriefChange(
     type: 'deal_brief_change',
     payload: { dealTitle: deal.title, author: user.nickname },
     link: `/deals/${deal.id}`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({

@@ -48,7 +48,7 @@ export async function remindMilestoneDeadlines(hoursBefore: number[]): Promise<n
           hours,
         },
         link: `/deals/${milestone.deal.id}`,
-        withEmail: true,
+        push: true,
       });
 
       sent += 1;
@@ -104,7 +104,7 @@ export async function remindStuckPayments(reminderDays: number[]): Promise<numbe
         currency: payment.currency,
       },
       link: `/deals/${payment.milestone.deal.id}`,
-      withEmail: true,
+      push: true,
     });
 
     const exhausted = ageDays >= maxDays;

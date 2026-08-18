@@ -337,6 +337,7 @@ export const SETTINGS_REGISTRY = {
       upload: { points: 60, windowSeconds: 3600 },
       response: { points: 30, windowSeconds: 3600 },
       bid: { points: 60, windowSeconds: 3600 },
+      telegram_link: { points: 10, windowSeconds: 3600 },
       message: { points: 120, windowSeconds: 60 },
     },
     schema: z.record(z.string(), rateLimitRule),

@@ -125,7 +125,7 @@ export async function submitResponse(
     type: 'order_response_received',
     payload: { orderTitle: order.title, designer: user.nickname },
     link: `/orders/${order.id}/responses`,
-    withEmail: true,
+    push: true,
   });
 
   await writeAuditLog({
@@ -228,7 +228,7 @@ export async function setResponseStatus(
       type: status === 'accepted' ? 'response_accepted' : 'response_status_changed',
       payload: { orderTitle: response.order.title, status },
       link: `/orders/${response.orderId}`,
-      withEmail: status === 'accepted',
+      push: status === 'accepted',
     });
   }
 
