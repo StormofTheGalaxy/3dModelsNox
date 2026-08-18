@@ -102,6 +102,22 @@ export const SETTINGS_REGISTRY = {
     schema: z.number().int().min(1).max(500),
     label: { ru: 'Активных заказов на заказчика', en: 'Active orders per customer' },
   },
+  comment_max_length: {
+    group: 'moderation',
+    default: 2000,
+    schema: z.number().int().min(50).max(10_000),
+    label: { ru: 'Длина комментария к работе, символов', en: 'Work comment length, characters' },
+  },
+  comment_edit_minutes: {
+    group: 'moderation',
+    default: 15,
+    schema: z.number().int().min(0).max(1440),
+    label: { ru: 'Окно правки комментария, минут', en: 'Comment edit window, minutes' },
+    hint: {
+      ru: 'Ноль — править нельзя вовсе; после окна остаётся только удалить',
+      en: 'Zero disables editing; after the window only deletion is left',
+    },
+  },
   order_autoarchive_days: {
     group: 'orders',
     default: 30,
@@ -340,6 +356,7 @@ export const SETTINGS_REGISTRY = {
       response: { points: 30, windowSeconds: 3600 },
       bid: { points: 60, windowSeconds: 3600 },
       telegram_link: { points: 10, windowSeconds: 3600 },
+      comment: { points: 30, windowSeconds: 3600 },
       message: { points: 120, windowSeconds: 60 },
     },
     schema: z.record(z.string(), rateLimitRule),
@@ -385,6 +402,12 @@ export const SETTINGS_REGISTRY = {
     default: false,
     schema: z.boolean(),
     label: { ru: 'Аукцион заказов', en: 'Order auction' },
+  },
+  feature_work_comments: {
+    group: 'features',
+    default: false,
+    schema: z.boolean(),
+    label: { ru: 'Комментарии к работам', en: 'Comments on works' },
   },
   feature_ai_matching: {
     group: 'features',

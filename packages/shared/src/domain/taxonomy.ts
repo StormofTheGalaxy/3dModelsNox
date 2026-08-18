@@ -92,7 +92,15 @@ export const REPORT_CATEGORIES = [
 ] as const;
 export type ReportCategory = (typeof REPORT_CATEGORIES)[number];
 
-export const REPORT_TARGET_TYPES = ['user', 'work', 'order', 'brief', 'message', 'review'] as const;
+export const REPORT_TARGET_TYPES = [
+  'user',
+  'work',
+  'order',
+  'brief',
+  'message',
+  'review',
+  'comment',
+] as const;
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
 /**

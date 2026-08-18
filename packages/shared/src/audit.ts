@@ -41,6 +41,7 @@ export const AUDIT_ACTIONS = [
   'work.published',
   'work.hidden',
   'work.deleted',
+  'comment.hidden',
 
   // ТЗ и сделки (появятся в фазах 2 и 4)
   'brief.frozen',
@@ -108,6 +109,7 @@ export const AUDIT_TARGET_TYPES = [
   'report',
   'setting',
   'waitlist',
+  'comment',
   'auction',
   'bid',
 ] as const;

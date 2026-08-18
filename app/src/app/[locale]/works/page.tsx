@@ -80,6 +80,7 @@ export default async function WorksGalleryPage({
           id: work.id,
           title: work.title,
           likesCount: work.likesCount,
+                    commentsCount: work.commentsCount,
           views: work.views,
           badgeOnPlatform: work.badgeOnPlatform,
           designer: { nickname: work.designer.nickname },

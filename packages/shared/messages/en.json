@@ -443,6 +443,14 @@
     },
     "telegram": {
       "disabled": "Telegram notifications are switched off on this platform"
+    },
+    "comment": {
+      "disabled": "Comments are switched off on this platform",
+      "empty": "The comment is empty",
+      "tooLong": "{limit} characters maximum",
+      "badParent": "You cannot reply to that comment",
+      "locked": "The comment is deleted or hidden",
+      "editWindowClosed": "Editing is only possible in the first {minutes} minutes after posting"
     }
   },
   "empty": {
@@ -701,7 +709,29 @@
       "text": "Works by platform designers will show up here.",
       "filtered": "Nothing matched these filters. Try loosening them."
     },
-    "needProfile": "Fill in your designer profile first — works are attached to it."
+    "needProfile": "Fill in your designer profile first — works are attached to it.",
+    "comments": {
+      "title": "Comments: {count}",
+      "empty": "No comments yet. Tell the author what you think of the work.",
+      "placeholder": "What do you think of this work?",
+      "label": "Comment on the work",
+      "send": "Send",
+      "save": "Save",
+      "reply": "Reply",
+      "replyPlaceholder": "Reply to @{nickname}",
+      "replyLabel": "Reply to a comment",
+      "edit": "Edit",
+      "editLabel": "Editing a comment",
+      "edited": "edited",
+      "delete": "Delete",
+      "deletedText": "The author deleted this comment.",
+      "hide": "Hide",
+      "hiddenBadge": "Hidden",
+      "hiddenText": "This comment is hidden.",
+      "guest": "Comments are open for everyone to read.",
+      "guestCta": "Sign in to reply",
+      "needVerified": "Confirm your email to comment."
+    }
   },
   "designers": {
     "title": "Designers",
@@ -1341,6 +1371,16 @@
       "title": "The winner declined: “{orderTitle}”",
       "body": "The deal did not start. The other bids still stand — you can pick another bidder.",
       "action": "Open the auction"
+    },
+    "work_comment": {
+      "title": "New comment on “{workTitle}”",
+      "body": "@{author} left a comment.",
+      "action": "Open the work"
+    },
+    "work_comment_reply": {
+      "title": "Reply to your comment: “{workTitle}”",
+      "body": "@{author} replied in the discussion of the work.",
+      "action": "Open the work"
     }
   },
   "deals": {

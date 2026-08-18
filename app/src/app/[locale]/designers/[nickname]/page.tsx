@@ -227,6 +227,7 @@ export default async function DesignerProfilePage({
                       id: work.id,
                       title: work.title,
                       likesCount: work.likesCount,
+                    commentsCount: work.commentsCount,
                       views: work.views,
                       badgeOnPlatform: work.badgeOnPlatform,
                       designer: { nickname: designer.nickname },

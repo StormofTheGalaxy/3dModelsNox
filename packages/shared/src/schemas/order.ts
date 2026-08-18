@@ -199,6 +199,8 @@ export const NOTIFICATION_TYPES = [
   'auction_closed',
   'auction_won',
   'auction_winner_declined',
+  'work_comment',
+  'work_comment_reply',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

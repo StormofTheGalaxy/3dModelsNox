@@ -11,11 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ReportDialog } from '@/components/report/report-dialog';
+import { WorkComments } from '@/components/works/work-comments';
 import { DeleteWorkButton } from '@/components/works/delete-work-button';
 import { OrderSimilarButton } from '@/components/works/order-similar-button';
 import { LikeButton } from '@/components/works/like-button';
 import { TranslatedText } from '@/components/translation/translated-text';
 import { getCurrentUser } from '@/server/auth/session';
+import { commentsEnabled, listWorkComments } from '@/server/comments';
+import { getSettings } from '@/server/settings';
 import { translateField } from '@/server/translation';
 import { getWorkForViewer, isLikedByViewer, registerWorkView } from '@/server/works';
 import { publicEnv } from '@/server/env';
@@ -57,11 +60,27 @@ export default async function WorkPage({
   const work = await getWorkForViewer(id, viewer?.id ?? null);
   if (!work) notFound();
 
-  const [t, tTax, liked] = await Promise.all([
+  const [t, tTax, liked, commentsOn] = await Promise.all([
     getTranslations('works'),
     getTranslations('taxonomy'),
     isLikedByViewer(work.id, viewer?.id ?? null),
+    commentsEnabled(),
   ]);
+
+  // Комментарии (§4.3, post-MVP №5). Что видно скрытым и удалённым, решает
+  // сервер: в разметку уезжает уже отфильтрованное.
+  const [comments, commentSettings] = commentsOn
+    ? await Promise.all([
+        listWorkComments(
+          work.id,
+          viewer ? { id: viewer.id, role: viewer.role } : null,
+          work.designerId,
+        ),
+        getSettings(['comment_max_length']),
+      ])
+    : [[], { comment_max_length: 2000 }];
+
+  const maxCommentLength = commentSettings.comment_max_length;
 
   // Просмотр считаем по пользователю, а для гостя — по IP: этого хватает,
   // чтобы счётчик не накручивался перезагрузкой страницы.
@@ -209,6 +228,17 @@ export default async function WorkPage({
           </div>
 
           {!work.isOwner ? <ReportDialog targetType="work" targetId={work.id} /> : null}
+
+          {/* Комментарии (§4.3, post-MVP №5). */}
+          {commentsOn ? (
+            <WorkComments
+              workId={work.id}
+              maxLength={maxCommentLength}
+              canWrite={Boolean(viewer?.emailVerifiedAt)}
+              isGuest={!viewer}
+              initial={comments}
+            />
+          ) : null}
         </div>
 
         <aside className="flex flex-col gap-4">

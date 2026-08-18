@@ -203,6 +203,7 @@ export default async function DashboardPage({
                     id: work.id,
                     title: work.title,
                     likesCount: work.likesCount,
+                    commentsCount: work.commentsCount,
                     views: work.views,
                     badgeOnPlatform: work.badgeOnPlatform,
                     designer: { nickname: user.nickname },

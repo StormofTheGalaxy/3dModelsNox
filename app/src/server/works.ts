@@ -15,6 +15,7 @@ const WORK_CARD_SELECT = {
   assetType: true,
   styles: true,
   likesCount: true,
+  commentsCount: true,
   views: true,
   badgeOnPlatform: true,
   publishedAt: true,
@@ -104,6 +105,7 @@ export async function getWorkForViewer(workId: string, viewerId: string | null) 
       badgeOnPlatform: true,
       views: true,
       likesCount: true,
+      commentsCount: true,
       publishedAt: true,
       designerId: true,
       designer: {

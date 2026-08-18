@@ -135,6 +135,7 @@ model User {
   customerProfile CustomerProfile?
   works           PortfolioWork[]  @relation("WorkAuthor")
   workLikes       WorkLike[]       @relation("WorkLiker")
+  workComments    WorkComment[]    @relation("CommentAuthor")
   reportsFiled    Report[]         @relation("ReportAuthor")
   reportsResolved Report[]         @relation("ReportResolver")
 
@@ -415,6 +416,7 @@ enum ReportTargetType {
   brief
   message
   review
+  comment
 }
 
 enum ReportCategory {
@@ -542,8 +544,11 @@ model PortfolioWork {
   /// Для visibility=link_only: работа открывается только по этому токену.
   shareToken String?        @unique
 
-  views      Int @default(0)
-  likesCount Int @default(0)
+  views         Int @default(0)
+  likesCount    Int @default(0)
+  /// Денормализовано: галерея и карточка работы не считают комментарии
+  /// запросом на каждую плитку. Учитываются только видимые.
+  commentsCount Int @default(0)
 
   /// Пост-модерация: работы не проходят премодерацию (§4.3).
   isHidden   Boolean   @default(false)
@@ -554,13 +559,52 @@ model PortfolioWork {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  media WorkMedia[]
-  likes WorkLike[]
+  media    WorkMedia[]
+  likes    WorkLike[]
+  comments WorkComment[]
 
   @@index([designerId, publishedAt])
   @@index([visibility, isHidden, publishedAt])
   @@index([visibility, isHidden, likesCount])
   @@map("portfolio_works")
+}
+
+/// Комментарии к работам (§4.3, post-MVP №5).
+///
+/// Одноуровневые ответы: ветка глубже двух шагов на телефоне превращается
+/// в лесенку из отступов, а обсуждение картинки этого не стоит.
+model WorkComment {
+  id String @id @default(cuid())
+
+  workId String
+  work   PortfolioWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  /// Ответ на комментарий. Только один уровень: у ответа parentId всегда null.
+  parentId String?
+  parent   WorkComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  WorkComment[] @relation("CommentReplies")
+
+  text String
+
+  /// Правка автором в течение окна из настроек — метка видна читателям.
+  editedAt DateTime?
+
+  /// Автор удалил свой комментарий. Строка остаётся, если на неё отвечали:
+  /// иначе ответы повисают без вопроса.
+  deletedAt DateTime?
+
+  /// Скрыт автором работы или модератором (§4.3, пост-модерация).
+  hiddenAt   DateTime?
+  hiddenById String?
+
+  createdAt DateTime @default(now())
+
+  @@index([workId, createdAt])
+  @@index([parentId, createdAt])
+  @@map("work_comments")
 }
 
 model WorkMedia {
@@ -935,6 +979,8 @@ enum NotificationType {
   auction_closed
   auction_won
   auction_winner_declined
+  work_comment
+  work_comment_reply
   system
 }
 

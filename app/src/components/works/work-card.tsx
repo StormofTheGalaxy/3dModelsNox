@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Heart, Sparkles } from 'lucide-react';
+import { Eye, Heart, MessageSquare, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
@@ -11,6 +11,8 @@ export interface WorkCardData {
   title: string;
   likesCount: number;
   views: number;
+  /** Ноль скрывается: пустой счётчик обсуждения обещает пустоту. */
+  commentsCount?: number;
   badgeOnPlatform: boolean;
   designer: { nickname: string };
   media: { url: string; thumbnailUrl: string | null; width: number | null; height: number | null }[];
@@ -104,6 +106,12 @@ export function WorkCard({ work }: { work: WorkCardData }) {
             <Eye className="size-3.5" aria-hidden />
             {work.views}
           </span>
+          {work.commentsCount ? (
+            <span className="inline-flex items-center gap-1" title={t('comments.title', { count: work.commentsCount })}>
+              <MessageSquare className="size-3.5" aria-hidden />
+              {work.commentsCount}
+            </span>
+          ) : null}
         </div>
       </div>
     </Link>
