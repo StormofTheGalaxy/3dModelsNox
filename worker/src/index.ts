@@ -9,6 +9,7 @@ import {
   remindMilestoneDeadlines,
   remindStuckPayments,
 } from './jobs/deal-maintenance';
+import { sendBroadcast, type BroadcastPayload } from './jobs/broadcast';
 import { sendWeeklyDigests } from './jobs/digest';
 import { summarizeDisputeJob, type DisputeSummaryPayload } from './jobs/dispute-summary';
 import {
@@ -58,8 +59,15 @@ function register(name: string, processor: (job: Job) => Promise<void>): void {
 }
 
 register(QUEUES.email, async (job) => {
-  // Письма фазы 0 (подтверждение, сброс пароля) отправляются синхронно из app:
-  // пользователь ждёт результат на экране. Очередь готова для дайджестов (фаза 6).
+  if (job.name === 'broadcast') {
+    const payload = job.data as BroadcastPayload;
+    const sent = await sendBroadcast(payload);
+    console.info(`[worker:email] рассылка ${payload.broadcastId}: отправлено ${sent}`);
+    return;
+  }
+
+  // Письма подтверждения и сброса пароля уходят синхронно из app:
+  // пользователь ждёт результат на экране.
   console.info(`[worker:email] задача ${job.name} принята`);
 });
 

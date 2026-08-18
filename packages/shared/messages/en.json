@@ -387,6 +387,17 @@
     },
     "onboarding": {
       "textTooShort": "Paste more text — at least 80 characters"
+    },
+    "settings": {
+      "invalidValue": "The value does not fit: {message}"
+    },
+    "legal": {
+      "titleRequired": "Enter a title",
+      "bodyTooShort": "The text is too short"
+    },
+    "broadcast": {
+      "subjectRequired": "Enter a subject",
+      "bodyTooShort": "The message is too short"
     }
   },
   "empty": {
@@ -423,13 +434,20 @@
       "reviews": "Deals awaiting your review: {count}",
       "orders": "New orders on the board: {count}",
       "action": "Open dashboard"
+    },
+    "invite": {
+      "subject": "Your PolyForge invitation",
+      "heading": "It's your turn",
+      "body": "We are opening access to the PolyForge closed beta. The link below creates an account with your invitation; it is valid for 30 days.",
+      "action": "Accept the invitation"
     }
   },
   "legal": {
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "rules": "Platform Rules",
-    "draftNotice": "Draft document. The final version will be published before the beta opens."
+    "draftNotice": "Draft document. The final version will be published before the beta opens.",
+    "effectiveAt": "In effect from {date}"
   },
   "taxonomy": {
     "specialization": {
@@ -1559,5 +1577,191 @@
     "machineTranslated": "translated by AI",
     "showOriginal": "show original",
     "showTranslation": "show translation"
+  },
+  "admin": {
+    "nav": {
+      "label": "Admin sections",
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "orders": "Orders",
+      "deals": "Deals",
+      "payments": "Receipts",
+      "disputes": "Disputes",
+      "reports": "Reports",
+      "verification": "Verification",
+      "invites": "Invites",
+      "content": "Content",
+      "broadcasts": "Broadcasts",
+      "settings": "Settings",
+      "audit": "Audit log"
+    },
+    "stats": {
+      "users": "Users",
+      "newInPeriod": "new in 30 days: {count}",
+      "activeToday": "Seen in 24h",
+      "banned": "blocked: {count}",
+      "orders": "Orders on the board",
+      "responses": "responses in 30 days: {count}",
+      "confirmed": "Payments confirmed",
+      "claimed": "claimed but unconfirmed: {amount}",
+      "registrations": "Registrations over 30 days",
+      "deals": "Deals by status",
+      "queues": "Queues",
+      "noData": "No data yet"
+    },
+    "users": {
+      "searchPlaceholder": "Nickname or email",
+      "empty": "Nobody found",
+      "status": {
+        "active": "Active",
+        "shadow_banned": "Shadow banned",
+        "temp_banned": "Temporarily banned",
+        "banned": "Banned",
+        "deleted": "Deleted"
+      },
+      "email": "Email",
+      "registered": "Registered",
+      "lastSeen": "Last seen",
+      "lastIp": "Last IP",
+      "locale": "Language",
+      "invitesLeft": "Invites left",
+      "deals": "Deals",
+      "orders": "Orders",
+      "responses": "Responses",
+      "works": "Works",
+      "reportsAgainst": "Reports against the user",
+      "designerProfile": "Designer profile",
+      "verified": "Verified",
+      "banReason": "Ban reason: {reason}",
+      "strikes": "Strikes",
+      "noStrikes": "No strikes",
+      "strikeStatus": {
+        "active": "active",
+        "expired": "expired",
+        "revoked": "revoked"
+      },
+      "actions": "Actions",
+      "reason": "Reason",
+      "ban": "Ban",
+      "shadowBan": "Shadow ban",
+      "unban": "Unban",
+      "shadowBanHint": "With a shadow ban the user's content and responses are invisible to others, and they are never told.",
+      "level": "Designer level",
+      "applyLevel": "Change level",
+      "invites": "Invites",
+      "grantInvites": "Grant",
+      "adminOnly": "Account actions are available to the superadmin only.",
+      "selfNotice": "This is your own account — actions on yourself are unavailable."
+    },
+    "orders": {
+      "searchPlaceholder": "Order title",
+      "empty": "No orders found",
+      "responses": "responses: {count}",
+      "unpublish": "Remove from the board",
+      "unpublishHint": "The order goes to the archive and its author gets a notification with the reason.",
+      "reason": "Reason"
+    },
+    "deals": {
+      "stuck": "Stuck payments",
+      "noStuck": "No stuck payments",
+      "overdue": "Overdue milestones",
+      "noOverdue": "No overdue milestones",
+      "reminders": "reminders: {count}"
+    },
+    "payments": {
+      "modeAll": "Beta mode: every receipt is reviewed.",
+      "modeSample": "{percent}% of receipts are sampled for review.",
+      "filterLabel": "Receipt filter",
+      "filters": {
+        "all": "All",
+        "sampled": "Sampled"
+      },
+      "empty": "No receipts yet",
+      "check": {
+        "none": "not reviewed",
+        "random_ok": "sampled",
+        "flagged": "flagged",
+        "verified": "verified"
+      },
+      "markVerified": "Mark as verified",
+      "markFlagged": "Flag as suspicious"
+    },
+    "invites": {
+      "waiting": "On the waitlist",
+      "invited": "Invited",
+      "unusedCodes": "Unused codes",
+      "usedCodes": "Codes used: {count}",
+      "empty": "The waitlist is empty",
+      "invite": "Invite ({count})",
+      "selectAll": "Select all",
+      "clearSelection": "Clear selection",
+      "sent": "Invitations sent: {count}",
+      "note": "The beta opens in batches — invite as many as the platform is ready to serve."
+    },
+    "content": {
+      "featured": "Designer of the week",
+      "featuredPlaceholder": "Designer nickname",
+      "featuredSave": "Set",
+      "featuredClear": "Clear",
+      "legal": "Legal documents",
+      "legalHint": "Until a document is created here, the public page shows the draft from code.",
+      "legalDocs": {
+        "terms": "Terms of service",
+        "privacy": "Privacy policy",
+        "rules": "Platform rules"
+      },
+      "legalStored": "Published",
+      "legalDraft": "Draft from code",
+      "legalEdit": "Edit",
+      "legalTitle": "Title",
+      "legalBody": "Body (markdown)",
+      "legalMarkdownHint": "Headings (## ), lists, **bold** and links are supported. HTML is not inserted.",
+      "legalSave": "Save document"
+    },
+    "broadcasts": {
+      "segment": "Segment",
+      "locale": "Language",
+      "anyLocale": "Any",
+      "subject": "Subject",
+      "body": "Message",
+      "warning": "A sent email cannot be recalled. Check the text and the segment.",
+      "send": "Send broadcast",
+      "queued": "The broadcast is queued",
+      "empty": "No broadcasts yet",
+      "segments": {
+        "all": "All users",
+        "designers": "Designers",
+        "customers": "Customers",
+        "waitlist": "Waitlist"
+      },
+      "status": {
+        "draft": "Queued",
+        "sending": "Sending",
+        "sent": "Sent",
+        "failed": "Failed"
+      }
+    },
+    "settings": {
+      "description": "Platform thresholds and limits. The value is JSON: a number, string, array or object.",
+      "save": "Save",
+      "reset": "Reset to default",
+      "isDefault": "default value",
+      "groups": {
+        "access": "Access and registration",
+        "orders": "Orders and responses",
+        "deals": "Deals",
+        "ai": "AI",
+        "reputation": "Reputation",
+        "moderation": "Moderation",
+        "uploads": "Uploads",
+        "features": "Feature flags"
+      }
+    },
+    "audit": {
+      "filterAction": "Filter by action",
+      "filterActor": "Filter by nickname",
+      "empty": "No entries found",
+      "system": "system"
+    }
   }
 }

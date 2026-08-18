@@ -6,18 +6,14 @@ import {
   BadgeCheck,
   ClipboardList,
   FileText,
-  Flag,
-  Gavel,
   Handshake,
   LayoutDashboard,
   LogOut,
   Send,
   Settings,
   Shield,
-  ShieldCheck,
   Ticket,
 } from 'lucide-react';
-import NextLink from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
@@ -149,33 +145,13 @@ export function UserMenu({
 
           {isStaff ? (
             <>
+              {/* Админка живёт внутри языковых префиксов: её страницы
+                  переведены наравне с остальными (§9 DoD). */}
               <DropdownMenu.Item asChild className={itemClass}>
-                <Link href="/admin/disputes">
-                  <Gavel className="size-4 text-fg-muted" aria-hidden />
-                  {t('disputes')}
-                </Link>
-              </DropdownMenu.Item>
-
-              <DropdownMenu.Item asChild className={itemClass}>
-                <Link href="/admin/reports">
-                  <Flag className="size-4 text-fg-muted" aria-hidden />
-                  {t('reports')}
-                </Link>
-              </DropdownMenu.Item>
-
-              <DropdownMenu.Item asChild className={itemClass}>
-                <Link href="/admin/verification">
-                  <ShieldCheck className="size-4 text-fg-muted" aria-hidden />
-                  {t('verificationQueue')}
-                </Link>
-              </DropdownMenu.Item>
-
-              <DropdownMenu.Item asChild className={itemClass}>
-                {/* Админка живёт вне языковых префиксов — обычный next/link. */}
-                <NextLink href="/admin">
+                <Link href="/admin">
                   <Shield className="size-4 text-fg-muted" aria-hidden />
                   {t('admin')}
-                </NextLink>
+                </Link>
               </DropdownMenu.Item>
             </>
           ) : null}

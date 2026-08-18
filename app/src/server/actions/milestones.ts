@@ -10,6 +10,7 @@ import { getCurrentUser } from '../auth/session';
 import { finalMilestone, getMilestoneWithDeal, postSystemMessage } from '../deals';
 import { storeDealFile, type StoredDealFile } from '../media';
 import { notify } from '../notifications';
+import { checkRateLimit } from '../ratelimit';
 import { grantAchievements, recomputeLevel } from '../reputation';
 import { enqueueWatermark } from '../queue';
 import { getSetting, getSettings } from '../settings';
@@ -71,6 +72,13 @@ export async function submitDelivery(
 
   const files = formData.getAll('files').filter((entry): entry is File => entry instanceof File && entry.size > 0);
   if (files.length === 0) return errorState('errors.deal.deliveryFilesRequired');
+
+  // Загрузка файлов ограничивается частотой наравне с портфолио (§9 DoD):
+  // сдача этапа — такой же приём файлов от пользователя.
+  const limit = await checkRateLimit('upload', user.id);
+  if (!limit.allowed) {
+    return errorState('errors.rateLimited', { values: { seconds: limit.retryAfterSeconds } });
+  }
 
   const limitGb = await getSetting('deal_files_limit_gb');
   const used = await prisma.deliveryFile.aggregate({
@@ -349,6 +357,11 @@ export async function claimPayment(
     .filter((entry): entry is File => entry instanceof File && entry.size > 0);
 
   if (receipts.length === 0) return errorState('errors.deal.receiptRequired');
+
+  const uploadLimit = await checkRateLimit('upload', user.id);
+  if (!uploadLimit.allowed) {
+    return errorState('errors.rateLimited', { values: { seconds: uploadLimit.retryAfterSeconds } });
+  }
 
   const stored: StoredDealFile[] = [];
   for (const file of receipts) {

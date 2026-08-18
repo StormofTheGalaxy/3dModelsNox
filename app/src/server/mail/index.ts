@@ -63,3 +63,26 @@ export async function sendNotificationEmail(
 ): Promise<void> {
   await mailer().send(to, locale, content);
 }
+
+/** Приглашение из листа ожидания (§4.11): код в ссылке, письмо двуязычное. */
+export async function sendInviteEmail(
+  to: string,
+  locale: Locale,
+  code: string,
+): Promise<void> {
+  await mailer().sendFromDictionary(
+    to,
+    locale,
+    'emails.invite',
+    `/${locale}/i/${encodeURIComponent(code)}`,
+  );
+}
+
+/** Ручная рассылка админа (§4.10): тема и текст приходят из формы. */
+export async function sendBroadcastEmail(
+  to: string,
+  locale: Locale,
+  content: ActionEmailContent,
+): Promise<void> {
+  await mailer().send(to, locale, content);
+}

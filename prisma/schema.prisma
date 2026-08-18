@@ -146,6 +146,8 @@ model User {
   disputesArbitrated Dispute[]          @relation("DisputeArbiter")
 
   contentTranslations ContentTranslation[] @relation("TranslationRequester")
+  legalEdits       LegalDocument[]      @relation("LegalEditor")
+  broadcasts       Broadcast[]          @relation("BroadcastAuthor")
   reviewsWritten   Review[]             @relation("ReviewAuthor")
   reviewsReceived  Review[]             @relation("ReviewTarget")
   reviewsHidden    Review[]             @relation("ReviewModerator")
@@ -1695,4 +1697,82 @@ model ChatSummary {
   updatedAt DateTime @updatedAt
 
   @@map("chat_summaries")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 7: админка и запуск
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Правовой документ в markdown (§4.10).
+///
+/// Тексты переезжают из кода в БД, потому что их правит юрист, а не
+/// разработчик: изменение оферты не должно требовать деплоя. Пока записи
+/// нет, страница показывает драфт из кода — платформа не может остаться
+/// вовсе без пользовательского соглашения.
+model LegalDocument {
+  id String @id @default(cuid())
+
+  /// terms | privacy | rules
+  slug   String
+  locale Locale
+
+  title    String
+  /// Markdown: заголовки, списки, ссылки. HTML не принимается.
+  body     String
+  /// Дата вступления в силу — показывается в шапке документа.
+  effectiveAt DateTime @default(now())
+
+  updatedById String?
+  updatedBy   User?   @relation("LegalEditor", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slug, locale])
+  @@map("legal_documents")
+}
+
+enum BroadcastStatus {
+  draft
+  sending
+  sent
+  failed
+}
+
+enum BroadcastSegment {
+  all
+  designers
+  customers
+  waitlist
+}
+
+/// Ручная рассылка сегменту (§4.10).
+///
+/// Отправка идёт воркером: письмо тысяче адресатов не помещается в один
+/// запрос админки, а прогресс должен быть виден после перезагрузки страницы.
+model Broadcast {
+  id String @id @default(cuid())
+
+  segment BroadcastSegment
+  locale  Locale?
+
+  subject String
+  body    String
+
+  status BroadcastStatus @default(draft)
+  /// Сколько адресатов было на момент старта и скольким ушло.
+  total  Int @default(0)
+  sent   Int @default(0)
+
+  authorId String?
+  author   User?   @relation("BroadcastAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("broadcasts")
 }

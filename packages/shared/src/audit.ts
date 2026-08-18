@@ -75,6 +75,8 @@ export const AUDIT_ACTIONS = [
   // платформа
   'setting.changed',
   'admin.broadcast_sent',
+  'content.updated',
+  'legal.updated',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

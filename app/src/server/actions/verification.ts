@@ -9,6 +9,7 @@ import { writeAuditLog } from '../audit';
 import { getCurrentUser, isStaff } from '../auth/session';
 import { storeProfileImage } from '../media';
 import { notify } from '../notifications';
+import { checkRateLimit } from '../ratelimit';
 import { recomputeLevel } from '../reputation';
 import { getSetting } from '../settings';
 import { errorState, successState, type ActionState } from './types';
@@ -99,6 +100,12 @@ export async function submitVerification(
 
   if (files.length === 0 && request.images.length === 0) {
     return errorState('errors.verification.imagesRequired');
+  }
+
+  // Приём картинок ограничивается частотой, как и остальные загрузки (§9 DoD).
+  const limit = await checkRateLimit('upload', user.id);
+  if (!limit.allowed) {
+    return errorState('errors.rateLimited', { values: { seconds: limit.retryAfterSeconds } });
   }
 
   let order = request.images.length;

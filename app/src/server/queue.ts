@@ -139,3 +139,23 @@ export async function enqueueDisputeSummary(job: DisputeSummaryJob): Promise<voi
     console.error('[queue] не удалось поставить резюме спора', error);
   }
 }
+
+export interface BroadcastJob {
+  broadcastId: string;
+}
+
+/**
+ * Ручная рассылка (§4.10). Уходит в очередь писем: отправка сотням адресатов
+ * занимает минуты и не может держать запрос админки.
+ */
+export async function enqueueBroadcast(job: BroadcastJob): Promise<void> {
+  try {
+    await queue(QUEUES.email).add('broadcast', job, {
+      attempts: 1,
+      removeOnComplete: 20,
+      removeOnFail: 50,
+    });
+  } catch (error) {
+    console.error('[queue] не удалось поставить рассылку', error);
+  }
+}
