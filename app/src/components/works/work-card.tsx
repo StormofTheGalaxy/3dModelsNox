@@ -60,9 +60,15 @@ export function WorkCard({ work }: { work: WorkCardData }) {
       </div>
 
       {work.badgeOnPlatform ? (
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-white">
+        <span
+          className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-white"
+          title={t('badgeOnPlatform')}
+        >
           <Sparkles className="size-3" aria-hidden />
-          {t('badgeOnPlatform')}
+          {/* На телефоне карточки идут в две колонки, и подпись переносилась на
+              две строки, закрывая треть кадра. Там остаётся один значок, но для
+              скринридера текст никуда не девается. */}
+          <span className="sr-only sm:not-sr-only">{t('badgeOnPlatform')}</span>
         </span>
       ) : null}
 
@@ -74,14 +80,18 @@ export function WorkCard({ work }: { work: WorkCardData }) {
         )}
       >
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white">{work.title}</p>
+          {/* Две строки, а не многоточие: в две колонки на телефоне карточка
+              шириной 184 px, и от названия оставался один слог. */}
+          <p className="line-clamp-2 text-sm font-semibold break-words text-white">{work.title}</p>
           <p className="truncate text-xs text-white/70">@{work.designer.nickname}</p>
         </div>
 
-        {/* Счётчики второстепенны — проявляются при наведении. */}
+        {/* Счётчики второстепенны — проявляются при наведении. На телефоне
+            наведения нет, а прозрачный блок всё равно занимал ширину и резал
+            название, поэтому там его нет в потоке вовсе. */}
         <div
           className={cn(
-            'flex shrink-0 items-center gap-2.5 text-xs text-white/80',
+            'hidden shrink-0 items-center gap-2.5 text-xs text-white/80 sm:flex',
             'opacity-0 transition-opacity duration-200',
             'group-hover:opacity-100 group-focus-visible:opacity-100',
           )}
