@@ -2,8 +2,11 @@
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
+  Award,
+  BadgeCheck,
   ClipboardList,
   FileText,
+  Flag,
   Gavel,
   Handshake,
   LayoutDashboard,
@@ -11,6 +14,7 @@ import {
   Send,
   Settings,
   Shield,
+  ShieldCheck,
   Ticket,
 } from 'lucide-react';
 import NextLink from 'next/link';
@@ -123,6 +127,20 @@ export function UserMenu({
           </DropdownMenu.Item>
 
           <DropdownMenu.Item asChild className={itemClass}>
+            <Link href="/achievements">
+              <Award className="size-4 text-fg-muted" aria-hidden />
+              {t('achievements')}
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild className={itemClass}>
+            <Link href="/verification">
+              <BadgeCheck className="size-4 text-fg-muted" aria-hidden />
+              {t('verification')}
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild className={itemClass}>
             <Link href="/settings">
               <Settings className="size-4 text-fg-muted" aria-hidden />
               {t('settings')}
@@ -135,6 +153,20 @@ export function UserMenu({
                 <Link href="/admin/disputes">
                   <Gavel className="size-4 text-fg-muted" aria-hidden />
                   {t('disputes')}
+                </Link>
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Item asChild className={itemClass}>
+                <Link href="/admin/reports">
+                  <Flag className="size-4 text-fg-muted" aria-hidden />
+                  {t('reports')}
+                </Link>
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Item asChild className={itemClass}>
+                <Link href="/admin/verification">
+                  <ShieldCheck className="size-4 text-fg-muted" aria-hidden />
+                  {t('verificationQueue')}
                 </Link>
               </DropdownMenu.Item>
 

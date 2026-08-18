@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { COOKIES } from '@polyforge/shared';
 
+import { redirectIfAuthenticated } from '@/server/auth/guards';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DiscordButton } from '@/components/forms/discord-button';
@@ -30,6 +31,10 @@ export default async function RegisterPage({
 }) {
   const [{ locale }, query] = await Promise.all([params, searchParams]);
   setRequestLocale(locale);
+
+  // Увод уже вошедшего в кабинет делает страница, а не proxy: только здесь
+  // видно, жива ли сессия на самом деле.
+  await redirectIfAuthenticated(locale);
 
   const [t, inviteOnly, cookieStore] = await Promise.all([
     getTranslations('auth'),

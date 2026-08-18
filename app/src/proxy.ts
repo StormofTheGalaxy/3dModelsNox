@@ -10,9 +10,6 @@ const intlMiddleware = createIntlMiddleware(routing);
 /** Пути (без языкового префикса), доступные только авторизованным. */
 const PROTECTED_PREFIXES = ['/dashboard', '/invites', '/settings', '/onboarding', '/admin'];
 
-/** Пути, с которых авторизованного пользователя уводим в кабинет. */
-const GUEST_ONLY_PREFIXES = ['/login', '/register', '/forgot-password', '/reset-password'];
-
 const localePattern = new RegExp(`^/(${LOCALES.join('|')})(?=/|$)`);
 
 function stripLocale(pathname: string): string {
@@ -45,9 +42,10 @@ export default function proxy(request: NextRequest): NextResponse {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (hasSession && matches(path, GUEST_ONLY_PREFIXES)) {
-    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
-  }
+  // Увода авторизованного пользователя со страницы входа здесь нет намеренно:
+  // proxy видит только наличие куки. Если сессия отозвана на сервере, а кука
+  // осталась, такой увод зацикливается со страничным редиректом на /login.
+  // Живую сессию отличает страница входа — у неё есть доступ к БД.
 
   return response;
 }

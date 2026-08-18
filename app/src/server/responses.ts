@@ -49,10 +49,16 @@ const RESPONSE_SELECT = {
   createdAt: true,
 } as const;
 
-/** Отклики на заказ — только для заказчика. Приглашённые идут первыми (§3). */
+/**
+ * Отклики на заказ — только для заказчика. Приглашённые идут первыми (§3).
+ *
+ * Теневой бан отсекается здесь же: заказчик не должен видеть откликов от
+ * тех, кого платформа скрыла, а сам дизайнер продолжает видеть свой отклик
+ * в «Моих откликах» и ни о чём не догадывается (§3).
+ */
 export async function listOrderResponses(orderId: string) {
   return prisma.orderResponse.findMany({
-    where: { orderId },
+    where: { orderId, designer: { status: 'active' } },
     orderBy: [{ isInvited: 'desc' }, { createdAt: 'desc' }],
     select: {
       ...RESPONSE_SELECT,

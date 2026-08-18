@@ -42,7 +42,11 @@
     "myResponses": "My proposals",
     "notifications": "Notifications",
     "deals": "Deals",
-    "disputes": "Disputes"
+    "disputes": "Disputes",
+    "achievements": "Achievements",
+    "verification": "Verification",
+    "reports": "Reports",
+    "verificationQueue": "Verification queue"
   },
   "soon": {
     "title": "This section is coming soon",
@@ -332,6 +336,37 @@
       "messageEmpty": "The message is empty",
       "changeDescriptionTooShort": "Describe the change in more detail (at least 20 characters)",
       "changeResolved": "The request has already been handled"
+    },
+    "review": {
+      "dealNotCompleted": "A review can only be left on a completed deal",
+      "alreadyLeft": "You have already reviewed this deal",
+      "textTooShort": "Write at least 20 characters",
+      "textTooLong": "The review is too long",
+      "scoreRequired": "Give a score",
+      "editWindowClosed": "The edit window is closed",
+      "hidden": "The review was hidden by a moderator",
+      "notPublished": "The review is not published yet",
+      "alreadyReplied": "You have already replied",
+      "replyTooShort": "The reply is too short",
+      "replyTooLong": "The reply is too long"
+    },
+    "verification": {
+      "alreadyVerified": "The profile is already verified",
+      "pending": "A request is already in review",
+      "notSubmitted": "The request has not been submitted yet",
+      "retryLater": "You cannot apply again yet",
+      "imagesRequired": "Attach at least one image",
+      "processTooShort": "Describe the process in more detail — at least 100 characters",
+      "processTooLong": "The description is too long"
+    },
+    "achievements": {
+      "tooManyFeatured": "You can show at most five achievements next to your nickname"
+    },
+    "moderation": {
+      "selfAction": "You cannot apply this action to yourself"
+    },
+    "report": {
+      "alreadyResolved": "The report has already been handled"
     }
   },
   "empty": {
@@ -470,7 +505,6 @@
     "save": "Save profile",
     "portfolio": "Portfolio",
     "reviews": "Reviews",
-    "reviewsSoon": "Reviews arrive together with deals — development phase 5.",
     "noWorks": "No works yet",
     "noWorksOwn": "Upload your first piece — a portfolio sells better than words.",
     "invite": "Invite to an order",
@@ -592,7 +626,13 @@
     "textHint": "Describe the problem — it helps the moderator act faster",
     "submit": "Send report",
     "sent": "Report sent. Thank you.",
-    "alreadySent": "You have already reported this."
+    "alreadySent": "You have already reported this.",
+    "queue": "Reports",
+    "queueEmpty": "No open reports",
+    "resolutionNote": "Resolution note",
+    "confirmAndStrike": "Confirm and issue a strike",
+    "dismiss": "Dismiss the report",
+    "bannedAfterStrike": "Strike threshold reached — the account is temporarily blocked"
   },
   "brief": {
     "title": "Briefs",
@@ -1041,6 +1081,41 @@
       "title": "The dispute on “{dealTitle}” is closed",
       "body": "The arbiter issued a verdict. The decision and its reasoning are in the deal.",
       "action": "See the decision"
+    },
+    "review_received": {
+      "title": "A new review on the deal “{dealTitle}”",
+      "body": "The other side left a review. It gets published once you write yours, or after {days} days.",
+      "action": "Leave a review"
+    },
+    "review_published": {
+      "title": "Reviews published",
+      "body": "The scores on the deal are now visible to both sides and counted in the rating.",
+      "action": "See the review"
+    },
+    "review_replied": {
+      "title": "{author} replied to your review",
+      "body": "The reply appears next to the review in the profile.",
+      "action": "Open"
+    },
+    "achievement_granted": {
+      "title": "Achievement unlocked",
+      "body": "You unlocked a new achievement. Check the shelf — it shows progress on the rest.",
+      "action": "My achievements"
+    },
+    "level_changed": {
+      "title": "Your level has changed",
+      "body": "New level: {level}. It affects your position in listings, your badge and your daily response limit.",
+      "action": "Open profile"
+    },
+    "verification_decided": {
+      "title": "Verification decision",
+      "body": "A moderator reviewed your request. The comment and the next step are on the verification page.",
+      "action": "See the decision"
+    },
+    "strike_issued": {
+      "title": "A strike was issued: {reason}",
+      "body": "Active strikes: {count}. Reaching the threshold temporarily blocks the account.",
+      "action": "Open settings"
     }
   },
   "deals": {
@@ -1263,8 +1338,12 @@
       "brief": {
         "changeRequested": "{author} requested a brief change",
         "changeResolved": "{author} answered the brief change request"
+      },
+      "reviews": {
+        "published": "Reviews on the deal are published"
       }
-    }
+    },
+    "reviewAboutYou": "Review about you"
   },
   "disputes": {
     "title": "Disputes",
@@ -1289,5 +1368,149 @@
       "customer_right": "Customer is right",
       "mutual": "Shared responsibility"
     }
+  },
+  "reviews": {
+    "title": "Review of {nickname}",
+    "editTitle": "Edit the review",
+    "blindHint": "Reviews are published together: yours becomes visible once the other side writes theirs, or after {days} days. Until then we do not show you theirs either.",
+    "overall": "Overall",
+    "text": "Your review",
+    "textHint": "What worked, what did not, what was missing. At least 20 characters.",
+    "submit": "Submit review",
+    "saveEdit": "Save changes",
+    "yours": "Your review",
+    "publishedNote": "The review is published, the edit window is closed.",
+    "pendingNote": "Waiting for the other side — we publish both at once, or after {days} days.",
+    "publishedNow": "Both reviews are published.",
+    "waitingOther": "Review saved. It will be published when the other side writes theirs, or after {days} days.",
+    "empty": "No reviews yet",
+    "reply": "Reply",
+    "sendReply": "Send reply",
+    "replyLabel": "Reply",
+    "subscores": {
+      "designer": {
+        "quality": "Quality of work",
+        "deadlines": "Meeting deadlines",
+        "communication": "Communication"
+      },
+      "customer": {
+        "briefClarity": "Brief clarity",
+        "communication": "Communication",
+        "payment": "Payment"
+      }
+    }
+  },
+  "achievements": {
+    "title": "Achievements",
+    "description": "Granted automatically from your activity. Up to five favourites show next to your nickname.",
+    "unlocked": "Achievement unlocked!",
+    "secret": "???",
+    "secretHint": "A hidden achievement — you learn the condition when you earn it",
+    "rarity": "{percent}% of users have this",
+    "maxed": "maxed out",
+    "feature": "Show next to nickname",
+    "unfeature": "Remove from nickname",
+    "tiers": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold"
+    },
+    "items": {
+      "first_deal": {
+        "title": "Deal closed",
+        "description": "Completed deals as a designer"
+      },
+      "portfolio_builder": {
+        "title": "Portfolio",
+        "description": "Works published in the gallery"
+      },
+      "five_stars": {
+        "title": "Five out of five",
+        "description": "Reviews with the top score"
+      },
+      "always_on_time": {
+        "title": "Right on time",
+        "description": "Milestones delivered without a delay in a row"
+      },
+      "responsive": {
+        "title": "Responsive",
+        "description": "Responses sent to orders"
+      },
+      "trusted": {
+        "title": "They come back",
+        "description": "Customers with more than one closed deal"
+      },
+      "brief_master": {
+        "title": "Brief master",
+        "description": "Briefs created"
+      },
+      "order_maker": {
+        "title": "Customer",
+        "description": "Orders published"
+      },
+      "night_shift": {
+        "title": "Night shift",
+        "description": "Milestones delivered between 23:00 and 5:00 UTC"
+      },
+      "polyglot_wallet": {
+        "title": "Multi-currency",
+        "description": "Different currencies across closed deals"
+      },
+      "first_try": {
+        "title": "First try",
+        "description": "Deals closed without a single revision round"
+      },
+      "vindicated": {
+        "title": "Vindicated",
+        "description": "Disputes resolved in your favour"
+      },
+      "marathon": {
+        "title": "Marathoner",
+        "description": "A great many closed deals"
+      }
+    }
+  },
+  "top": {
+    "title": "Designer leaderboard",
+    "description": "A weighted score with decay: recent reviews count for more than old ones.",
+    "designerOfWeek": "Designer of the week",
+    "ratingLine": "Rating {rating} from {count} reviews",
+    "periodLabel": "Period",
+    "specLabel": "Specialization",
+    "periods": {
+      "month": "This month",
+      "all": "All time"
+    },
+    "allSpecs": "All specializations",
+    "empty": "Nobody to show yet — the leaderboard fills up with the first reviews."
+  },
+  "verification": {
+    "title": "Verification",
+    "description": "Confirm the portfolio is yours: pick a test task, complete it and show your process.",
+    "needProfile": "Fill in your designer profile first.",
+    "verified": "Profile verified",
+    "choose": "Take this task",
+    "hours": "≈ {hours} h",
+    "noTasks": "No tasks for your specializations yet. Check back later.",
+    "images": "Images of the work",
+    "imagesHint": "Renders, wireframes, work-in-progress screenshots — up to ten files.",
+    "process": "Process description",
+    "processHint": "How you got there: where you started, what you changed, what you used. At least 100 characters — this text is what proves authorship.",
+    "submit": "Send for review",
+    "submitted": "Your request has been sent for review.",
+    "submittedAt": "Submitted {date}",
+    "waitingReview": "A moderator will look at it within a few days. You will get a notification with the result.",
+    "retryAfter": "You can apply again from {date}.",
+    "statuses": {
+      "draft": "Draft",
+      "submitted": "In review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "queue": "Verification queue",
+    "queueEmpty": "No requests to review",
+    "decisionNote": "Comment for the designer",
+    "approve": "Approve",
+    "reject": "Reject"
   }
 }

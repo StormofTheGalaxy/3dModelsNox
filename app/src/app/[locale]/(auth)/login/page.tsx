@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { redirectIfAuthenticated } from '@/server/auth/guards';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DiscordButton } from '@/components/forms/discord-button';
@@ -19,6 +20,10 @@ export async function generateMetadata({
 export default async function LoginPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  // Увод уже вошедшего в кабинет делает страница, а не proxy: только здесь
+  // видно, жива ли сессия на самом деле.
+  await redirectIfAuthenticated(locale);
 
   const t = await getTranslations('auth');
 

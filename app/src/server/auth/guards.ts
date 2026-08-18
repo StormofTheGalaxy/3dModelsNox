@@ -2,6 +2,7 @@ import 'server-only';
 
 import { redirect } from 'next/navigation';
 
+import { redirectToLogin } from './redirects';
 import { getCurrentUser, isStaff, type SessionUser } from './session';
 
 /**
@@ -12,7 +13,10 @@ import { getCurrentUser, isStaff, type SessionUser } from './session';
 export async function requireUser(locale: string): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) {
-    redirect(`/${locale}/login`);
+    // Не `/login` напрямую: кука сессии может пережить саму сессию (бан,
+    // разлогин со всех устройств), и тогда proxy вернёт со страницы входа
+    // обратно в кабинет. Роут сначала удаляет куку.
+    redirectToLogin(locale);
   }
   return user;
 }
@@ -35,4 +39,20 @@ export async function requireStaff(locale: string): Promise<SessionUser> {
     redirect(`/${locale}`);
   }
   return user;
+}
+
+/**
+ * Обратный гвард: вошедшего пользователя уводим со страниц входа и
+ * регистрации в кабинет.
+ *
+ * Живёт на странице, а не в proxy: proxy работает на Edge и видит только
+ * наличие куки. Кука переживает саму сессию (бан отзывает сессии, разлогин
+ * со всех устройств — тоже), и увод по одному её наличию зацикливается с
+ * редиректом страницы на /login. Здесь же сессия проверяется по-настоящему.
+ */
+export async function redirectIfAuthenticated(locale: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (user) {
+    redirect(`/${locale}/dashboard`);
+  }
 }

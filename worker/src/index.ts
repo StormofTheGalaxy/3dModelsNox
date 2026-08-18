@@ -11,6 +11,11 @@ import {
 } from './jobs/deal-maintenance';
 import { summarizeDisputeJob, type DisputeSummaryPayload } from './jobs/dispute-summary';
 import {
+  grantAchievementsBatch,
+  publishExpiredReviews,
+  recomputeLevels,
+} from './jobs/reputation';
+import {
   archiveExpiredOrders,
   dispatchSavedFilterMatches,
   flagInactiveCustomers,
@@ -25,7 +30,8 @@ import { storage } from './storage';
  *
  * Фазы 1–4: сжатие изображений портфолио, экспорт ТЗ в PDF, гигиена витрины
  * заказов, дайджесты по сохранённым фильтрам, водяные знаки на превью
- * финальных сдач, напоминания о дедлайнах и зависших оплатах.
+ * финальных сдач, напоминания о дедлайнах и зависших оплатах, репутация:
+ * публикация отзывов по сроку, пересчёт уровней, выдача достижений.
  */
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -186,6 +192,33 @@ register(QUEUES.maintenance, async (job) => {
     return;
   }
 
+  if (job.name === 'publish-reviews') {
+    const count = await publishExpiredReviews();
+    console.info(`[worker:maintenance] отзывов опубликовано по сроку: ${count}`);
+    return;
+  }
+
+  if (job.name === 'recompute-levels') {
+    const count = await recomputeLevels();
+    console.info(`[worker:maintenance] уровней изменено: ${count}`);
+    return;
+  }
+
+  if (job.name === 'grant-achievements') {
+    const count = await grantAchievementsBatch();
+    console.info(`[worker:maintenance] достижений выдано: ${count}`);
+    return;
+  }
+
+  if (job.name === 'expire-strikes') {
+    const { expireStrikesAndBans } = await import('./jobs/strikes');
+    const result = await expireStrikesAndBans();
+    console.info(
+      `[worker:maintenance] страйков истекло: ${result.strikes}, банов снято: ${result.bans}`,
+    );
+    return;
+  }
+
   if (job.name === 'delete-storage-objects') {
     const { keys } = job.data as { keys: string[] };
     // Производные webp лежат рядом с оригиналом — удаляем и их.
@@ -222,6 +255,15 @@ async function scheduleRepeatableJobs(): Promise<void> {
     { name: 'remind-stuck-payments', pattern: '45 10 * * *' },
     // Метрика «сдано в срок» — ночью, она нигде не нужна в реальном времени.
     { name: 'recompute-ontime', pattern: '20 3 * * *' },
+    // Отзывы с истёкшим слепым периодом — раз в час: срок задан в днях,
+    // но публиковать их в один момент суток незачем.
+    { name: 'publish-reviews', pattern: '25 * * * *' },
+    // Пересчёт уровней — еженедельно (§3), ночью с воскресенья на понедельник.
+    { name: 'recompute-levels', pattern: '0 2 * * 1' },
+    // Достижения — ежедневно: тост про новую ачивку не должен ждать неделю.
+    { name: 'grant-achievements', pattern: '40 3 * * *' },
+    // Истечение страйков и снятие временных банов — ежедневно.
+    { name: 'expire-strikes', pattern: '10 1 * * *' },
   ];
 
   for (const job of repeatable) {

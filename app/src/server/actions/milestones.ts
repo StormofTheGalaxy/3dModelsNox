@@ -10,6 +10,7 @@ import { getCurrentUser } from '../auth/session';
 import { finalMilestone, getMilestoneWithDeal, postSystemMessage } from '../deals';
 import { storeDealFile, type StoredDealFile } from '../media';
 import { notify } from '../notifications';
+import { grantAchievements, recomputeLevel } from '../reputation';
 import { enqueueWatermark } from '../queue';
 import { getSetting, getSettings } from '../settings';
 import { errorState, successState, type ActionState } from './types';
@@ -450,6 +451,13 @@ export async function confirmPayment(
   const { milestone } = loaded;
   if (milestone.status !== 'paid_claimed') return { ok: false, error: 'errors.deal.paymentNotClaimed' };
 
+  const previousLevel = (
+    await prisma.designerProfile.findUnique({
+      where: { userId: milestone.deal.designerId },
+      select: { level: true },
+    })
+  )?.level;
+
   const isFinal = finalMilestone(milestone.deal.milestones)?.id === milestone.id;
   const othersDone = milestone.deal.milestones
     .filter((entry) => entry.id !== milestone.id)
@@ -525,6 +533,28 @@ export async function confirmPayment(
       targetType: 'deal',
       targetId: milestone.dealId,
     });
+
+    // Репутация обновляется по событию завершения сделки, а не только
+    // еженедельным прогоном (§4.8): дизайнер должен увидеть результат сразу.
+    await prisma.designerProfile.updateMany({
+      where: { userId: milestone.deal.designerId },
+      data: { ordersCompleted: { increment: 1 } },
+    });
+
+    for (const participant of [milestone.deal.customerId, milestone.deal.designerId]) {
+      await grantAchievements(participant);
+    }
+
+    const level = await recomputeLevel(milestone.deal.designerId);
+    if (level && level !== previousLevel) {
+      await notify({
+        userId: milestone.deal.designerId,
+        type: 'level_changed',
+        payload: { level },
+        link: '/profile/designer',
+        withEmail: true,
+      });
+    }
   }
 
   revalidatePath(`/deals/${milestone.dealId}`);

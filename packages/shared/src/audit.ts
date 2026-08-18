@@ -28,7 +28,10 @@ export const AUDIT_ACTIONS = [
   'user.role_changed',
   'user.level_changed',
   'strike.issued',
+  'strike.revoked',
   'report.created',
+  'report.confirmed',
+  'report.rejected',
   'report.resolved',
 
   // профили и портфолио
@@ -63,6 +66,8 @@ export const AUDIT_ACTIONS = [
   'dispute.resolved',
 
   // достижения и верификация
+  'review.created',
+  'review.hidden',
   'achievement.granted_manually',
   'verification.approved',
   'verification.rejected',

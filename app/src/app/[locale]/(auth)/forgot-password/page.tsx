@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { redirectIfAuthenticated } from '@/server/auth/guards';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ForgotPasswordForm } from '@/components/forms/password-forms';
@@ -23,6 +24,10 @@ export default async function ForgotPasswordPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  // Увод уже вошедшего в кабинет делает страница, а не proxy: только здесь
+  // видно, жива ли сессия на самом деле.
+  await redirectIfAuthenticated(locale);
 
   const t = await getTranslations('auth');
 

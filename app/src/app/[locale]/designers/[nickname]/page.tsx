@@ -10,10 +10,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { MetricTile } from '@/components/profile/metric-tile';
 import { ReportDialog } from '@/components/report/report-dialog';
+import { AchievementBadges } from '@/components/achievements/achievement-badges';
+import { ReviewList } from '@/components/reviews/review-list';
 import { WorkCard } from '@/components/works/work-card';
 import { getCurrentUser } from '@/server/auth/session';
 import { getPublicDesigner } from '@/server/profiles';
+import { listPublishedReviews } from '@/server/reviews';
 import { listDesignerWorks } from '@/server/works';
+import { prisma } from '@polyforge/db';
 import { formatDate } from '@/lib/utils';
 
 export async function generateMetadata({
@@ -52,11 +56,19 @@ export default async function DesignerProfilePage({
 
   const isOwner = viewer?.id === designer.id;
 
-  const [t, tTax, works] = await Promise.all([
+  const [t, tTax, works, reviews, featuredAchievements] = await Promise.all([
     getTranslations('profile'),
     getTranslations('taxonomy'),
     // Владелец видит и работы «по ссылке» — это его портфолио.
     listDesignerWorks(designer.id, isOwner),
+    listPublishedReviews(designer.id),
+    // Избранные достижения у ника (§3): не больше пяти, порядок — по выдаче.
+    prisma.userAchievement.findMany({
+      where: { userId: designer.id, featured: true },
+      orderBy: { grantedAt: 'asc' },
+      take: 5,
+      select: { key: true, tier: true },
+    }),
   ]);
 
   const { profile } = designer;
@@ -104,6 +116,8 @@ export default async function DesignerProfilePage({
                   <Badge variant={profile.availability === 'open' ? 'success' : 'neutral'}>
                     {tTax(`availability.${profile.availability}`)}
                   </Badge>
+
+                  <AchievementBadges achievements={featuredAchievements} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 text-sm text-fg-muted">
@@ -222,10 +236,26 @@ export default async function DesignerProfilePage({
             )}
           </section>
 
-          {/* Отзывы появятся вместе со сделками (фаза 5). */}
           <section className="flex flex-col gap-3 pb-4">
             <h2 className="text-xl font-bold">{t('reviews')}</h2>
-            <p className="text-sm text-fg-muted">{t('reviewsSoon')}</p>
+            <ReviewList
+              reviews={reviews.map((review) => ({
+                id: review.id,
+                overall: review.overall,
+                sub1: review.sub1,
+                sub2: review.sub2,
+                sub3: review.sub3,
+                text: review.text,
+                reply: review.reply,
+                targetRole: review.targetRole,
+                publishedAt: review.publishedAt?.toISOString() ?? null,
+                author: review.author
+                  ? { id: review.author.id, nickname: review.author.nickname }
+                  : null,
+              }))}
+              locale={locale}
+              canReplyAs={isOwner ? designer.id : null}
+            />
           </section>
 
           {!isOwner ? (

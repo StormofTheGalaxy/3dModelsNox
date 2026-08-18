@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { BriefContent } from '@/components/briefs/brief-content';
 import { DealPanel } from '@/components/deals/deal-panel';
+import { redirectToLogin } from '@/server/auth/redirects';
 import { getCurrentUser, isStaff } from '@/server/auth/session';
 import {
   dealBriefSections,
@@ -14,6 +15,9 @@ import {
   sourcesUnlocked,
 } from '@/server/deals';
 import { prisma } from '@polyforge/db';
+
+import { getOwnReview, getReviewAbout } from '@/server/reviews';
+import { getSetting } from '@/server/settings';
 
 export async function generateMetadata({
   params,
@@ -44,7 +48,7 @@ export default async function DealPage({
   setRequestLocale(locale);
 
   const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  if (!user) redirectToLogin(locale, `/${locale}/deals/${id}`);
 
   const access = await getDealForUser(id, user.id, isStaff(user));
   if (!access) notFound();
@@ -76,6 +80,17 @@ export default async function DealPage({
       payments: await listMilestonePayments(milestone.id),
     })),
   );
+
+  // Отзывы показываются только на закрытой сделке: раньше их не с чего писать.
+  const [ownReview, reviewAboutMe, blindDays] = await Promise.all([
+    deal.status === 'completed' && role !== 'staff'
+      ? getOwnReview(deal.id, user.id)
+      : Promise.resolve(null),
+    deal.status === 'completed' && role !== 'staff'
+      ? getReviewAbout(deal.id, user.id)
+      : Promise.resolve(null),
+    getSetting('review_blind_days'),
+  ]);
 
   return (
     <DealPanel
@@ -116,6 +131,30 @@ export default async function DealPage({
         createdAt: request.createdAt.toISOString(),
       }))}
       sourcesUnlocked={sourcesUnlocked(deal.milestones)}
+      review={{
+        blindDays,
+        targetRole: role === 'customer' ? 'designer' : 'customer',
+        targetNickname: role === 'customer' ? deal.designer.nickname : deal.customer.nickname,
+        own: ownReview
+          ? { ...ownReview, editableUntil: ownReview.editableUntil.toISOString() }
+          : null,
+        aboutMe: reviewAboutMe
+          ? {
+              id: reviewAboutMe.id,
+              overall: reviewAboutMe.overall,
+              sub1: reviewAboutMe.sub1,
+              sub2: reviewAboutMe.sub2,
+              sub3: reviewAboutMe.sub3,
+              text: reviewAboutMe.text,
+              reply: reviewAboutMe.reply,
+              targetRole: reviewAboutMe.targetRole,
+              publishedAt: reviewAboutMe.publishedAt?.toISOString() ?? null,
+              author: reviewAboutMe.author
+                ? { id: reviewAboutMe.author.id, nickname: reviewAboutMe.author.nickname }
+                : null,
+            }
+          : null,
+      }}
     />
   );
 }

@@ -127,6 +127,13 @@ export const NOTIFICATION_TYPES = [
   'deal_brief_change',
   'dispute_opened',
   'dispute_resolved',
+  'review_received',
+  'review_published',
+  'review_replied',
+  'achievement_granted',
+  'level_changed',
+  'verification_decided',
+  'strike_issued',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

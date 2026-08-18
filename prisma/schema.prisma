@@ -138,6 +138,16 @@ model User {
   disputesOpened  Dispute[]             @relation("DisputeAuthor")
   disputesArbitrated Dispute[]          @relation("DisputeArbiter")
 
+  reviewsWritten   Review[]             @relation("ReviewAuthor")
+  reviewsReceived  Review[]             @relation("ReviewTarget")
+  reviewsHidden    Review[]             @relation("ReviewModerator")
+  achievements     UserAchievement[]    @relation("AchievementOwner")
+  strikes          Strike[]             @relation("StrikeTarget")
+  strikesIssued    Strike[]             @relation("StrikeIssuer")
+  verifications    VerificationRequest[] @relation("VerificationAuthor")
+  verificationsReviewed VerificationRequest[] @relation("VerificationReviewer")
+  testTasksCreated TestTask[]           @relation("TestTaskAuthor")
+
   @@index([status])
   @@index([role])
   @@index([createdAt])
@@ -851,6 +861,13 @@ enum NotificationType {
   deal_brief_change
   dispute_opened
   dispute_resolved
+  review_received
+  review_published
+  review_replied
+  achievement_granted
+  level_changed
+  verification_decided
+  strike_issued
   system
 }
 
@@ -1161,6 +1178,8 @@ model Deal {
   milestones Milestone[]
   messages   DealMessage[]
   dispute    Dispute?
+  /// По одному отзыву с каждой стороны (§4.8).
+  reviews    Review[]
 
   @@index([customerId, status])
   @@index([designerId, status])
@@ -1392,4 +1411,220 @@ model Dispute {
 
   @@index([status, createdAt])
   @@map("disputes")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 5: репутация
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ReviewStatus {
+  /// Написан, но ещё не опубликован: ждём вторую сторону или срок (§4.8).
+  hidden_pending
+  published
+  hidden_by_moderator
+}
+
+enum ReviewTargetRole {
+  designer
+  customer
+}
+
+/// Отзыв по завершённой сделке (§4.8). Двойное слепое: обе стороны пишут,
+/// не видя чужого текста, и оба публикуются одновременно.
+model Review {
+  id String @id @default(cuid())
+
+  dealId String
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  targetId String
+  target   User   @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  /// Кого оценивают: набор подоценок у ролей разный.
+  targetRole ReviewTargetRole
+
+  overall Int
+  /// Дизайнеру: качество / сроки / коммуникация.
+  /// Заказчику: чёткость ТЗ / коммуникация / оплата.
+  sub1 Int
+  sub2 Int
+  sub3 Int
+
+  text  String
+  reply String?
+  repliedAt DateTime?
+
+  status ReviewStatus @default(hidden_pending)
+  publishedAt DateTime?
+
+  /// До какого момента автор может править свой отзыв (§4.8, 72 часа).
+  editableUntil DateTime
+
+  hiddenById String?
+  hiddenBy   User?   @relation("ReviewModerator", fields: [hiddenById], references: [id], onDelete: SetNull)
+  hiddenReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Одна сторона оставляет по сделке ровно один отзыв.
+  @@unique([dealId, authorId])
+  @@index([targetId, status, publishedAt])
+  @@index([status, createdAt])
+  @@map("reviews")
+}
+
+enum AchievementTier {
+  bronze
+  silver
+  gold
+}
+
+/// Выданное достижение. Сам каталог — конфиг в коде
+/// (`@polyforge/shared/achievements`), в БД лежат только факты выдачи (§3).
+model UserAchievement {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("AchievementOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Ключ из конфига достижений.
+  key  String
+  tier AchievementTier @default(bronze)
+
+  /// Прогресс на момент выдачи — показывается на полке достижений.
+  progress Int @default(0)
+
+  /// Пока не показан тост «Достижение получено!».
+  seenAt   DateTime?
+  /// Избранные достижения выводятся у ника (3–5 штук).
+  featured Boolean @default(false)
+
+  grantedAt DateTime @default(now())
+  /// Выдано вручную админом, а не триггером.
+  grantedById String?
+
+  @@unique([userId, key])
+  @@index([userId, featured])
+  @@index([key])
+  @@map("user_achievements")
+}
+
+enum StrikeStatus {
+  active
+  expired
+  revoked
+}
+
+/// Страйк (§3). Три активных — автоматический временный бан; пороги и сроки
+/// живут в настройках платформы, а не в коде.
+model Strike {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("StrikeTarget", fields: [userId], references: [id], onDelete: Cascade)
+
+  reportId String?
+
+  reason String
+  note   String?
+
+  issuedById String?
+  issuedBy   User?   @relation("StrikeIssuer", fields: [issuedById], references: [id], onDelete: SetNull)
+
+  status    StrikeStatus @default(active)
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, status])
+  @@map("strikes")
+}
+
+enum VerificationStatus {
+  draft
+  submitted
+  approved
+  rejected
+}
+
+/// Тестовое задание из пула админки (§4.9).
+model TestTask {
+  id String @id @default(cuid())
+
+  specialization Specialization
+
+  titleRu String
+  titleEn String
+  bodyRu  String
+  bodyEn  String
+
+  /// Ориентировочный срок на выполнение, часов.
+  estimateHours Int @default(8)
+
+  isActive Boolean @default(true)
+
+  authorId String?
+  author   User?   @relation("TestTaskAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  requests VerificationRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([specialization, isActive])
+  @@map("test_tasks")
+}
+
+/// Заявка на верификацию (§4.9): выбранное задание, сдача, решение модератора.
+model VerificationRequest {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("VerificationAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId String
+  task   TestTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+
+  /// Описание процесса работы — модератор смотрит на него не меньше, чем на картинки.
+  processNote String?
+
+  status VerificationStatus @default(draft)
+
+  submittedAt DateTime?
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   User?   @relation("VerificationReviewer", fields: [decidedById], references: [id], onDelete: SetNull)
+  decisionNote String?
+
+  /// Раньше этой даты повторная подача не принимается (§4.9).
+  retryAfter DateTime?
+
+  images VerificationImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, submittedAt])
+  @@index([userId, status])
+  @@map("verification_requests")
+}
+
+model VerificationImage {
+  id String @id @default(cuid())
+
+  requestId String
+  request   VerificationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  storageKey String
+  url        String
+  order      Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([requestId])
+  @@map("verification_images")
 }

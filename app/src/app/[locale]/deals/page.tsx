@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { Handshake } from 'lucide-react';
-import { redirect } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Link } from '@/i18n/navigation';
+import { redirectToLogin } from '@/server/auth/redirects';
 import { getCurrentUser } from '@/server/auth/session';
 import { dealProgress, listUserDeals } from '@/server/deals';
 import { DEAL_STATUS_TONE } from '@/components/deals/status';
@@ -28,7 +28,7 @@ export default async function DealsPage({ params }: { params: Promise<{ locale: 
   setRequestLocale(locale);
 
   const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  if (!user) redirectToLogin(locale, `/${locale}/deals`);
 
   const [deals, t] = await Promise.all([listUserDeals(user.id), getTranslations('deals')]);
 
@@ -68,7 +68,7 @@ export default async function DealsPage({ params }: { params: Promise<{ locale: 
 
                     <div className="flex flex-wrap items-center gap-3">
                       <div
-                        className="h-1.5 min-w-40 flex-1 overflow-hidden rounded-full bg-surface-2"
+                        className="h-1.5 w-full min-w-0 flex-1 basis-40 overflow-hidden rounded-full bg-surface-2"
                         role="progressbar"
                         aria-valuenow={progress.percent}
                         aria-valuemin={0}
@@ -79,7 +79,7 @@ export default async function DealsPage({ params }: { params: Promise<{ locale: 
                           style={{ width: `${progress.percent}%` }}
                         />
                       </div>
-                      <span className="text-sm whitespace-nowrap text-fg-muted">
+                      <span className="text-sm text-fg-muted">
                         {progress.paid.toLocaleString(locale)} / {deal.price.toLocaleString(locale)}{' '}
                         {deal.currency}
                       </span>

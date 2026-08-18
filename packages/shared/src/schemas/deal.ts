@@ -158,6 +158,7 @@ export const SYSTEM_MESSAGE_KEYS = [
   'dispute.resolved',
   'brief.changeRequested',
   'brief.changeResolved',
+  'reviews.published',
 ] as const;
 export type SystemMessageKey = (typeof SYSTEM_MESSAGE_KEYS)[number];
 

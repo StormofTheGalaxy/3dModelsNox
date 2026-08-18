@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MetricTile } from '@/components/profile/metric-tile';
 import { ReportDialog } from '@/components/report/report-dialog';
+import { ReviewList } from '@/components/reviews/review-list';
 import { getCurrentUser } from '@/server/auth/session';
 import { getPublicCustomer } from '@/server/profiles';
+import { listPublishedReviews } from '@/server/reviews';
 import { formatDate } from '@/lib/utils';
 
 export async function generateMetadata({
@@ -41,9 +43,10 @@ export default async function CustomerProfilePage({
 
   const isOwner = viewer?.id === customer.id;
 
-  const [t, tTax] = await Promise.all([
+  const [t, tTax, reviews] = await Promise.all([
     getTranslations('profile'),
     getTranslations('taxonomy'),
+    listPublishedReviews(customer.id),
   ]);
 
   const { profile } = customer;
@@ -126,7 +129,24 @@ export default async function CustomerProfilePage({
 
         <section className="flex flex-col gap-3">
           <h2 className="text-xl font-bold">{t('reviews')}</h2>
-          <p className="text-sm text-fg-muted">{t('reviewsSoon')}</p>
+          <ReviewList
+            reviews={reviews.map((review) => ({
+              id: review.id,
+              overall: review.overall,
+              sub1: review.sub1,
+              sub2: review.sub2,
+              sub3: review.sub3,
+              text: review.text,
+              reply: review.reply,
+              targetRole: review.targetRole,
+              publishedAt: review.publishedAt?.toISOString() ?? null,
+              author: review.author
+                ? { id: review.author.id, nickname: review.author.nickname }
+                : null,
+            }))}
+            locale={locale}
+            canReplyAs={isOwner ? customer.id : null}
+          />
         </section>
 
         {!isOwner ? <ReportDialog targetType="user" targetId={customer.id} /> : null}

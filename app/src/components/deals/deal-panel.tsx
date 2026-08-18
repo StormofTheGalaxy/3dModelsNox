@@ -16,6 +16,8 @@ import { DealReceipts } from '@/components/deals/deal-receipts';
 import { MilestonePlan } from '@/components/deals/milestone-plan';
 import { MilestoneTimeline } from '@/components/deals/milestone-timeline';
 import { DEAL_STATUS_TONE } from '@/components/deals/status';
+import { ReviewForm } from '@/components/reviews/review-form';
+import { ReviewList, type ReviewView } from '@/components/reviews/review-list';
 import { cn } from '@/lib/utils';
 import type {
   DealChangeRequest,
@@ -56,6 +58,7 @@ export function DealPanel({
   messages,
   changeRequests,
   sourcesUnlocked,
+  review,
 }: {
   locale: string;
   role: 'customer' | 'designer' | 'staff';
@@ -69,6 +72,22 @@ export function DealPanel({
   messages: DealMessageView[];
   changeRequests: DealChangeRequest[];
   sourcesUnlocked: boolean;
+  review: {
+    blindDays: number;
+    targetRole: 'designer' | 'customer';
+    targetNickname: string;
+    own: {
+      id: string;
+      overall: number;
+      sub1: number;
+      sub2: number;
+      sub3: number;
+      text: string;
+      status: string;
+      editableUntil: string;
+    } | null;
+    aboutMe: ReviewView | null;
+  };
 }) {
   const t = useTranslations('deals');
   const [tab, setTab] = useState<TabKey>('brief');
@@ -97,7 +116,7 @@ export function DealPanel({
 
         <div className="flex flex-wrap items-center gap-3">
           <div
-            className="h-2 min-w-40 flex-1 overflow-hidden rounded-full bg-surface-2"
+            className="h-2 w-full min-w-0 flex-1 basis-40 overflow-hidden rounded-full bg-surface-2"
             role="progressbar"
             aria-valuenow={percent}
             aria-valuemin={0}
@@ -109,7 +128,7 @@ export function DealPanel({
               style={{ width: `${percent}%` }}
             />
           </div>
-          <span className="text-sm whitespace-nowrap">
+          <span className="text-sm">
             {t('paidOf', {
               paid: paid.toLocaleString(locale),
               total: deal.price.toLocaleString(locale),
@@ -126,7 +145,9 @@ export function DealPanel({
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section className="flex flex-col gap-4">
+        {/* min-w-0 обязателен: без него колонка грида растягивается по самому
+            широкому потомку и страница едет вбок на телефоне. */}
+        <section className="flex min-w-0 flex-col gap-4">
           {deal.status === 'plan_agreement' && role !== 'staff' ? (
             <MilestonePlan
               dealId={deal.id}
@@ -149,9 +170,34 @@ export function DealPanel({
           )}
 
           <DealActions role={role} deal={deal} changeRequests={changeRequests} viewerId={viewerId} />
+
+          {deal.status === 'completed' && role !== 'staff' ? (
+            <>
+              <ReviewForm
+                dealId={deal.id}
+                targetRole={review.targetRole}
+                targetNickname={review.targetNickname}
+                blindDays={review.blindDays}
+                existing={review.own}
+              />
+
+              {review.aboutMe ? (
+                <Card>
+                  <CardContent className="flex flex-col gap-3 p-5">
+                    <h2 className="text-lg font-bold">{t('reviewAboutYou')}</h2>
+                    <ReviewList
+                      reviews={[review.aboutMe]}
+                      locale={locale}
+                      canReplyAs={review.aboutMe.reply ? null : viewerId}
+                    />
+                  </CardContent>
+                </Card>
+              ) : null}
+            </>
+          ) : null}
         </section>
 
-        <section className="flex flex-col gap-4">
+        <section className="flex min-w-0 flex-col gap-4">
           <nav
             className="flex gap-1 overflow-x-auto rounded-[var(--radius-card)] bg-surface-2 p-1"
             aria-label={t('tabsLabel')}
