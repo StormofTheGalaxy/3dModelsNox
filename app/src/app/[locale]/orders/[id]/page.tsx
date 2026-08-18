@@ -12,11 +12,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BriefContent } from '@/components/briefs/brief-content';
 import { TranslatedText } from '@/components/translation/translated-text';
+import { AuctionPanel } from '@/components/orders/auction-panel';
 import { OrderOwnerActions } from '@/components/orders/order-owner-actions';
 import { ResponseForm } from '@/components/orders/response-form';
 import { ReportDialog } from '@/components/report/report-dialog';
 import { getCurrentUser } from '@/server/auth/session';
+import { getAuctionState } from '@/server/auctions';
 import { getOrder } from '@/server/orders';
+import { getSetting } from '@/server/settings';
 import { getProfileState } from '@/server/profiles';
 import { translateField } from '@/server/translation';
 import { getOwnResponse, responsesLeftToday } from '@/server/responses';
@@ -90,6 +93,20 @@ export default async function OrderPage({
     canRespond && viewer ? responsesLeftToday(viewer.id) : Promise.resolve({ left: 0, limit: 0 }),
   ]);
 
+  // Торги (§3, post-MVP №1). Заказ в режиме аукциона не собирает обычные
+  // отклики: договариваются о цене ставками, а не письмами.
+  const isAuction = order.workMode === 'auction';
+  const auctionOn = await getSetting('feature_auction');
+
+  const [auction, minDecrementPct, maxBidsPerDesigner] =
+    isAuction && auctionOn
+      ? await Promise.all([
+          getAuctionState(order.id, viewer?.id ?? null, isOwner),
+          getSetting('auction_min_decrement_pct'),
+          getSetting('auction_max_bids_per_designer'),
+        ])
+      : [null, 0, 0];
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
@@ -135,6 +152,20 @@ export default async function OrderPage({
 
       <div className="grid gap-5 lg:grid-cols-[1.7fr_1fr]">
         <div className="flex flex-col gap-4">
+          {/* На аукционе торги идут выше ТЗ: ставка — это то, ради чего сюда
+              заходят повторно, а на телефоне ТЗ занимает несколько экранов. */}
+          {auction ? (
+            <AuctionPanel
+              auction={auction}
+              locale={locale}
+              viewerId={viewer?.id ?? null}
+              isCustomer={isOwner}
+              canBid={canRespond}
+              minDecrementPct={minDecrementPct}
+              maxBidsPerDesigner={maxBidsPerDesigner}
+            />
+          ) : null}
+
           {isGuest ? (
             <>
               <Alert tone="info">{t('guestTeaser')}</Alert>
@@ -154,7 +185,7 @@ export default async function OrderPage({
             <BriefContent sections={parseBriefSections(order.brief.sections)} />
           )}
 
-          {ownResponse ? (
+          {isAuction ? null : ownResponse ? (
             <Card>
               <CardContent className="flex flex-col gap-2">
                 <h2 className="font-semibold">{t('response.yours')}</h2>

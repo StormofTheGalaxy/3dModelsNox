@@ -39,6 +39,12 @@ export async function publishOrder(
       : null,
     budgetCurrency: formData.get('budgetCurrency') ?? 'USD',
     deadline: formData.get('deadline') || null,
+    workMode: formData.get('workMode') || 'fixed',
+    auctionMode: formData.get('auctionMode') || 'open_reverse',
+    auctionStartPrice: formData.get('auctionStartPrice')
+      ? Number(formData.get('auctionStartPrice'))
+      : null,
+    auctionEndsAt: formData.get('auctionEndsAt') || null,
   });
 
   if (!parsed.success) {
@@ -66,6 +72,35 @@ export async function publishOrder(
     return errorState('errors.order.tooManyActive', { values: { limit } });
   }
 
+  // Торги — post-MVP за флагом (§1.2.2). Форма их не покажет, но проверка
+  // нужна и здесь: `workMode` приходит из FormData.
+  const auctionOn = await getSetting('feature_auction');
+  const wantsAuction = input.workMode === 'auction';
+
+  if (wantsAuction && !auctionOn) return errorState('errors.auction.disabled');
+
+  let auctionEndsAt: Date | null = null;
+
+  if (wantsAuction && input.auctionEndsAt) {
+    const [minHours, maxDays] = await Promise.all([
+      getSetting('auction_min_duration_hours'),
+      getSetting('auction_max_duration_days'),
+    ]);
+
+    auctionEndsAt = new Date(input.auctionEndsAt);
+    if (Number.isNaN(auctionEndsAt.getTime())) {
+      return errorState('errors.generic', { fieldErrors: { auctionEndsAt: 'errors.auction.invalidEndsAt' } });
+    }
+
+    const hours = (auctionEndsAt.getTime() - Date.now()) / (60 * 60 * 1000);
+    if (hours < minHours) {
+      return errorState('errors.auction.tooShort', { values: { hours: minHours } });
+    }
+    if (hours > maxDays * 24) {
+      return errorState('errors.auction.tooLong', { values: { days: maxDays } });
+    }
+  }
+
   const sections = parseBriefSections(brief.sections);
   const now = new Date();
 
@@ -75,6 +110,7 @@ export async function publishOrder(
       briefId: brief.id,
       title: input.title,
       status: 'published',
+      workMode: wantsAuction ? 'auction' : 'fixed',
       // Денормализуем из ТЗ на момент публикации: витрина читает эти поля.
       assetType: sections.general.assetType,
       styles: sections.style.styleTags,
@@ -100,6 +136,29 @@ export async function publishOrder(
     },
     select: { id: true },
   });
+
+  if (wantsAuction) {
+    await prisma.auction.create({
+      data: {
+        orderId: order.id,
+        mode: input.auctionMode,
+        startPrice: input.auctionStartPrice,
+        currency: input.budgetCurrency,
+        endsAt: auctionEndsAt,
+        // В открытом режиме ставки видны с первой секунды; в закрытом
+        // вскрытие наступает по дедлайну и ставит эту метку само.
+        revealedAt: input.auctionMode === 'open_reverse' ? now : null,
+      },
+    });
+
+    await writeAuditLog({
+      action: 'auction.opened',
+      actorId: user.id,
+      targetType: 'order',
+      targetId: order.id,
+      payload: { mode: input.auctionMode, endsAt: auctionEndsAt?.toISOString() ?? null },
+    });
+  }
 
   // Опубликованный заказ означает, что ТЗ по нему уже показывают наружу.
   if (brief.status === 'draft') {

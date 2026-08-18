@@ -134,6 +134,7 @@ model User {
 
   orders          Order[]          @relation("OrderCustomer")
   responses       OrderResponse[]  @relation("ResponseDesigner")
+  bids            Bid[]            @relation("BidDesigner")
   savedFilters    SavedFilter[]    @relation("SavedFilterOwner")
   notifications   Notification[]   @relation("NotificationRecipient")
   notificationPrefs NotificationPreference[] @relation("NotificationPrefOwner")
@@ -456,6 +457,11 @@ model DesignerProfile {
   repeatClientsPct  Int?
   disputesLost      Int   @default(0)
   responsesToday    Int   @default(0)
+
+  /// Надёжность в торгах (§3): выигранные аукционы и отказы от них.
+  /// Торги необязывающие, но отказ виден в профиле.
+  auctionsWon       Int   @default(0)
+  auctionsDeclined  Int   @default(0)
 
   /// Заполнен ли профиль настолько, чтобы показывать его в каталоге.
   completedAt DateTime?
@@ -878,6 +884,12 @@ enum NotificationType {
   level_changed
   verification_decided
   strike_issued
+  auction_bid_placed
+  auction_outbid
+  auction_ending_soon
+  auction_closed
+  auction_won
+  auction_winner_declined
   system
 }
 
@@ -929,6 +941,7 @@ model Order {
 
   responses OrderResponse[]
   bids      Bid[]
+  auction   Auction?
   deal      Deal?           @relation("DealOrder")
 
   @@index([status, publishedAt])
@@ -1032,29 +1045,58 @@ model NotificationPreference {
   @@map("notification_preferences")
 }
 
-// ── Аукцион: post-MVP (§3). Схема заложена, логика и UI не делаются. ────────
+// ── Аукцион заказов (§3, post-MVP №1). За флагом feature_auction. ───────────
 
 enum AuctionMode {
+  /// Открытый обратный аукцион: ставки видны всем, дизайнеры идут вниз.
   open_reverse
+  /// Закрытые ставки: до вскрытия дизайнер видит только свою.
   sealed
+}
+
+/// Что победитель ответил на выбор заказчика. Торги необязывающие (§3),
+/// поэтому отказ — законный исход, а не ошибка.
+enum AuctionWinnerDecision {
+  pending
+  accepted
+  declined
+  expired
 }
 
 model Auction {
   id String @id @default(cuid())
 
   orderId String @unique
-  mode    AuctionMode @default(open_reverse)
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  mode AuctionMode @default(open_reverse)
 
   startPrice Int?
   currency   String @default("USD")
   endsAt     DateTime?
 
+  /// Момент вскрытия закрытых ставок. У открытого режима совпадает с
+  /// созданием: там ставки видны сразу.
+  revealedAt DateTime?
+
   /// Торги необязывающие; отказ победителя фиксируется и бьёт по метрике.
-  winnerBidId String?
-  closedAt    DateTime?
+  winnerBidId       String?               @unique
+  winnerBid         Bid?                  @relation("AuctionWinner", fields: [winnerBidId], references: [id], onDelete: SetNull)
+  winnerDecision    AuctionWinnerDecision @default(pending)
+  /// До какого момента победитель может принять или отказаться.
+  winnerDeadlineAt  DateTime?
+  winnerRespondedAt DateTime?
+
+  closedAt DateTime?
+
+  /// Напоминание «торги скоро закончатся» отправляется один раз.
+  endingSoonNotifiedAt DateTime?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@index([closedAt, endsAt])
+  @@index([winnerDecision, winnerDeadlineAt])
   @@map("auctions")
 }
 
@@ -1065,14 +1107,23 @@ model Bid {
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   designerId String
-  amount     Int
-  currency   String @default("USD")
-  days       Int?
+  designer   User   @relation("BidDesigner", fields: [designerId], references: [id], onDelete: Cascade)
+
+  amount   Int
+  currency String @default("USD")
+  days     Int?
+
+  /// Сопроводительный текст: короче, чем у отклика — аукцион про цену.
+  comment String?
 
   withdrawnAt DateTime?
   createdAt   DateTime @default(now())
 
+  wonAuction Auction? @relation("AuctionWinner")
+
   @@index([orderId, amount])
+  /// История ставок дизайнера: активная — последняя без withdrawnAt.
+  @@index([orderId, designerId, createdAt])
   @@map("bids")
 }
 

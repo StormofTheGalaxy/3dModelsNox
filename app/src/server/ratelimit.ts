@@ -15,6 +15,7 @@ export type RateLimitAction =
   | 'ai'
   | 'upload'
   | 'response'
+  | 'bid'
   | 'message';
 
 export interface RateLimitResult {

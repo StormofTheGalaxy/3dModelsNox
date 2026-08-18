@@ -126,6 +126,110 @@ export async function createDealFromResponse(
   return { dealId: deal.id };
 }
 
+/**
+ * Создаёт сделку из выигравшей ставки аукциона (§3, post-MVP №1).
+ *
+ * Отличие от пути через отклик — кто вызывает: там сделку начинает заказчик,
+ * приняв отклик, а здесь дизайнер, приняв победу. Условия сделки берутся из
+ * ставки: цена и срок — это ровно то, за что торговались.
+ */
+export async function createDealFromBid(
+  bidId: string,
+): Promise<{ dealId: string } | { error: string }> {
+  const user = await getCurrentUser();
+  if (!user?.emailVerifiedAt) return { error: 'errors.forbidden' };
+
+  const bid = await prisma.bid.findUnique({
+    where: { id: bidId },
+    select: {
+      id: true,
+      designerId: true,
+      amount: true,
+      currency: true,
+      order: {
+        select: {
+          id: true,
+          customerId: true,
+          title: true,
+          briefId: true,
+          deal: { select: { id: true } },
+          brief: { select: { currentVersion: true, sections: true } },
+          auction: { select: { winnerBidId: true, winnerDecision: true } },
+        },
+      },
+    },
+  });
+
+  if (!bid || bid.designerId !== user.id) return { error: 'errors.forbidden' };
+
+  const auction = bid.order.auction;
+  if (!auction || auction.winnerBidId !== bid.id || auction.winnerDecision !== 'accepted') {
+    return { error: 'errors.auction.notWinner' };
+  }
+
+  if (bid.order.deal) return { dealId: bid.order.deal.id };
+
+  // Снимок ТЗ делается от имени владельца ТЗ — заказчика, а не победителя.
+  let briefVersion = await prisma.briefVersion.findFirst({
+    where: { briefId: bid.order.briefId, version: bid.order.brief.currentVersion },
+    select: { id: true },
+  });
+
+  if (!briefVersion) {
+    briefVersion = await prisma.briefVersion.create({
+      data: {
+        briefId: bid.order.briefId,
+        version: bid.order.brief.currentVersion,
+        title: bid.order.title,
+        sections: bid.order.brief.sections as Prisma.InputJsonValue,
+        authorId: bid.order.customerId,
+        comment: 'snapshot',
+      },
+      select: { id: true },
+    });
+  }
+
+  const deal = await prisma.$transaction(async (tx) => {
+    const created = await tx.deal.create({
+      data: {
+        orderId: bid.order.id,
+        briefVersionId: briefVersion.id,
+        customerId: bid.order.customerId,
+        designerId: bid.designerId,
+        title: bid.order.title,
+        price: bid.amount,
+        currency: bid.currency,
+        revisionRoundsIncluded: readRevisionRounds(bid.order.brief.sections),
+      },
+      select: { id: true },
+    });
+
+    await tx.brief.update({ where: { id: bid.order.briefId }, data: { status: 'frozen' } });
+
+    return created;
+  });
+
+  await postSystemMessage(deal.id, 'deal.created', { title: bid.order.title });
+
+  await notify({
+    userId: bid.order.customerId,
+    type: 'deal_started',
+    payload: { orderTitle: bid.order.title },
+    link: `/deals/${deal.id}`,
+    withEmail: true,
+  });
+
+  await writeAuditLog({
+    action: 'deal.created',
+    actorId: user.id,
+    targetType: 'deal',
+    targetId: deal.id,
+    payload: { bidId, orderId: bid.order.id, source: 'auction' },
+  });
+
+  return { dealId: deal.id };
+}
+
 /** Раунды правок из секции delivery замороженного ТЗ. */
 function readRevisionRounds(sections: unknown): number {
   const delivery = (sections as { delivery?: { revisionRounds?: unknown } } | null)?.delivery;

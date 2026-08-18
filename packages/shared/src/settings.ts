@@ -115,6 +115,56 @@ export const SETTINGS_REGISTRY = {
     label: { ru: 'Молчание заказчика до пометки «неактивен», дней', en: 'Days until customer marked inactive' },
   },
 
+  // ── Аукцион (post-MVP №1). Работает только при feature_auction. ──────────
+  auction_min_duration_hours: {
+    group: 'orders',
+    default: 12,
+    schema: z.number().int().min(1).max(720),
+    label: { ru: 'Минимальная длительность торгов, часов', en: 'Minimum auction duration, hours' },
+    hint: {
+      ru: 'Слишком короткие торги отсекают дизайнеров из других часовых поясов',
+      en: 'Very short auctions cut off designers in other time zones',
+    },
+  },
+  auction_max_duration_days: {
+    group: 'orders',
+    default: 14,
+    schema: z.number().int().min(1).max(90),
+    label: { ru: 'Максимальная длительность торгов, дней', en: 'Maximum auction duration, days' },
+  },
+  auction_min_decrement_pct: {
+    group: 'orders',
+    default: 2,
+    schema: z.number().min(0).max(50),
+    label: { ru: 'Минимальный шаг снижения ставки, %', en: 'Minimum bid decrement, %' },
+    hint: {
+      ru: 'В открытом аукционе новая ставка дизайнера должна быть ниже прежней хотя бы на столько',
+      en: 'In an open auction a designer’s new bid must undercut their previous one by at least this much',
+    },
+  },
+  auction_winner_response_hours: {
+    group: 'orders',
+    default: 48,
+    schema: z.number().int().min(1).max(336),
+    label: { ru: 'Срок ответа победителя торгов, часов', en: 'Auction winner response window, hours' },
+    hint: {
+      ru: 'Торги необязывающие: по истечении срока выбор снимается, отказ идёт в метрику надёжности',
+      en: 'Bids are non-binding: after this the pick expires and counts against the reliability metric',
+    },
+  },
+  auction_ending_soon_hours: {
+    group: 'orders',
+    default: 6,
+    schema: z.number().int().min(1).max(72),
+    label: { ru: 'Напоминание «торги скоро закончатся», часов до конца', en: 'Ending-soon reminder, hours before close' },
+  },
+  auction_max_bids_per_designer: {
+    group: 'orders',
+    default: 10,
+    schema: z.number().int().min(1).max(100),
+    label: { ru: 'Максимум ставок одного дизайнера в торгах', en: 'Maximum bids per designer per auction' },
+  },
+
   // ── Сделки, файлы, оплаты ───────────────────────────────────────────
   deal_files_limit_gb: {
     group: 'deals',
@@ -286,6 +336,7 @@ export const SETTINGS_REGISTRY = {
       ai: { points: 30, windowSeconds: 3600 },
       upload: { points: 60, windowSeconds: 3600 },
       response: { points: 30, windowSeconds: 3600 },
+      bid: { points: 60, windowSeconds: 3600 },
       message: { points: 120, windowSeconds: 60 },
     },
     schema: z.record(z.string(), rateLimitRule),

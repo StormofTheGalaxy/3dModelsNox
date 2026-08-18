@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Star, Users } from 'lucide-react';
+import { CalendarDays, Gavel, Star, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
@@ -21,6 +21,8 @@ export interface OrderCardData {
   previewUrl: string | null;
   competition: 'low' | 'medium' | 'high';
   isInvited: boolean;
+  /** Торги вместо откликов (§3). Ставка видна только в открытом режиме. */
+  auction: { mode: string; bestAmount: number | null; endsAt: string | null } | null;
   publishedAt: string | null;
   customer: {
     nickname: string;
@@ -40,6 +42,7 @@ const COMPETITION_TONE = {
 /** Карточка заказа на витрине (§4.5). */
 export function OrderCard({ order, locale }: { order: OrderCardData; locale: string }) {
   const t = useTranslations('orders');
+  const tAuction = useTranslations('orders.auction');
   const tTax = useTranslations('taxonomy');
 
   const budget =
@@ -68,7 +71,15 @@ export function OrderCard({ order, locale }: { order: OrderCardData; locale: str
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <p className="font-semibold">{order.title}</p>
-              {order.isInvited ? <Badge variant="accent">{t('invitedBadge')}</Badge> : null}
+              <div className="flex shrink-0 flex-wrap gap-1.5">
+                {order.auction ? (
+                  <Badge variant="accent">
+                    <Gavel className="size-3" aria-hidden />
+                    {tAuction(`mode.${order.auction.mode}`)}
+                  </Badge>
+                ) : null}
+                {order.isInvited ? <Badge variant="accent">{t('invitedBadge')}</Badge> : null}
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-1.5">
@@ -85,6 +96,15 @@ export function OrderCard({ order, locale }: { order: OrderCardData; locale: str
 
             <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-xs text-fg-muted">
               <span className={cn('font-mono text-sm font-semibold text-fg')}>{budget}</span>
+
+              {/* Текущая ставка — только у открытых торгов: в закрытых её
+                  не знает никто, включая заказчика. */}
+              {order.auction?.bestAmount !== null && order.auction ? (
+                <span className="inline-flex items-center gap-1 font-mono text-sm text-accent">
+                  <Gavel className="size-3.5" aria-hidden />
+                  {order.auction.bestAmount.toLocaleString(locale)} {order.budgetCurrency}
+                </span>
+              ) : null}
 
               {deadline ? (
                 <span className="inline-flex items-center gap-1">

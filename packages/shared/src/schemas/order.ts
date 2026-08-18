@@ -43,6 +43,12 @@ export const orderFilterSchema = z.object({
 
 export type OrderFilter = z.infer<typeof orderFilterSchema>;
 
+export const ORDER_WORK_MODES = ['fixed', 'auction'] as const;
+export type OrderWorkModeValue = (typeof ORDER_WORK_MODES)[number];
+
+export const AUCTION_MODES = ['open_reverse', 'sealed'] as const;
+export type AuctionModeValue = (typeof AUCTION_MODES)[number];
+
 /** Публикация заказа из готового ТЗ. */
 export const orderPublishSchema = z
   .object({
@@ -57,13 +63,66 @@ export const orderPublishSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/u, 'errors.brief.invalidDate')
       .nullable()
       .default(null),
+
+    /** Аукцион принимается, только когда включён feature_auction (§3). */
+    workMode: z.enum(ORDER_WORK_MODES).default('fixed'),
+    auctionMode: z.enum(AUCTION_MODES).default('open_reverse'),
+    /** Стартовая цена необязательна (§3): торги можно открыть «от предложений». */
+    auctionStartPrice: z.number().int().min(0).max(100_000_000).nullable().default(null),
+    /** Локальная дата-время из формы; в часах длительность проверяет сервер. */
+    auctionEndsAt: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/u, 'errors.auction.invalidEndsAt')
+      .nullable()
+      .default(null),
   })
   .refine(
     // §4.5: заказы «бесплатно» и «за отзыв» запрещены — либо сумма больше нуля,
     // либо честное «жду предложений».
     (data) => data.budgetMode === 'open' || (data.budgetAmount !== null && data.budgetAmount > 0),
     { message: 'errors.order.budgetRequired', path: ['budgetAmount'] },
+  )
+  .refine(
+    // Закрытые ставки вскрываются по дедлайну — без него вскрывать нечем.
+    (data) =>
+      data.workMode !== 'auction' || data.auctionMode !== 'sealed' || data.auctionEndsAt !== null,
+    { message: 'errors.auction.sealedNeedsDeadline', path: ['auctionEndsAt'] },
+  )
+  .refine(
+    (data) =>
+      data.workMode !== 'auction' ||
+      data.auctionStartPrice === null ||
+      data.auctionStartPrice > 0,
+    { message: 'errors.auction.startPricePositive', path: ['auctionStartPrice'] },
   );
+
+/**
+ * Ставка в торгах. Короче отклика намеренно: аукцион — про цену и срок,
+ * подробное сопроводительное письмо там только шумит.
+ */
+export const bidSchema = z.object({
+  orderId: z.string().min(1),
+  amount: z.number().int().min(1, 'errors.auction.amountRequired').max(100_000_000),
+  currency: z.enum(CURRENCIES).default('USD'),
+  days: z.number().int().min(1, 'errors.auction.daysRequired').max(365),
+  comment: z.string().trim().max(600, 'errors.auction.commentTooLong').default(''),
+});
+
+export type BidInput = z.infer<typeof bidSchema>;
+
+/**
+ * Разрешён ли шаг вниз: в открытом аукционе дизайнер может только
+ * перебивать сам себя, и не «на копейку» (§3, шаг — настройка платформы).
+ */
+export function bidUndercutsPrevious(
+  amount: number,
+  previousAmount: number,
+  minDecrementPct: number,
+): boolean {
+  const maxAllowed = previousAmount * (1 - minDecrementPct / 100);
+  return amount <= Math.floor(maxAllowed);
+}
 
 export type OrderPublishInput = z.infer<typeof orderPublishSchema>;
 
@@ -134,6 +193,12 @@ export const NOTIFICATION_TYPES = [
   'level_changed',
   'verification_decided',
   'strike_issued',
+  'auction_bid_placed',
+  'auction_outbid',
+  'auction_ending_soon',
+  'auction_closed',
+  'auction_won',
+  'auction_winner_declined',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

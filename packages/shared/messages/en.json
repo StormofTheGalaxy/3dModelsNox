@@ -16,7 +16,8 @@
     "more": "Learn more",
     "optional": "optional",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "nonBindingNote": "Bids are non-binding: declining is recorded on your profile, but the platform imposes no penalty."
   },
   "meta": {
     "defaultTitle": "PolyForge — 3D game asset marketplace",
@@ -398,6 +399,30 @@
     "broadcast": {
       "subjectRequired": "Enter a subject",
       "bodyTooShort": "The message is too short"
+    },
+    "auction": {
+      "disabled": "Auctions are switched off on this platform",
+      "notFound": "This order has no auction",
+      "closed": "The auction is already closed",
+      "noBid": "You have no active bid",
+      "notRevealed": "The bids have not been revealed yet",
+      "bidWithdrawn": "That bid was withdrawn",
+      "winnerAlreadyPicked": "A winner has already been picked",
+      "decided": "You have already answered",
+      "decisionExpired": "The response window has closed",
+      "notWinner": "You did not win this auction",
+      "currencyMismatch": "The bid currency does not match the auction currency",
+      "aboveStartPrice": "A bid cannot exceed the starting price of {amount} {currency}",
+      "mustUndercut": "The bid must be at least {percent}% below your previous one ({amount} {currency})",
+      "tooManyBids": "You cannot place more than {limit} bids in one auction",
+      "tooShort": "An auction must run for at least {hours} hours",
+      "tooLong": "An auction cannot run longer than {days} days",
+      "invalidEndsAt": "Invalid end date",
+      "sealedNeedsDeadline": "A sealed auction needs an end date",
+      "startPricePositive": "The starting price must be above zero",
+      "amountRequired": "Enter an amount",
+      "daysRequired": "Enter a delivery time",
+      "commentTooLong": "600 characters maximum"
     }
   },
   "empty": {
@@ -961,7 +986,8 @@
       "budgetAmount": "Amount",
       "budgetHint": "Orders offered “for free” or “for a review” are against platform rules",
       "deadline": "Preferred deadline",
-      "submit": "Publish"
+      "submit": "Publish",
+      "currency": "Currency"
     },
     "response": {
       "title": "Proposal",
@@ -1020,6 +1046,74 @@
       "submit": "Invite",
       "sent": "Invitation sent",
       "noOrders": "Publish an order first"
+    },
+    "auction": {
+      "workMode": "How to pick the designer",
+      "workModeFixed": "Proposals with the designer’s price",
+      "workModeAuction": "Auction",
+      "workModeHint": "In auction mode designers place bids instead of writing proposals: a price and a deadline, not a cover letter",
+      "modeLabel": "Auction type",
+      "mode": {
+        "open_reverse": "Open auction",
+        "sealed": "Sealed bids"
+      },
+      "modeHint": {
+        "open_reverse": "Bids are visible to everyone, and any designer can undercut the current best",
+        "sealed": "Until the deadline each designer sees only their own bid. Everything is revealed when the auction closes"
+      },
+      "startPrice": "Starting price",
+      "startPriceOptional": "Optional. If set, it is a ceiling: bids only go below it",
+      "startPriceHint": "No more than {amount} {currency}",
+      "noStartPrice": "No starting price",
+      "endsAt": "Auction ends",
+      "endsAtOptional": "Optional. Without a deadline the customer closes the auction",
+      "endsAtRequiredSealed": "Required: this is when the bids are revealed",
+      "noDeadline": "No deadline",
+      "open": "Running",
+      "closed": "Closed",
+      "ended": "Time is up",
+      "sealedUntilReveal": "Bids hidden",
+      "sealedExplainer": "These are sealed bids: until the auction closes neither the designers nor the customer can see anyone else’s bid. Everything is visible after the reveal.",
+      "bidders": "Bidders",
+      "competition": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "bestBid": "Best bid: {amount} {currency}",
+      "noBids": "No bids yet",
+      "noOwnBid": "You have not bid yet",
+      "yours": "Yours",
+      "winner": "Winner",
+      "days": "{days} days",
+      "leftDays": "{days}d {hours}h",
+      "leftHours": "{hours}h {minutes}m",
+      "leftMinutes": "{minutes}:{seconds}",
+      "yourAmount": "Your bid, {currency}",
+      "yourDays": "Delivery, days",
+      "comment": "Note",
+      "commentHint": "One line: what exactly you are offering at this price",
+      "placeBid": "Place a bid",
+      "lowerBid": "Lower your bid",
+      "withdraw": "Withdraw bid",
+      "bidWithdrawn": "Bid withdrawn",
+      "bidsLeft": "Bids left: {count}",
+      "noBidsLeft": "You have used every bid allowed in this auction",
+      "undercutHint": "No more than {amount} {currency} — your previous bid minus the step",
+      "aboveCeiling": "The bid is above the allowed ceiling",
+      "closeEarly": "Close the auction",
+      "closeEarlyWarning": "No further bids will be accepted. In a sealed auction the bids are revealed at the same time — a winner cannot be picked blind.",
+      "pickWinner": "Pick",
+      "pickWinnerConfirm": "Offer the deal to @{nickname}? Bids are non-binding: they can still decline.",
+      "youWon": "You won the auction: {amount} {currency}",
+      "decideBy": "Respond by {date}",
+      "acceptWin": "Accept and start the deal",
+      "declineWin": "Decline",
+      "declineWarning": "Bids are non-binding, but declining shows on your profile and customers can see it.",
+      "winnerDecision": {
+        "declined": "The winner declined the deal. Pick another bidder.",
+        "expired": "The winner did not respond in time. Pick another bidder."
+      }
     }
   },
   "notifications": {
@@ -1172,6 +1266,36 @@
       "title": "A strike was issued: {reason}",
       "body": "Active strikes: {count}. Reaching the threshold temporarily blocks the account.",
       "action": "Open settings"
+    },
+    "auction_bid_placed": {
+      "title": "New bid: “{orderTitle}”",
+      "body": "@{designer} offered {amount} {currency}.",
+      "action": "Open the auction"
+    },
+    "auction_outbid": {
+      "title": "You have been outbid: “{orderTitle}”",
+      "body": "The best bid is now {amount} {currency}. You can go below it.",
+      "action": "Open the auction"
+    },
+    "auction_ending_soon": {
+      "title": "The auction ends soon: “{orderTitle}”",
+      "body": "Less than {hours} hours left. After that no further bids are accepted.",
+      "action": "Open the auction"
+    },
+    "auction_closed": {
+      "title": "Auction closed: “{orderTitle}”",
+      "body": "Bidding is over. The customer is picking a winner.",
+      "action": "Open the auction"
+    },
+    "auction_won": {
+      "title": "You won the auction: “{orderTitle}”",
+      "body": "Your bid of {amount} {currency} was picked. Respond within {hours} hours — bids are non-binding, so declining is allowed.",
+      "action": "Respond"
+    },
+    "auction_winner_declined": {
+      "title": "The winner declined: “{orderTitle}”",
+      "body": "The deal did not start. The other bids still stand — you can pick another bidder.",
+      "action": "Open the auction"
     }
   },
   "deals": {

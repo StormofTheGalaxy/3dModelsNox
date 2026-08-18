@@ -4,6 +4,7 @@ import { prisma, type Prisma } from '@polyforge/db';
 import { competitionLevel, type OrderFilter } from '@polyforge/shared';
 
 import type { OrderCardData } from '@/components/orders/order-card';
+import { bestBidForCards } from './auctions';
 
 /**
  * Витрина заказов (§4.5).
@@ -28,6 +29,8 @@ const ORDER_CARD_SELECT = {
   responsesCount: true,
   invitedDesignerIds: true,
   publishedAt: true,
+  workMode: true,
+  auction: { select: { mode: true, endsAt: true, closedAt: true } },
   customer: {
     select: {
       id: true,
@@ -42,6 +45,8 @@ const ORDER_CARD_SELECT = {
 export type OrderCard = Prisma.OrderGetPayload<{ select: typeof ORDER_CARD_SELECT }> & {
   competition: 'low' | 'medium' | 'high';
   isInvited: boolean;
+  /** Лучшая ставка — только у открытых торгов, см. `bestBidForCards`. */
+  bestBid: number | null;
 };
 
 function orderBy(sort: OrderFilter['sort']): Prisma.OrderOrderByWithRelationInput[] {
@@ -120,10 +125,16 @@ export async function listOrders(
   const hasMore = orders.length > filter.limit;
   const page = hasMore ? orders.slice(0, filter.limit) : orders;
 
+  // Ставки подтягиваются одним запросом на страницу, а не по карточке.
+  const best = await bestBidForCards(
+    page.filter((order) => order.auction !== null).map((order) => order.id),
+  );
+
   const items = page.map((order) => ({
     ...order,
     competition: competitionLevel(order.responsesCount),
     isInvited: viewerId !== null && order.invitedDesignerIds.includes(viewerId),
+    bestBid: best.get(order.id)?.amount ?? null,
   }));
 
   return { items, nextCursor: hasMore ? (items.at(-1)?.id ?? null) : null };
@@ -136,6 +147,7 @@ export async function getOrder(orderId: string) {
     select: {
       ...ORDER_CARD_SELECT,
       status: true,
+      workMode: true,
       customerId: true,
       briefId: true,
       expiresAt: true,
@@ -204,6 +216,13 @@ export function toOrderCardData(order: OrderCard): OrderCardData {
     previewUrl: order.previewUrl,
     competition: order.competition,
     isInvited: order.isInvited,
+    auction: order.auction
+      ? {
+          mode: order.auction.mode,
+          bestAmount: order.bestBid,
+          endsAt: order.auction.endsAt?.toISOString() ?? null,
+        }
+      : null,
     publishedAt: order.publishedAt?.toISOString() ?? null,
     customer: {
       nickname: order.customer.nickname,

@@ -9,6 +9,11 @@ import {
   remindMilestoneDeadlines,
   remindStuckPayments,
 } from './jobs/deal-maintenance';
+import {
+  closeExpiredAuctions,
+  expireWinnerDecisions,
+  remindAuctionsEndingSoon,
+} from './jobs/auction';
 import { sendBroadcast, type BroadcastPayload } from './jobs/broadcast';
 import { sendWeeklyDigests } from './jobs/digest';
 import { summarizeDisputeJob, type DisputeSummaryPayload } from './jobs/dispute-summary';
@@ -195,6 +200,16 @@ register(QUEUES.maintenance, async (job) => {
     return;
   }
 
+  if (job.name === 'close-auctions') {
+    const closed = await closeExpiredAuctions();
+    const soon = await remindAuctionsEndingSoon();
+    const expired = await expireWinnerDecisions();
+    console.info(
+      `[worker:maintenance] торги: закрыто ${closed}, напоминаний ${soon}, просрочен выбор у ${expired}`,
+    );
+    return;
+  }
+
   if (job.name === 'recompute-ontime') {
     const count = await recomputeOnTimeMetrics();
     console.info(`[worker:maintenance] метрик «в срок» пересчитано: ${count}`);
@@ -281,6 +296,10 @@ async function scheduleRepeatableJobs(): Promise<void> {
     { name: 'expire-strikes', pattern: '10 1 * * *' },
     // Еженедельный дайджест (§4.7) — утро понедельника.
     { name: 'weekly-digest', pattern: '0 8 * * 1' },
+    // Торги: дедлайн, вскрытие закрытых ставок и срок ответа победителя.
+    // Каждые десять минут — дедлайн задаётся с точностью до минуты, и час
+    // ожидания после его наступления выглядел бы поломкой.
+    { name: 'close-auctions', pattern: '*/10 * * * *' },
   ];
 
   for (const job of repeatable) {

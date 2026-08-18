@@ -49,6 +49,13 @@ export const AUDIT_ACTIONS = [
   'response.submitted',
   'response.accepted',
   'response.rejected',
+  'auction.opened',
+  'auction.bid_placed',
+  'auction.bid_withdrawn',
+  'auction.closed',
+  'auction.winner_selected',
+  'auction.winner_accepted',
+  'auction.winner_declined',
   'brief.change_requested',
   'brief.change_resolved',
   'deal.created',
@@ -98,6 +105,8 @@ export const AUDIT_TARGET_TYPES = [
   'report',
   'setting',
   'waitlist',
+  'auction',
+  'bid',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];

@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PublishOrderForm } from '@/components/orders/publish-order-form';
 import { requireVerifiedUser } from '@/server/auth/guards';
 import { listOwnBriefs } from '@/server/briefs';
+import { getSetting } from '@/server/settings';
 
 export async function generateMetadata({
   params,
@@ -66,6 +67,7 @@ export default async function NewOrderPage({
           title: brief.title || tBrief('untitled'),
         }))}
         preselectedBriefId={query.brief ?? null}
+        auctionEnabled={await getSetting('feature_auction')}
       />
     </div>
   );

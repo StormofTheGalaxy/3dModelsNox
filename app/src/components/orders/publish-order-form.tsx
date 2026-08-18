@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useActionState, useState } from 'react';
 
-import { CURRENCIES } from '@polyforge/shared';
+import { AUCTION_MODES, CURRENCIES } from '@polyforge/shared';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,14 +18,20 @@ import { idleState } from '@/server/actions/types';
 export function PublishOrderForm({
   briefs,
   preselectedBriefId,
+  auctionEnabled,
 }: {
   briefs: { id: string; title: string }[];
   preselectedBriefId: string | null;
+  /** Торги — post-MVP за флагом: при выключенном флаге выбора режима нет. */
+  auctionEnabled: boolean;
 }) {
   const t = useTranslations('orders.publishForm');
+  const tAuction = useTranslations('orders.auction');
   const tRoot = useTranslations();
 
   const [budgetMode, setBudgetMode] = useState<'fixed' | 'open'>('open');
+  const [workMode, setWorkMode] = useState<'fixed' | 'auction'>('fixed');
+  const [auctionMode, setAuctionMode] = useState<'open_reverse' | 'sealed'>('open_reverse');
   const [state, formAction, pending] = useActionState(publishOrder, idleState);
   useActionRedirect(state);
 
@@ -101,7 +107,7 @@ export function PublishOrderForm({
                 </Field>
 
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="order-currency">{t('budgetAmount')}</Label>
+                  <Label htmlFor="order-currency">{t('currency')}</Label>
                   <Select id="order-currency" name="budgetCurrency" defaultValue="USD">
                     {CURRENCIES.map((currency) => (
                       <option key={currency} value={currency}>
@@ -123,6 +129,92 @@ export function PublishOrderForm({
           </div>
         </CardContent>
       </Card>
+
+      {auctionEnabled ? (
+        <Card>
+          <CardContent className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="order-work-mode">{tAuction('workMode')}</Label>
+              <Select
+                id="order-work-mode"
+                name="workMode"
+                value={workMode}
+                onChange={(event) => setWorkMode(event.target.value as 'fixed' | 'auction')}
+              >
+                <option value="fixed">{tAuction('workModeFixed')}</option>
+                <option value="auction">{tAuction('workModeAuction')}</option>
+              </Select>
+              <p className="text-xs text-fg-muted">{tAuction('workModeHint')}</p>
+            </div>
+
+            {workMode === 'auction' ? (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="order-auction-mode">{tAuction('modeLabel')}</Label>
+                  <Select
+                    id="order-auction-mode"
+                    name="auctionMode"
+                    value={auctionMode}
+                    onChange={(event) =>
+                      setAuctionMode(event.target.value as 'open_reverse' | 'sealed')
+                    }
+                  >
+                    {AUCTION_MODES.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {tAuction(`mode.${mode}`)}
+                      </option>
+                    ))}
+                  </Select>
+                  <p className="text-xs text-fg-muted">{tAuction(`modeHint.${auctionMode}`)}</p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field
+                    label={tAuction('startPrice')}
+                    hint={tAuction('startPriceOptional')}
+                    error={fieldError('auctionStartPrice')}
+                  >
+                    {({ id, invalid }) => (
+                      <Input
+                        id={id}
+                        name="auctionStartPrice"
+                        type="number"
+                        min={1}
+                        inputMode="numeric"
+                        className="font-mono"
+                        invalid={invalid}
+                      />
+                    )}
+                  </Field>
+
+                  <Field
+                    label={tAuction('endsAt')}
+                    /* Закрытым ставкам дедлайн обязателен: без него нечем
+                       запустить вскрытие. */
+                    hint={
+                      auctionMode === 'sealed'
+                        ? tAuction('endsAtRequiredSealed')
+                        : tAuction('endsAtOptional')
+                    }
+                    error={fieldError('auctionEndsAt')}
+                    required={auctionMode === 'sealed'}
+                  >
+                    {({ id, invalid }) => (
+                      <Input
+                        id={id}
+                        name="auctionEndsAt"
+                        type="datetime-local"
+                        required={auctionMode === 'sealed'}
+                        invalid={invalid}
+                      />
+                    )}
+                  </Field>
+                </div>
+              </>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <FormMessage state={state} />
 
