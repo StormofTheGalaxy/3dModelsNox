@@ -4,6 +4,8 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   ClipboardList,
   FileText,
+  Gavel,
+  Handshake,
   LayoutDashboard,
   LogOut,
   Send,
@@ -88,6 +90,13 @@ export function UserMenu({
           </DropdownMenu.Item>
 
           <DropdownMenu.Item asChild className={itemClass}>
+            <Link href="/deals">
+              <Handshake className="size-4 text-fg-muted" aria-hidden />
+              {t('deals')}
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild className={itemClass}>
             <Link href="/responses">
               <Send className="size-4 text-fg-muted" aria-hidden />
               {t('myResponses')}
@@ -121,13 +130,22 @@ export function UserMenu({
           </DropdownMenu.Item>
 
           {isStaff ? (
-            <DropdownMenu.Item asChild className={itemClass}>
-              {/* Админка живёт вне языковых префиксов — обычный next/link. */}
-              <NextLink href="/admin">
-                <Shield className="size-4 text-fg-muted" aria-hidden />
-                {t('admin')}
-              </NextLink>
-            </DropdownMenu.Item>
+            <>
+              <DropdownMenu.Item asChild className={itemClass}>
+                <Link href="/admin/disputes">
+                  <Gavel className="size-4 text-fg-muted" aria-hidden />
+                  {t('disputes')}
+                </Link>
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Item asChild className={itemClass}>
+                {/* Админка живёт вне языковых префиксов — обычный next/link. */}
+                <NextLink href="/admin">
+                  <Shield className="size-4 text-fg-muted" aria-hidden />
+                  {t('admin')}
+                </NextLink>
+              </DropdownMenu.Item>
+            </>
           ) : null}
 
           <DropdownMenu.Separator className="my-1 h-px bg-[var(--pf-border)]" />

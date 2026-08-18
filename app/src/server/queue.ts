@@ -97,3 +97,45 @@ export async function enqueueStorageCleanup(keys: string[]): Promise<void> {
     console.error('[queue] не удалось поставить очистку хранилища', error);
   }
 }
+
+export interface WatermarkJob {
+  deliveryFileId: string;
+}
+
+/**
+ * Водяной знак на превью финального этапа (§4.6).
+ *
+ * До подтверждения оплаты заказчик видит только помеченное превью —
+ * это единственная защита, которую платформа может дать дизайнеру,
+ * не участвуя в расчётах.
+ */
+export async function enqueueWatermark(job: WatermarkJob): Promise<void> {
+  try {
+    await queue(QUEUES.media).add('watermark', job, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5_000 },
+      removeOnComplete: 100,
+      removeOnFail: 500,
+    });
+  } catch (error) {
+    console.error('[queue] не удалось поставить нанесение водяного знака', error);
+  }
+}
+
+export interface DisputeSummaryJob {
+  disputeId: string;
+}
+
+/** Резюме спора для арбитра: длинный запрос к модели, место ему в воркере. */
+export async function enqueueDisputeSummary(job: DisputeSummaryJob): Promise<void> {
+  try {
+    await queue(QUEUES.ai).add('dispute-summary', job, {
+      attempts: 2,
+      backoff: { type: 'exponential', delay: 5_000 },
+      removeOnComplete: 50,
+      removeOnFail: 200,
+    });
+  } catch (error) {
+    console.error('[queue] не удалось поставить резюме спора', error);
+  }
+}

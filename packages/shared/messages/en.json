@@ -40,7 +40,9 @@
     "briefs": "My briefs",
     "myOrders": "My orders",
     "myResponses": "My proposals",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "deals": "Deals",
+    "disputes": "Disputes"
   },
   "soon": {
     "title": "This section is coming soon",
@@ -300,6 +302,36 @@
     },
     "savedFilter": {
       "titleTooShort": "At least 2 characters"
+    },
+    "deal": {
+      "responseNotAccepted": "The response has not been accepted yet",
+      "planLocked": "The plan is already agreed and cannot be changed",
+      "planEmpty": "Add at least one milestone",
+      "planTooLong": "Too many milestones",
+      "planSumMismatch": "Milestones total ({total}) does not match the deal price ({price} {currency})",
+      "milestoneTitleTooShort": "Milestone title is too short",
+      "milestoneTitleTooLong": "Milestone title is too long",
+      "milestoneAmountRequired": "Enter the milestone amount",
+      "milestoneNotInWork": "The milestone is not in progress",
+      "milestoneNotSubmitted": "The milestone has not been submitted yet",
+      "milestoneNotAccepted": "The milestone has not been accepted yet",
+      "deliveryFilesRequired": "Attach at least one file",
+      "filesLimitReached": "Deal file limit reached ({limit} GB)",
+      "receiptRequired": "Attach a receipt",
+      "paymentAmountRequired": "Enter the payment amount",
+      "paymentNotClaimed": "The customer has not reported the payment yet",
+      "paymentAlreadyConfirmed": "The payment is already confirmed",
+      "revisionCommentRequired": "Describe what needs fixing (at least 10 characters)",
+      "notActive": "The deal is not in progress",
+      "inDispute": "There is an open dispute on this deal",
+      "alreadyClosed": "The deal is already closed",
+      "disputeExists": "A dispute on this deal is already open",
+      "disputeResolved": "The dispute is already closed",
+      "disputeReasonTooShort": "Describe the situation in more detail (at least 30 characters)",
+      "resolutionRequired": "Justify the verdict (at least 20 characters)",
+      "messageEmpty": "The message is empty",
+      "changeDescriptionTooShort": "Describe the change in more detail (at least 20 characters)",
+      "changeResolved": "The request has already been handled"
     }
   },
   "empty": {
@@ -939,6 +971,323 @@
       "title": "Platform message",
       "body": "Open your notifications to read it.",
       "action": "Open"
+    },
+    "deal_started": {
+      "title": "Deal started: “{dealTitle}”",
+      "body": "Agree on the milestone plan — work starts once both sides confirm it.",
+      "action": "Open the deal"
+    },
+    "deal_plan_changed": {
+      "title": "Milestone plan changed: “{dealTitle}”",
+      "body": "The other side proposed a different set of milestones. Confirm it or propose your own.",
+      "action": "Open the deal"
+    },
+    "deal_milestone_submitted": {
+      "title": "Milestone submitted: “{milestoneTitle}”",
+      "body": "The designer submitted a milestone on the deal “{dealTitle}”. Accept it or request a revision.",
+      "action": "Review the submission"
+    },
+    "deal_revision_requested": {
+      "title": "Milestone in revision: “{milestoneTitle}”",
+      "body": "The customer sent a milestone on “{dealTitle}” back for revision. Round {round} of {included}.",
+      "action": "Open the deal"
+    },
+    "deal_milestone_accepted": {
+      "title": "Milestone accepted: “{milestoneTitle}”",
+      "body": "The customer accepted a milestone on the deal “{dealTitle}”. Expect the payment next.",
+      "action": "Open the deal"
+    },
+    "deal_payment_claimed": {
+      "title": "The customer reported a payment: {amount} {currency}",
+      "body": "A receipt was uploaded for “{milestoneTitle}” on the deal “{dealTitle}”. Confirm you received the money.",
+      "action": "Check the receipt"
+    },
+    "deal_payment_confirmed": {
+      "title": "Payment confirmed: {amount} {currency}",
+      "body": "The designer confirmed receiving the payment for “{milestoneTitle}” on “{dealTitle}”.",
+      "action": "Open the deal"
+    },
+    "deal_payment_stuck": {
+      "title": "A payment is waiting for confirmation: {amount} {currency}",
+      "body": "The customer sent a receipt for “{milestoneTitle}” on “{dealTitle}” and there is still no confirmation.",
+      "action": "Confirm receipt"
+    },
+    "deal_deadline_soon": {
+      "title": "Milestone “{milestoneTitle}” is due in {hours} h",
+      "body": "A deadline on the deal “{dealTitle}” is approaching. Submit the milestone or warn the customer.",
+      "action": "Open the deal"
+    },
+    "deal_message": {
+      "title": "New message from {author}",
+      "body": "There is a new message in the chat of the deal “{dealTitle}”.",
+      "action": "Open the chat"
+    },
+    "deal_completed": {
+      "title": "Deal completed: “{dealTitle}”",
+      "body": "All milestones are delivered and paid. Source files are available to the customer.",
+      "action": "Open the deal"
+    },
+    "deal_brief_change": {
+      "title": "Brief change request: “{dealTitle}”",
+      "body": "{author} proposes changing the frozen brief. The change takes effect once you agree.",
+      "action": "Review the request"
+    },
+    "dispute_opened": {
+      "title": "A dispute was opened on “{dealTitle}”",
+      "body": "The deal is frozen until the arbiter decides. State your side in the deal chat.",
+      "action": "Open the deal"
+    },
+    "dispute_resolved": {
+      "title": "The dispute on “{dealTitle}” is closed",
+      "body": "The arbiter issued a verdict. The decision and its reasoning are in the deal.",
+      "action": "See the decision"
+    }
+  },
+  "deals": {
+    "title": "Deals",
+    "empty": {
+      "title": "No deals yet",
+      "description": "A deal starts when a customer accepts a designer's response."
+    },
+    "role": {
+      "customer": "You are the customer",
+      "designer": "You are the designer"
+    },
+    "parties": "Customer: {customer} · Designer: {designer}",
+    "progress": "Progress by paid milestones",
+    "paidOf": "Paid {paid} of {total} {currency}",
+    "paymentDisclaimer": "PolyForge does not process payments and takes no commission. The parties pay each other directly; the platform only records the confirmations they submit.",
+    "briefFrozen": "Frozen brief: “{title}”, version {version}. Changes require both parties to agree.",
+    "tabsLabel": "Deal sections",
+    "tabs": {
+      "brief": "Brief",
+      "files": "Files",
+      "receipts": "Receipts",
+      "chat": "Chat",
+      "history": "History"
+    },
+    "status": {
+      "plan_agreement": "Plan agreement",
+      "active": "In progress",
+      "paused": "Paused",
+      "in_dispute": "Dispute",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "paymentMethods": {
+      "card": "Card",
+      "crypto": "Crypto",
+      "paypal": "PayPal",
+      "sbp": "SBP",
+      "other": "Other"
+    },
+    "plan": {
+      "title": "Milestone plan",
+      "description": "Split the deal amount into milestones. Work starts once both sides confirm the plan.",
+      "templates": {
+        "full": "Single milestone",
+        "half": "50 / 50",
+        "thirds": "30 / 40 / 30"
+      },
+      "stage": "Milestone {number}",
+      "stageTitle": "Milestone title",
+      "amount": "Amount, {currency}",
+      "dueDate": "Due date",
+      "addStage": "Add milestone",
+      "remove": "Remove milestone",
+      "sum": "Milestones total: {total} of {price} {currency}",
+      "save": "Save plan",
+      "confirm": "Confirm plan",
+      "bothConfirmed": "Both sides confirmed the plan.",
+      "waitingOther": "You confirmed the plan. Waiting for the other side.",
+      "otherConfirmed": "The other side confirmed the plan. Confirm it to start work."
+    },
+    "milestones": {
+      "title": "Milestones",
+      "sourcesLocked": "Source files of the final milestone unlock once its payment is confirmed.",
+      "roundsUsed": "revisions: {used} of {included}",
+      "waitingConfirmation": "Waiting for the designer to confirm the payment",
+      "dealCompleted": "Deal closed. Source files are available.",
+      "status": {
+        "pending": "Pending",
+        "in_work": "In progress",
+        "submitted": "Submitted",
+        "revision": "In revision",
+        "accepted": "Accepted",
+        "paid_claimed": "Payment claimed",
+        "paid_confirmed": "Payment confirmed"
+      },
+      "actions": {
+        "submit": "Submit milestone",
+        "accept": "Accept",
+        "revision": "Request revision ({left})",
+        "revisionOverLimit": "Request revision over limit",
+        "pay": "I have paid",
+        "confirmPayment": "Payment received"
+      },
+      "delivery": {
+        "title": "Submit milestone “{milestone}”",
+        "files": "Files",
+        "filesHint": "Every submission is stored as a separate version — earlier ones stay available.",
+        "note": "Comment",
+        "submit": "Send"
+      },
+      "revision": {
+        "title": "Revision for “{milestone}”",
+        "roundsLeft": "Revision rounds left after this one: {left}. The round is spent on send.",
+        "overLimit": "Included revision rounds are used up. This one is over the limit — agree on it with the designer separately.",
+        "comment": "What needs fixing",
+        "submit": "Send for revision"
+      },
+      "payment": {
+        "title": "Payment for “{milestone}”",
+        "disclaimer": "Pay the designer directly by any method you both accept. The platform only stores your receipt and notifies the designer.",
+        "amount": "Amount, {currency}",
+        "method": "Payment method",
+        "txHash": "Transfer reference",
+        "receipt": "Receipt or screenshot",
+        "note": "Comment",
+        "submit": "Send receipt"
+      }
+    },
+    "files": {
+      "empty": "No files yet",
+      "locked": "Until the final milestone is paid, source files stay locked — you see watermarked previews.",
+      "lockedShort": "After payment",
+      "version": "Version {version}",
+      "download": "Download"
+    },
+    "receipts": {
+      "empty": "No receipts yet",
+      "disclaimer": "A log of payments reported by the parties. The platform does not process payments and does not verify them with any bank.",
+      "claimedAt": "claimed {date}",
+      "confirmedAt": "confirmed {date}",
+      "status": {
+        "pending": "Awaiting confirmation",
+        "confirmed": "Confirmed",
+        "stuck": "Stuck"
+      }
+    },
+    "chat": {
+      "placeholder": "Write a message…",
+      "send": "Send",
+      "attach": "Attach a file",
+      "quote": "Reply",
+      "cancelQuote": "Cancel",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinned": "Pinned",
+      "translate": "Translate",
+      "typing": "The other side is typing…",
+      "offline": "Realtime is unavailable — messages will appear after a page refresh."
+    },
+    "history": {
+      "empty": "No events yet"
+    },
+    "actions": {
+      "title": "Deal controls",
+      "staffView": "Arbiter mode: the deal is read-only.",
+      "pause": "Pause the deal",
+      "resume": "Resume",
+      "pauseDescription": "A pause shifts milestone deadlines by its duration and does not affect metrics.",
+      "pausedWithReason": "Deal paused: {reason}",
+      "cancel": "Cancel the deal",
+      "cancelDescription": "Cancellation records what has been delivered and paid. Use a dispute for contested cases.",
+      "reason": "Reason",
+      "openDispute": "Open a dispute",
+      "disputeOpen": "A dispute is open on this deal: {reason}",
+      "requestChange": "Request a brief change",
+      "changeRequests": "Brief change requests",
+      "changeAccept": "Agree",
+      "changeReject": "Decline",
+      "changeStatus": {
+        "pending": "Awaiting reply",
+        "accepted": "Agreed",
+        "rejected": "Declined"
+      },
+      "portfolioQuestion": "Allow the designer to show this work in their portfolio?",
+      "portfolioAllow": "I allow publishing this work"
+    },
+    "dispute": {
+      "title": "Open a dispute",
+      "description": "A platform arbiter reviews the case.",
+      "freezeWarning": "The deal freezes while the dispute is open: submitting, accepting and paying milestones is blocked. The platform does not refund money — it never holds it; the verdict affects reputation.",
+      "reason": "What happened",
+      "submit": "Open dispute",
+      "opened": "Dispute opened. An arbiter will review it shortly.",
+      "resolved": "Dispute closed."
+    },
+    "briefChange": {
+      "title": "Brief change",
+      "description": "The brief was frozen when the deal started. The change takes effect once the other side agrees.",
+      "what": "What should change",
+      "submit": "Send request",
+      "sent": "Request sent to the other side."
+    },
+    "delivery": {
+      "submitted": "Milestone submitted. The customer has been notified."
+    },
+    "revision": {
+      "sent": "Sent for revision. Round {round} of {included} used.",
+      "overLimit": "Sent for revision beyond the included rounds ({included}). Agree on paying for it separately."
+    },
+    "payment": {
+      "claimed": "Receipt sent. Waiting for the designer to confirm."
+    },
+    "system": {
+      "deal": {
+        "created": "Deal created: “{title}”",
+        "paused": "{author} paused the deal",
+        "resumed": "{author} resumed the deal",
+        "completed": "Deal “{title}” completed",
+        "cancelled": "{author} cancelled the deal"
+      },
+      "plan": {
+        "proposed": "{author} proposed a plan of {count} milestones",
+        "confirmed": "{author} confirmed the plan"
+      },
+      "milestone": {
+        "started": "Milestone “{title}” started",
+        "submitted": "Milestone “{title}” submitted, version {version}",
+        "revision": "Milestone “{title}” sent for revision, round {round} of {included}",
+        "accepted": "Milestone “{title}” accepted"
+      },
+      "payment": {
+        "claimed": "The customer reported paying for “{title}”: {amount} {currency}",
+        "confirmed": "The designer confirmed receiving payment for “{title}”: {amount} {currency}"
+      },
+      "dispute": {
+        "opened": "{author} opened a dispute",
+        "resolved": "Dispute closed, verdict: {verdict}"
+      },
+      "brief": {
+        "changeRequested": "{author} requested a brief change",
+        "changeResolved": "{author} answered the brief change request"
+      }
+    }
+  },
+  "disputes": {
+    "title": "Disputes",
+    "empty": "No open disputes",
+    "reason": "What the dispute is about",
+    "milestones": "Deal milestones",
+    "conversation": "Conversation",
+    "systemAuthor": "System",
+    "openDeal": "Open the deal",
+    "late": "late",
+    "resolve": "Decision",
+    "summarize": "Generate summary",
+    "verdict": "Verdict",
+    "resolutionNote": "Reasoning",
+    "submit": "Issue verdict",
+    "status": {
+      "open": "Open",
+      "resolved": "Closed"
+    },
+    "verdicts": {
+      "designer_right": "Designer is right",
+      "customer_right": "Customer is right",
+      "mutual": "Shared responsibility"
     }
   }
 }

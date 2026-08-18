@@ -5,19 +5,27 @@ import { QUEUES } from '@polyforge/shared';
 
 import { generateBriefPdf, markBriefPdfFailed, type BriefPdfPayload } from './jobs/brief-pdf';
 import {
+  recomputeOnTimeMetrics,
+  remindMilestoneDeadlines,
+  remindStuckPayments,
+} from './jobs/deal-maintenance';
+import { summarizeDisputeJob, type DisputeSummaryPayload } from './jobs/dispute-summary';
+import {
   archiveExpiredOrders,
   dispatchSavedFilterMatches,
   flagInactiveCustomers,
 } from './jobs/order-maintenance';
 import { closeNotifier } from './notify';
 import { markImageFailed, processImage, type ProcessImagePayload } from './jobs/process-image';
+import { applyWatermark, markWatermarkFailed, type WatermarkPayload } from './jobs/watermark';
 import { storage } from './storage';
 
 /**
  * Фоновые задачи (§2.1).
  *
- * Фазы 1–3: сжатие изображений портфолио, экспорт ТЗ в PDF, гигиена витрины
- * заказов и дайджесты по сохранённым фильтрам. Водяные знаки — фаза 4.
+ * Фазы 1–4: сжатие изображений портфолио, экспорт ТЗ в PDF, гигиена витрины
+ * заказов, дайджесты по сохранённым фильтрам, водяные знаки на превью
+ * финальных сдач, напоминания о дедлайнах и зависших оплатах.
  */
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -63,6 +71,22 @@ register(QUEUES.media, async (job) => {
     return;
   }
 
+  if (job.name === 'watermark') {
+    const payload = job.data as WatermarkPayload;
+    try {
+      await applyWatermark(payload);
+      console.info(`[worker:media] водяной знак нанесён на файл ${payload.deliveryFileId}`);
+    } catch (error) {
+      // Флаг снимаем только на последней попытке: иначе UI перестанет ждать
+      // знак, который ещё может появиться.
+      if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
+        await markWatermarkFailed(payload.deliveryFileId);
+      }
+      throw error;
+    }
+    return;
+  }
+
   if (job.name !== 'process-image') {
     console.info(`[worker:media] неизвестная задача ${job.name}`);
     return;
@@ -84,7 +108,14 @@ register(QUEUES.media, async (job) => {
 });
 
 register(QUEUES.ai, async (job) => {
-  // Генерация ТЗ, переводы, саммари — фазы 2 и 6.
+  if (job.name === 'dispute-summary') {
+    const payload = job.data as DisputeSummaryPayload;
+    await summarizeDisputeJob(payload);
+    console.info(`[worker:ai] саммари спора ${payload.disputeId} готово`);
+    return;
+  }
+
+  // Генерация ТЗ и переводы идут синхронно из app: пользователь ждёт ответ.
   console.info(`[worker:ai] задача ${job.name} принята`);
 });
 
@@ -123,6 +154,38 @@ register(QUEUES.maintenance, async (job) => {
     return;
   }
 
+  if (job.name === 'remind-deadlines') {
+    const { prisma } = await import('@polyforge/db');
+    const setting = await prisma.platformSetting.findUnique({
+      where: { key: 'deadline_reminder_hours' },
+      select: { value: true },
+    });
+    const hours = Array.isArray(setting?.value) ? (setting.value as number[]) : [48, 24];
+
+    const count = await remindMilestoneDeadlines(hours);
+    console.info(`[worker:maintenance] напоминаний о дедлайне: ${count}`);
+    return;
+  }
+
+  if (job.name === 'remind-stuck-payments') {
+    const { prisma } = await import('@polyforge/db');
+    const setting = await prisma.platformSetting.findUnique({
+      where: { key: 'payment_stuck_reminder_days' },
+      select: { value: true },
+    });
+    const days = Array.isArray(setting?.value) ? (setting.value as number[]) : [1, 3];
+
+    const count = await remindStuckPayments(days);
+    console.info(`[worker:maintenance] напоминаний об оплате: ${count}`);
+    return;
+  }
+
+  if (job.name === 'recompute-ontime') {
+    const count = await recomputeOnTimeMetrics();
+    console.info(`[worker:maintenance] метрик «в срок» пересчитано: ${count}`);
+    return;
+  }
+
   if (job.name === 'delete-storage-objects') {
     const { keys } = job.data as { keys: string[] };
     // Производные webp лежат рядом с оригиналом — удаляем и их.
@@ -153,6 +216,12 @@ async function scheduleRepeatableJobs(): Promise<void> {
     { name: 'flag-inactive-customers', pattern: '30 9 * * *' },
     // Дайджест по сохранённым фильтрам — дважды в день.
     { name: 'saved-filter-digest', pattern: '0 9,18 * * *' },
+    // Дедлайны этапов: раз в час — окно напоминания как раз часовое (§4.6).
+    { name: 'remind-deadlines', pattern: '5 * * * *' },
+    // Зависшие оплаты — раз в сутки: пороги в настройках заданы в днях.
+    { name: 'remind-stuck-payments', pattern: '45 10 * * *' },
+    // Метрика «сдано в срок» — ночью, она нигде не нужна в реальном времени.
+    { name: 'recompute-ontime', pattern: '20 3 * * *' },
   ];
 
   for (const job of repeatable) {

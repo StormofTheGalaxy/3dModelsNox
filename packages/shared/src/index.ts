@@ -9,3 +9,4 @@ export * from './schemas/profile';
 export * from './schemas/work';
 export * from './schemas/brief';
 export * from './schemas/order';
+export * from './schemas/deal';

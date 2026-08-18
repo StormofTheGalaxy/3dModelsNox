@@ -131,6 +131,13 @@ model User {
   notifications   Notification[]   @relation("NotificationRecipient")
   notificationPrefs NotificationPreference[] @relation("NotificationPrefOwner")
 
+  dealsAsCustomer Deal[]                @relation("DealCustomer")
+  dealsAsDesigner Deal[]                @relation("DealDesigner")
+  paymentsUploaded PaymentConfirmation[] @relation("PaymentUploader")
+  dealMessages    DealMessage[]         @relation("MessageAuthor")
+  disputesOpened  Dispute[]             @relation("DisputeAuthor")
+  disputesArbitrated Dispute[]          @relation("DisputeArbiter")
+
   @@index([status])
   @@index([role])
   @@index([createdAt])
@@ -691,6 +698,8 @@ model BriefVersion {
 
   createdAt DateTime @default(now())
 
+  deals Deal[] @relation("DealBriefVersion")
+
   @@unique([briefId, version])
   @@index([briefId, createdAt])
   @@map("brief_versions")
@@ -828,6 +837,20 @@ enum NotificationType {
   response_status_changed
   response_accepted
   brief_shared
+  deal_started
+  deal_plan_changed
+  deal_milestone_submitted
+  deal_revision_requested
+  deal_milestone_accepted
+  deal_payment_claimed
+  deal_payment_confirmed
+  deal_payment_stuck
+  deal_deadline_soon
+  deal_message
+  deal_completed
+  deal_brief_change
+  dispute_opened
+  dispute_resolved
   system
 }
 
@@ -879,6 +902,7 @@ model Order {
 
   responses OrderResponse[]
   bids      Bid[]
+  deal      Deal?           @relation("DealOrder")
 
   @@index([status, publishedAt])
   @@index([customerId, status])
@@ -1023,4 +1047,349 @@ model Bid {
 
   @@index([orderId, amount])
   @@map("bids")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Фаза 4: сделки, этапы, чеки, сдачи, чат, споры
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum DealStatus {
+  /// План этапов согласуется: сделка ещё не в работе (§4.6).
+  plan_agreement
+  active
+  paused
+  in_dispute
+  completed
+  cancelled
+}
+
+enum MilestoneStatus {
+  pending
+  in_work
+  submitted
+  revision
+  accepted
+  /// Заказчик заявил об оплате и приложил чек.
+  paid_claimed
+  /// Дизайнер подтвердил получение денег — этап закрыт.
+  paid_confirmed
+}
+
+enum PaymentMethod {
+  card
+  crypto
+  paypal
+  sbp
+  other
+}
+
+enum PaymentStatus {
+  pending
+  confirmed
+  /// Дизайнер молчит: чек висит, админ видит флаг (§4.6).
+  stuck
+}
+
+/// Выборочная проверка чеков админом (§4.10).
+enum PaymentAdminCheck {
+  none
+  random_ok
+  flagged
+  verified
+}
+
+enum DealMessageKind {
+  user
+  /// Системные события ленты: «этап сдан», «чек загружен», «спор открыт».
+  system
+}
+
+enum DisputeStatus {
+  open
+  resolved
+}
+
+enum DisputeVerdict {
+  designer_right
+  customer_right
+  mutual
+}
+
+/// Сделка. Хранит снимок версии ТЗ: изменения после старта идут через
+/// BriefChangeRequest с подтверждением второй стороны (§4.4, §4.6).
+model Deal {
+  id String @id @default(cuid())
+
+  orderId String? @unique
+  order   Order?  @relation("DealOrder", fields: [orderId], references: [id], onDelete: SetNull)
+
+  briefVersionId String
+  briefVersion   BriefVersion @relation("DealBriefVersion", fields: [briefVersionId], references: [id], onDelete: Restrict)
+
+  customerId String
+  customer   User   @relation("DealCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+
+  designerId String
+  designer   User   @relation("DealDesigner", fields: [designerId], references: [id], onDelete: Restrict)
+
+  title    String
+  price    Int
+  currency String @default("USD")
+
+  /// Раунды правок из принятого отклика: расходуются по этапам.
+  revisionRoundsIncluded Int @default(2)
+
+  status DealStatus @default(plan_agreement)
+
+  /// План подтверждают обе стороны — только после этого сделка активна.
+  planConfirmedByCustomerAt DateTime?
+  planConfirmedByDesignerAt DateTime?
+
+  pausedAt    DateTime?
+  pauseReason String?
+
+  completedAt DateTime?
+  cancelledAt DateTime?
+  cancelReason String?
+
+  /// Согласие заказчика на публикацию работы в портфолио (§4.6).
+  portfolioAllowed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  milestones Milestone[]
+  messages   DealMessage[]
+  dispute    Dispute?
+
+  @@index([customerId, status])
+  @@index([designerId, status])
+  @@map("deals")
+}
+
+model Milestone {
+  id String @id @default(cuid())
+
+  dealId String
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  /// Порядковый номер в плане: 1..10 (§3).
+  position    Int
+  title       String
+  description String?
+
+  amount   Int
+  currency String @default("USD")
+  dueDate  DateTime?
+
+  status MilestoneStatus @default(pending)
+
+  /// Сколько раундов правок уже израсходовано на этом этапе.
+  revisionRoundsUsed Int @default(0)
+
+  submittedAt DateTime?
+  acceptedAt  DateTime?
+  /// Сдан ли этап в срок — из этого считается onTimePct дизайнера (§4.6).
+  wasLate     Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries Delivery[]
+  payments   PaymentConfirmation[]
+
+  @@unique([dealId, position])
+  @@index([dealId, status])
+  @@index([status, dueDate])
+  @@map("milestones")
+}
+
+/// Сдача этапа. Версии накапливаются: v1, v2… — история правок видна обеим
+/// сторонам и нужна при разборе спора.
+model Delivery {
+  id String @id @default(cuid())
+
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  version Int
+  note    String?
+
+  createdAt DateTime @default(now())
+
+  files DeliveryFile[]
+
+  @@unique([milestoneId, version])
+  @@map("deliveries")
+}
+
+model DeliveryFile {
+  id String @id @default(cuid())
+
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  /// Исходники лежат в приватном бакете и открываются заказчику только
+  /// после подтверждения оплаты финального этапа (§4.6).
+  isSource Boolean @default(true)
+
+  storageKey String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+
+  /// Публичное превью: для финала воркер накладывает водяной знак.
+  previewUrl        String?
+  watermarkedUrl    String?
+  watermarkPending  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([deliveryId])
+  @@map("delivery_files")
+}
+
+/// Подтверждение оплаты (§3). Платформа денег не проводит — только фиксирует
+/// то, что стороны предоставили сами.
+model PaymentConfirmation {
+  id String @id @default(cuid())
+
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User   @relation("PaymentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  amount   Int
+  currency String        @default("USD")
+  method   PaymentMethod @default(other)
+  txHash   String?
+  note     String?
+
+  customerClaimedAt   DateTime  @default(now())
+  designerConfirmedAt DateTime?
+
+  status     PaymentStatus     @default(pending)
+  adminCheck PaymentAdminCheck @default(none)
+
+  /// Когда уходили напоминания дизайнеру — чтобы не слать их повторно.
+  remindedAt DateTime?
+  reminderCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  files PaymentFile[]
+
+  @@index([milestoneId])
+  @@index([status, customerClaimedAt])
+  @@map("payment_confirmations")
+}
+
+model PaymentFile {
+  id String @id @default(cuid())
+
+  paymentId String
+  payment   PaymentConfirmation @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  /// Чеки всегда в приватном бакете: доступ только участникам и админу.
+  storageKey String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+
+  createdAt DateTime @default(now())
+
+  @@index([paymentId])
+  @@map("payment_files")
+}
+
+/// Сообщение чата сделки (§4.7). Пре-сделочный тред привязан к отклику
+/// и продолжается в сделке.
+model DealMessage {
+  id String @id @default(cuid())
+
+  dealId String?
+  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  /// Пре-сделочный чат: тред по отклику до старта сделки.
+  responseId String?
+
+  kind DealMessageKind @default(user)
+
+  authorId String?
+  author   User?   @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  text String
+
+  /// Для системных сообщений — ключ словаря и подстановки.
+  systemKey     String?
+  systemPayload Json?
+
+  quotedMessageId String?
+  pinned          Boolean @default(false)
+
+  /// Кэш ИИ-перевода: {lang, text}. Наполняется в фазе 6.
+  translatedText Json?
+
+  readByCustomerAt DateTime?
+  readByDesignerAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  attachments MessageAttachment[]
+
+  @@index([dealId, createdAt])
+  @@index([responseId, createdAt])
+  @@map("deal_messages")
+}
+
+model MessageAttachment {
+  id String @id @default(cuid())
+
+  messageId String
+  message   DealMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  storageKey String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  /// Для картинок — публичное превью, чтобы не подписывать ссылку на каждый рендер.
+  previewUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+  @@map("message_attachments")
+}
+
+/// Спор (§4.6). Сделка при открытии замораживается; последствия
+/// репутационные — деньги платформа не возвращает.
+model Dispute {
+  id String @id @default(cuid())
+
+  dealId String @unique
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  openedById String
+  openedBy   User   @relation("DisputeAuthor", fields: [openedById], references: [id], onDelete: Restrict)
+
+  reason String
+
+  status  DisputeStatus   @default(open)
+  verdict DisputeVerdict?
+
+  arbiterId String?
+  arbiter   User?   @relation("DisputeArbiter", fields: [arbiterId], references: [id], onDelete: SetNull)
+
+  /// Саммари переписки, которое арбитр запрашивает кнопкой.
+  aiSummary      String?
+  resolutionNote String?
+  resolvedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("disputes")
 }

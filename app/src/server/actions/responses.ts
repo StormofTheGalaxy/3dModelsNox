@@ -10,6 +10,7 @@ import { writeAuditLog } from '../audit';
 import { getCurrentUser } from '../auth/session';
 import { refundCredits, spendCredits } from '../ai/credits';
 import { aiProvider } from '../ai/provider';
+import { createDealFromResponse } from './deals';
 import { notify } from '../notifications';
 import { checkRateLimit } from '../ratelimit';
 import { responsesLeftToday } from '../responses';
@@ -169,7 +170,7 @@ export async function setResponseStatus(
   responseId: string,
   status: string,
   rejectReason?: string,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; dealId?: string }> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: 'errors.forbidden' };
 
@@ -205,22 +206,31 @@ export async function setResponseStatus(
     },
   });
 
-  // Принятие отклика запускает сделку — она появится в фазе 4. Пока заказ
-  // переводится в работу, чтобы он ушёл с витрины и не собирал новые отклики.
+  // Принятие отклика запускает сделку (§4.6). Заказ уходит с витрины, чтобы
+  // не собирать новые отклики, а стороны переходят к согласованию плана.
+  let dealId: string | undefined;
+
   if (status === 'accepted') {
     await prisma.order.update({
       where: { id: response.orderId },
       data: { status: 'in_progress', lastActivityAt: new Date() },
     });
+
+    const deal = await createDealFromResponse(responseId);
+    if ('dealId' in deal) dealId = deal.dealId;
   }
 
-  await notify({
-    userId: response.designerId,
-    type: status === 'accepted' ? 'response_accepted' : 'response_status_changed',
-    payload: { orderTitle: response.order.title, status },
-    link: `/orders/${response.orderId}`,
-    withEmail: status === 'accepted',
-  });
+  // Про созданную сделку дизайнер уже уведомлён ссылкой на неё —
+  // второе письмо про тот же факт только путает.
+  if (!dealId) {
+    await notify({
+      userId: response.designerId,
+      type: status === 'accepted' ? 'response_accepted' : 'response_status_changed',
+      payload: { orderTitle: response.order.title, status },
+      link: `/orders/${response.orderId}`,
+      withEmail: status === 'accepted',
+    });
+  }
 
   await writeAuditLog({
     action: status === 'accepted' ? 'response.accepted' : 'response.rejected',
@@ -232,7 +242,7 @@ export async function setResponseStatus(
 
   revalidatePath(`/orders/${response.orderId}/responses`);
 
-  return { ok: true };
+  return { ok: true, dealId };
 }
 
 /**
