@@ -143,6 +143,7 @@ model User {
   memberships     OrganizationMember[] @relation("OrganizationMembership")
 
   pushSubscriptions PushSubscription[] @relation("PushSubscriptionOwner")
+  subscriptions     UserSubscription[] @relation("SubscriptionOwner")
 
   briefs          Brief[]          @relation("BriefOwner")
   briefVersions   BriefVersion[]   @relation("BriefVersionAuthor")
@@ -1134,9 +1135,16 @@ model Order {
   auction   Auction?
   deal      Deal?           @relation("DealOrder")
 
+  /// До какого момента заказ поднят в выдаче (post-MVP №12).
+  /// Денормализация продвижения: сортировка с курсорной пагинацией должна
+  /// делаться базой, а перетасовать страницы в памяти — значит показать
+  /// один заказ дважды и потерять другой.
+  boostedUntil DateTime?
+
   @@index([status, publishedAt])
   @@index([customerId, status])
   @@index([organizationId, status])
+  @@index([status, boostedUntil])
   @@index([status, expiresAt])
   @@map("orders")
 }
@@ -1559,6 +1567,118 @@ model DeliveryFile {
 
 /// Подтверждение оплаты (§3). Платформа денег не проводит — только фиксирует
 /// то, что стороны предоставили сами.
+// ── Монетизация: подписки, буст, featured (§1.2.2, post-MVP №12). ──────────
+//
+// За флагами и выключено. Продавать подписку без юрлица и платёжного
+// модуля нельзя, поэтому здесь нет ни цены к оплате, ни продления: есть
+// тарифы, их лимиты и место, куда встанет оплата, когда ей будет откуда
+// взяться.
+
+/// Тариф. Бесплатный существует всегда и описывает сегодняшнее поведение
+/// платформы: все на нём, и лимиты у него те же, что в реестре настроек.
+model SubscriptionPlan {
+  id String @id @default(cuid())
+
+  /// Ключ тарифа: free, pro, studio. Ходит в словарь подписей.
+  key String @unique
+
+  audience SubscriptionAudience @default(any)
+
+  /// Цена в минимальных единицах валюты. У бесплатного — ноль, и это не
+  /// «пока»: тариф без цены остаётся осмысленным, а цена без юрлица нет.
+  priceMinor Int    @default(0)
+  currency   String @default("USD")
+
+  /// Надбавки к лимитам платформы. Пусто — лимиты как у всех.
+  /// Хранится JSON: состав лимитов меняется вместе с платформой, и
+  /// колонка на каждый из них превратила бы тариф в таблицу с миграцией
+  /// на каждый чих.
+  perks Json?
+
+  isEnabled Boolean @default(true)
+  sortOrder Int     @default(100)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions UserSubscription[]
+
+  @@map("subscription_plans")
+}
+
+enum SubscriptionAudience {
+  designer
+  customer
+  any
+}
+
+/// Подписка человека на тариф.
+///
+/// Выдаётся администратором, а не покупается: покупка требует платёжного
+/// модуля, которого нет (ADR 0019). Срок хранится, потому что тариф без
+/// срока — это навсегда, а навсегда никто не собирался.
+model UserSubscription {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("SubscriptionOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  startsAt DateTime  @default(now())
+  endsAt   DateTime?
+
+  /// Кто выдал. Оплаты нет — значит, есть ответственный.
+  grantedById String?
+  note        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, endsAt])
+  @@map("user_subscriptions")
+}
+
+/// Продвижение заказа или профиля: буст и featured.
+///
+/// Механика работает и без денег — админ выдаёт её вручную. Продажа
+/// появится вместе с платёжным модулем.
+model Promotion {
+  id String @id @default(cuid())
+
+  kind   PromotionKind
+  target PromotionTarget
+  /// Идентификатор заказа или пользователя — в зависимости от target.
+  targetId String
+
+  /// Кому продвижение принадлежит: с него спрос, если оно куплено.
+  userId String
+
+  startsAt DateTime @default(now())
+  endsAt   DateTime
+
+  grantedById String?
+  note        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([target, targetId, endsAt])
+  @@index([kind, endsAt])
+  @@map("promotions")
+}
+
+enum PromotionKind {
+  /// Поднятие в выдаче на срок.
+  boost
+  /// Место в подборке на главной и в каталоге.
+  featured
+}
+
+enum PromotionTarget {
+  order
+  designer
+}
+
 // ── Платёжный модуль и комиссии (§1.2.2, post-MVP №11). ────────────────────
 //
 // Обе фичи за флагами и выключены: юрлица нет, комиссий нет (§1.2.1).

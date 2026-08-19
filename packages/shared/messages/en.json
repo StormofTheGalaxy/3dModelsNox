@@ -488,6 +488,14 @@
       "failed": "The payment did not go through. Try again.",
       "disabled": "The payments module is turned off on the platform",
       "noWebhook": "This payment mode does not accept provider notifications"
+    },
+    "monetization": {
+      "subscriptionsOff": "Subscriptions are turned off on the platform",
+      "promotionsOff": "Boost and featured are turned off on the platform",
+      "badDays": "The period is a whole number of days",
+      "userNotFound": "No user with that nickname",
+      "targetNotFound": "The promotion target was not found",
+      "badPerks": "The plan perks do not pass validation"
     }
   },
   "empty": {
@@ -1253,7 +1261,8 @@
       "alreadyInvited": "Invited",
       "scoreHint": "How well the profile matches this order, 0–100",
       "footer": "Candidates shown: {count}. The score is a hint, not a verdict — look at the portfolio."
-    }
+    },
+    "boostedBadge": "Boosted"
   },
   "notifications": {
     "title": "Notifications",
@@ -1872,6 +1881,7 @@
       "invites": "Invites",
       "content": "Content",
       "achievements": "Achievements",
+      "monetization": "Monetization",
       "broadcasts": "Broadcasts",
       "settings": "Settings",
       "audit": "Audit log"
@@ -2102,6 +2112,55 @@
         "nightDeliveries": "Night-time milestone deliveries",
         "currencies": "Currencies in completed deals",
         "revisionFreeDeals": "Deals without revisions"
+      }
+    },
+    "monetization": {
+      "title": "Monetization",
+      "description": "Plans, boost and featured. There is no selling: it requires the payments module, which requires a legal entity.",
+      "noSelling": "A user cannot buy a plan or a promotion: the platform has no payments module (ADR 0019). Everything is granted by hand, and every grant has someone behind it.",
+      "plans": "Plans",
+      "promotions": "Boost and featured",
+      "promotionsHint": "A boost raises an order in the listing for a period, featured gives a slot in the selection. An order is addressed by id, a designer by nickname.",
+      "on": "On",
+      "off": "Off",
+      "planKeys": {
+        "free": "Free",
+        "pro": "Pro",
+        "studio": "Studio"
+      },
+      "audiences": {
+        "designer": "Designers",
+        "customer": "Customers",
+        "any": "Everyone"
+      },
+      "freeOfCharge": "free of charge",
+      "price": "{amount} {currency} per month",
+      "noPerks": "No perks — the same limits as everyone",
+      "perks": {
+        "responsesPerDay": "Responses per day",
+        "aiCredits": "AI credits",
+        "aiBriefCredits": "Brief generation credits",
+        "invites": "Invites",
+        "selfBoost": "Can promote own orders"
+      },
+      "nickname": "Nickname",
+      "plan": "Plan",
+      "days": "Days",
+      "grant": "Grant",
+      "granted": "Granted",
+      "end": "End",
+      "ended": "Ended",
+      "until": "until {date}",
+      "kind": "What",
+      "target": "To whom",
+      "orderId": "Order id",
+      "kinds": {
+        "boost": "Boost",
+        "featured": "Featured"
+      },
+      "targets": {
+        "order": "Order",
+        "designer": "Designer"
       }
     },
     "audit": {

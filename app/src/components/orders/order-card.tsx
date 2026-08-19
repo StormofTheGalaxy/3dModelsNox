@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Gavel, Star, Users } from 'lucide-react';
+import { ArrowUp, CalendarDays, Gavel, Star, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
@@ -21,6 +21,8 @@ export interface OrderCardData {
   previewUrl: string | null;
   competition: 'low' | 'medium' | 'high';
   isInvited: boolean;
+  /** Заказ поднят в выдаче (post-MVP №12). */
+  isBoosted?: boolean;
   /** Торги вместо откликов (§3). Ставка видна только в открытом режиме. */
   auction: { mode: string; bestAmount: number | null; endsAt: string | null } | null;
   publishedAt: string | null;
@@ -79,6 +81,14 @@ export function OrderCard({ order, locale }: { order: OrderCardData; locale: str
                   </Badge>
                 ) : null}
                 {order.isInvited ? <Badge variant="accent">{t('invitedBadge')}</Badge> : null}
+                {/* Подпись обязательна: поднятый заказ обогнал остальные не
+                    потому, что подходит лучше, и читатель вправе это знать. */}
+                {order.isBoosted ? (
+                  <Badge variant="warning">
+                    <ArrowUp aria-hidden className="size-3" />
+                    {t('boostedBadge')}
+                  </Badge>
+                ) : null}
               </div>
             </div>
 

@@ -176,11 +176,57 @@ async function seedAchievements(): Promise<void> {
   console.info(`✓ достижения: ${ACHIEVEMENTS.length}`);
 }
 
+/**
+ * Тарифы (§1.2.2, post-MVP №12).
+ *
+ * Бесплатный существует всегда и описывает сегодняшнее поведение: все на
+ * нём, надбавок нет. Платные заведены с ценой, но продать их нечем —
+ * платёжного модуля нет (ADR 0019), и выдаёт их администратор.
+ */
+const PLANS = [
+  { key: 'free', audience: 'any' as const, priceMinor: 0, perks: {}, sortOrder: 0 },
+  {
+    key: 'pro',
+    audience: 'designer' as const,
+    priceMinor: 900,
+    perks: { responsesPerDay: 20, aiCredits: 100, selfBoost: true },
+    sortOrder: 10,
+  },
+  {
+    key: 'studio',
+    audience: 'customer' as const,
+    priceMinor: 2900,
+    perks: { aiCredits: 300, aiBriefCredits: 20, invites: 5, selfBoost: true },
+    sortOrder: 20,
+  },
+];
+
+async function seedPlans(): Promise<void> {
+  for (const plan of PLANS) {
+    await prisma.subscriptionPlan.upsert({
+      where: { key: plan.key },
+      create: {
+        key: plan.key,
+        audience: plan.audience,
+        priceMinor: plan.priceMinor,
+        currency: 'USD',
+        perks: plan.perks,
+        sortOrder: plan.sortOrder,
+      },
+      // Надбавки и цену админ мог поправить осознанно — деплой их не трогает.
+      update: {},
+    });
+  }
+
+  console.info(`✓ тарифы: ${PLANS.length}`);
+}
+
 async function main(): Promise<void> {
   await seedSettings();
   await seedBriefTemplates();
   await seedTestTasks();
   await seedAchievements();
+  await seedPlans();
   await seedSuperAdmin();
 }
 

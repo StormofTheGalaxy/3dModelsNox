@@ -2,6 +2,7 @@
 
 import {
   Award,
+  BadgePercent,
   BarChart3,
   ClipboardList,
   FileText,
@@ -42,6 +43,7 @@ const SECTIONS = [
   { href: '/admin/invites', key: 'invites', icon: Ticket, adminOnly: true },
   { href: '/admin/content', key: 'content', icon: FileText, adminOnly: true },
   { href: '/admin/achievements', key: 'achievements', icon: Award, adminOnly: true },
+  { href: '/admin/monetization', key: 'monetization', icon: BadgePercent, adminOnly: true },
   { href: '/admin/broadcasts', key: 'broadcasts', icon: Megaphone, adminOnly: true },
   { href: '/admin/settings', key: 'settings', icon: Settings2, adminOnly: true },
   { href: '/admin/audit', key: 'audit', icon: ScrollText, adminOnly: false },

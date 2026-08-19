@@ -3,6 +3,7 @@ import 'server-only';
 import { prisma } from '@polyforge/db';
 
 import { getSetting } from './settings';
+import { activePerks } from './monetization';
 
 /**
  * Отклики (§4.5): лимиты, списки, метрики.
@@ -10,20 +11,22 @@ import { getSetting } from './settings';
 
 /**
  * Сколько откликов дизайнер может отправить сегодня. Лимит зависит от уровня
- * и живёт в настройках (§6, `responses_per_day`).
+ * и живёт в настройках (§6, `responses_per_day`), а тариф может его поднять
+ * (post-MVP №12). При выключенных подписках надбавка нулевая.
  */
 export async function responsesLeftToday(
   designerId: string,
 ): Promise<{ left: number; limit: number }> {
-  const [limits, profile] = await Promise.all([
+  const [limits, profile, perks] = await Promise.all([
     getSetting('responses_per_day'),
     prisma.designerProfile.findUnique({
       where: { userId: designerId },
       select: { level: true },
     }),
+    activePerks(designerId),
   ]);
 
-  const limit = limits[profile?.level ?? 'novice'];
+  const limit = limits[profile?.level ?? 'novice'] + (perks.responsesPerDay ?? 0);
 
   const since = new Date();
   since.setUTCHours(0, 0, 0, 0);

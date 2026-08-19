@@ -3,6 +3,7 @@ import 'server-only';
 import { prisma } from '@polyforge/db';
 
 import { getSettings } from '../settings';
+import { activePerks } from '../monetization';
 
 /**
  * ИИ-кредиты (§3, AICreditLedger).
@@ -51,7 +52,17 @@ export interface CreditBalance {
 
 export async function getBalances(userId: string): Promise<CreditBalance[]> {
   const period = currentPeriod();
-  const { ai_credits_monthly } = await getSettings(['ai_credits_monthly']);
+  // Тариф добавляет кредитов сверх общего лимита (post-MVP №12). При
+  // выключенных подписках надбавка нулевая, и лимит остаётся прежним.
+  const [{ ai_credits_monthly }, perks] = await Promise.all([
+    getSettings(['ai_credits_monthly']),
+    activePerks(userId),
+  ]);
+
+  const bonus = {
+    brief_generate: perks.aiBriefCredits ?? 0,
+    general_pool: perks.aiCredits ?? 0,
+  } as const;
 
   const spentRows = await prisma.aICreditLedger.groupBy({
     by: ['pool'],
@@ -62,7 +73,7 @@ export async function getBalances(userId: string): Promise<CreditBalance[]> {
   const spentByPool = new Map(spentRows.map((row) => [row.pool, row._sum.cost ?? 0]));
 
   return (['brief_generate', 'general_pool'] as const).map((pool) => {
-    const limit = ai_credits_monthly[pool];
+    const limit = ai_credits_monthly[pool] + bonus[pool];
     const spent = spentByPool.get(pool) ?? 0;
     return { pool, limit, spent, left: Math.max(0, limit - spent) };
   });
@@ -88,13 +99,17 @@ export async function spendCredits(
   const period = currentPeriod();
   const pool = poolFor(feature);
 
-  const { ai_feature_costs, ai_credits_monthly } = await getSettings([
-    'ai_feature_costs',
-    'ai_credits_monthly',
+  const [{ ai_feature_costs, ai_credits_monthly }, perks] = await Promise.all([
+    getSettings(['ai_feature_costs', 'ai_credits_monthly']),
+    activePerks(userId),
   ]);
 
   const cost = ai_feature_costs[feature] ?? 1;
-  const limit = ai_credits_monthly[pool];
+  // Надбавку тарифа считаем и здесь, а не только в балансе: иначе экран
+  // показывал бы одно число, а списание упиралось бы в другое.
+  const limit =
+    ai_credits_monthly[pool] +
+    (pool === 'brief_generate' ? (perks.aiBriefCredits ?? 0) : (perks.aiCredits ?? 0));
 
   const spent = await prisma.aICreditLedger.aggregate({
     where: { userId, period, pool },

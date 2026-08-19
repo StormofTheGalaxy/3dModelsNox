@@ -488,7 +488,21 @@ export const SETTINGS_REGISTRY = {
     group: 'features',
     default: false,
     schema: z.boolean(),
-    label: { ru: 'Подписки и продвижение', en: 'Subscriptions and boosts' },
+    label: { ru: 'Подписки', en: 'Subscriptions' },
+    hint: {
+      ru: 'Тарифы с надбавками к лимитам. Продажа требует платёжного модуля; сейчас тариф выдаёт администратор',
+      en: 'Plans with limit boosts. Selling requires the payments module; for now a plan is granted by an admin',
+    },
+  },
+  feature_promotions: {
+    group: 'features',
+    default: false,
+    schema: z.boolean(),
+    label: { ru: 'Буст и featured', en: 'Boost and featured' },
+    hint: {
+      ru: 'Поднятие заказа в выдаче и место в подборке. Выдаётся администратором, продажа — вместе с платёжным модулем',
+      en: 'Raising an order in the listing and a slot in the selection. Granted by an admin; selling comes with the payments module',
+    },
   },
   feature_ai_assistant: {
     group: 'features',

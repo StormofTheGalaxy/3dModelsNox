@@ -6,6 +6,7 @@ import { competitionLevel, type OrderFilter } from '@polyforge/shared';
 import type { OrderCardData } from '@/components/orders/order-card';
 import { bestBidForCards } from './auctions';
 import { managedOrganizationIds, orderedBy } from './organizations';
+import { promotionsEnabled } from './monetization';
 
 /**
  * Витрина заказов (§4.5).
@@ -31,6 +32,7 @@ const ORDER_CARD_SELECT = {
   invitedDesignerIds: true,
   publishedAt: true,
   workMode: true,
+  boostedUntil: true,
   auction: { select: { mode: true, endsAt: true, closedAt: true } },
   customer: {
     select: {
@@ -46,21 +48,33 @@ const ORDER_CARD_SELECT = {
 export type OrderCard = Prisma.OrderGetPayload<{ select: typeof ORDER_CARD_SELECT }> & {
   competition: 'low' | 'medium' | 'high';
   isInvited: boolean;
+  /** Заказ поднят в выдаче и продвижение включено (post-MVP №12). */
+  isBoosted: boolean;
   /** Лучшая ставка — только у открытых торгов, см. `bestBidForCards`. */
   bestBid: number | null;
 };
 
-function orderBy(sort: OrderFilter['sort']): Prisma.OrderOrderByWithRelationInput[] {
+function orderBy(
+  sort: OrderFilter['sort'],
+  boosted: boolean,
+): Prisma.OrderOrderByWithRelationInput[] {
+  // Поднятые заказы идут первыми — но только пока продвижение включено.
+  // Сортирует база, а не память: перетасовать страницы после выборки
+  // значит показать один заказ дважды и потерять другой.
+  const first: Prisma.OrderOrderByWithRelationInput[] = boosted
+    ? [{ boostedUntil: { sort: 'desc', nulls: 'last' } }]
+    : [];
+
   switch (sort) {
     case 'budget_desc':
       // Заказы «жду предложений» уходят вниз: сравнивать их по сумме не с чем.
-      return [{ budgetAmount: { sort: 'desc', nulls: 'last' } }, { publishedAt: 'desc' }];
+      return [...first, { budgetAmount: { sort: 'desc', nulls: 'last' } }, { publishedAt: 'desc' }];
     case 'budget_asc':
-      return [{ budgetAmount: { sort: 'asc', nulls: 'last' } }, { publishedAt: 'desc' }];
+      return [...first, { budgetAmount: { sort: 'asc', nulls: 'last' } }, { publishedAt: 'desc' }];
     case 'deadline':
-      return [{ deadline: { sort: 'asc', nulls: 'last' } }, { publishedAt: 'desc' }];
+      return [...first, { deadline: { sort: 'asc', nulls: 'last' } }, { publishedAt: 'desc' }];
     default:
-      return [{ publishedAt: 'desc' }];
+      return [...first, { publishedAt: 'desc' }];
   }
 }
 
@@ -115,9 +129,11 @@ export async function listOrders(
   filter: OrderFilter,
   viewerId: string | null,
 ): Promise<{ items: OrderCard[]; nextCursor: string | null }> {
+  const boostOn = await promotionsEnabled();
+
   const orders = await prisma.order.findMany({
     where: buildWhere(filter),
-    orderBy: orderBy(filter.sort),
+    orderBy: orderBy(filter.sort, boostOn),
     take: filter.limit + 1,
     ...(filter.cursor ? { cursor: { id: filter.cursor }, skip: 1 } : {}),
     select: ORDER_CARD_SELECT,
@@ -131,11 +147,17 @@ export async function listOrders(
     page.filter((order) => order.auction !== null).map((order) => order.id),
   );
 
+  const now = Date.now();
+
   const items = page.map((order) => ({
     ...order,
     competition: competitionLevel(order.responsesCount),
     isInvited: viewerId !== null && order.invitedDesignerIds.includes(viewerId),
     bestBid: best.get(order.id)?.amount ?? null,
+    // Метка «поднят» честная: если продвижение выключено или срок вышел,
+    // заказ и не поднимался, и подписи быть не должно.
+    isBoosted:
+      boostOn && order.boostedUntil !== null && order.boostedUntil.getTime() > now,
   }));
 
   return { items, nextCursor: hasMore ? (items.at(-1)?.id ?? null) : null };
@@ -221,6 +243,7 @@ export function toOrderCardData(order: OrderCard): OrderCardData {
     previewUrl: order.previewUrl,
     competition: order.competition,
     isInvited: order.isInvited,
+    isBoosted: order.isBoosted,
     auction: order.auction
       ? {
           mode: order.auction.mode,
