@@ -199,6 +199,37 @@ export interface SummarizeInput {
   messages: { author: string; text: string }[];
 }
 
+// ── Единый ИИ-ассистент (post-MVP №10) ──────────────────────────────────────
+
+/**
+ * Ассистент — маршрутизатор, а не вторая голова.
+ *
+ * Он не отвечает от себя: выбирает одно из уже существующих действий
+ * платформы либо одну из заранее написанных справок. Поэтому модель
+ * возвращает не текст, а выбор — и соврать в фактах ей негде.
+ */
+export const assistantRouteSchema = z.object({
+  /** Что делать: запустить действие, показать справку или признаться, что не понял. */
+  kind: z.enum(['action', 'topic', 'unknown']),
+  /** Ключ действия из переданного списка возможностей. */
+  action: z.string().trim().max(64).optional(),
+  /** Ключ справки из переданного списка тем. */
+  topic: z.string().trim().max(64).optional(),
+  /** Короткое пояснение выбора на языке пользователя. */
+  reason: z.string().trim().max(300).default(''),
+});
+
+export type AssistantRoute = z.infer<typeof assistantRouteSchema>;
+
+export interface AssistantRouteInput {
+  /** Что человек написал своими словами. */
+  question: string;
+  /** Что доступно на текущем экране: ключ и краткое описание. */
+  actions: { key: string; label: string; description: string }[];
+  /** Темы справки: ключ и о чём она. */
+  topics: { key: string; label: string }[];
+}
+
 // ── Разбор страницы портфолио (фаза 6) ──────────────────────────────────────
 
 export const parsedProfileSchema = z.object({
@@ -231,6 +262,8 @@ export interface AIProvider {
   summarizeChat(input: SummarizeInput, context: AIContext): Promise<string>;
   summarizeDispute(input: SummarizeInput, context: AIContext): Promise<string>;
   parsePortfolioProfile(input: { text: string }, context: AIContext): Promise<ParsedProfile>;
+
+  routeAssistant(input: AssistantRouteInput, context: AIContext): Promise<AssistantRoute>;
 }
 
 export class AIError extends Error {

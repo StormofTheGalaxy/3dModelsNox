@@ -479,6 +479,10 @@
       "badDescription": "Description: 5 to 300 characters in both languages",
       "systemLocked": "A standard achievement cannot be deleted — the next deploy brings it back. Disable it instead.",
       "hasHolders": "Someone already holds this achievement: it can be disabled, but not deleted"
+    },
+    "assistant": {
+      "disabled": "The AI assistant is turned off on the platform",
+      "tooShort": "Write a question of at least three characters"
     }
   },
   "empty": {
@@ -2166,6 +2170,102 @@
       "stub": "Sending keys aren't configured: the subscription will be created, but no notifications will be delivered.",
       "devicesTitle": "Devices with notifications",
       "forget": "Forget"
+    }
+  },
+  "assistant": {
+    "title": "AI assistant",
+    "subtitle": "Ask in your own words — I will take you to the right button. I press nothing myself: credits are spent only when you do.",
+    "placeholder": "For example: how do I estimate the budget?",
+    "ask": "Ask",
+    "close": "Close",
+    "unknown": "I did not get the question. Have a look at the list below — it holds everything you can do from here.",
+    "stub": "The model is not connected: the question is parsed by a deterministic stub matching words. The lists below work as usual.",
+    "creditsLeft": "AI credits left: {left}",
+    "hereYouCan": "From here you can",
+    "aboutPlatform": "How the platform works",
+    "actions": {
+      "brief_create": {
+        "label": "Create a brief",
+        "description": "Assemble a brief section by section — from a preset or from scratch"
+      },
+      "brief_generate": {
+        "label": "Generate a brief from a description",
+        "description": "Describe the task in free text, the AI lays it out into fields"
+      },
+      "brief_review": {
+        "label": "Review the brief",
+        "description": "Find gaps and contradictions: texture formats, polycount, deadlines"
+      },
+      "brief_estimate": {
+        "label": "Estimate budget and timeline",
+        "description": "Get a range based on the contents of the brief"
+      },
+      "brief_clarify": {
+        "label": "Clarify the brief in a chat",
+        "description": "Answer the AI's questions, it fills the values into the fields"
+      },
+      "order_publish": {
+        "label": "Publish an order",
+        "description": "Put a finished brief on the board and collect responses"
+      },
+      "order_match": {
+        "label": "Match designers",
+        "description": "Select designers by the order's tags and rank them with the model"
+      },
+      "order_responses": {
+        "label": "Go through responses",
+        "description": "Shortlist, decline with a reason, accept — accepting starts the deal"
+      },
+      "deal_summary": {
+        "label": "Summarize the conversation",
+        "description": "Pull the agreements out of the deal chat"
+      },
+      "response_improve": {
+        "label": "Improve the response text",
+        "description": "Fix the grammar and structure of what you wrote"
+      },
+      "profile_fill": {
+        "label": "Fill the profile from a link",
+        "description": "Parse a portfolio page description into specializations and styles"
+      },
+      "credits": {
+        "label": "Check AI credits",
+        "description": "What is left in each pool and what it went on"
+      }
+    },
+    "topics": {
+      "payments": {
+        "title": "Payments",
+        "body": "The platform is not a party to settlements. The sides pay each other directly by any means, and the platform records the payment confirmations they submit. The platform charges no commission."
+      },
+      "deal_flow": {
+        "title": "How a deal runs",
+        "body": "Accepting a response creates the deal and freezes the brief. The sides then agree a milestone plan; for each one the designer delivers and the customer accepts or sends it back within the agreed revision rounds. A milestone closes once the designer confirms the money arrived."
+      },
+      "disputes": {
+        "title": "Disputes",
+        "body": "Either side can open a dispute; the deal freezes until the verdict. The arbiter sees the correspondence, the files and the payment confirmations. The verdict is public as a counter in the profile — the dispute texts themselves are not published."
+      },
+      "levels": {
+        "title": "Levels and rating",
+        "body": "The level is recomputed weekly from completed deals, reviews and the on-time percentage. The rating is weighted: a single five from a newcomer counts for less than twenty scores. The “top” level is granted by hand only."
+      },
+      "credits": {
+        "title": "AI credits",
+        "body": "Brief generation has its own monthly pool, the rest of the AI features share a common one: that way an expensive feature cannot be drained by translations. The balance is visible in the settings and on the “My briefs” page; the limits are set by the platform admin."
+      },
+      "invites": {
+        "title": "Invites",
+        "body": "The platform is in closed beta: registration is by invite code only. Codes are handed to members in batches, and the remaining count is visible in the menu. The platform remembers who invited whom."
+      },
+      "verification": {
+        "title": "Verification",
+        "body": "A designer takes a test task from the pool for their specialization and submits the work together with a description of the process — that is what confirms the authorship of the portfolio. Passing verification changes the level and adds a badge."
+      },
+      "translation": {
+        "title": "Languages and translation",
+        "body": "The interface is in Russian and English. Translation of incoming messages, of your outgoing ones (the other side also sees the original) and of content — orders, briefs and work descriptions — are switched on separately."
+      }
     }
   }
 }

@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import { parseBriefSections } from '@polyforge/shared';
 
 import {
+  assistantRouteSchema,
   briefClarificationSchema,
   briefEstimateSchema,
   matchRankingSchema,
@@ -13,6 +14,8 @@ import {
   AIError,
   type AIContext,
   type AIProvider,
+  type AssistantRoute,
+  type AssistantRouteInput,
   type BriefClarification,
   type BriefEstimate,
   type BriefReview,
@@ -36,6 +39,7 @@ import {
   improveTextPrompt,
   parseProfilePrompt,
   clarifyBriefPrompt,
+  assistantRoutePrompt,
   rankMatchesPrompt,
   reviewBriefPrompt,
   suggestFieldPrompt,
@@ -329,4 +333,37 @@ export class OpenAIProvider implements AIProvider {
 
     return this.parseJson(raw, parsedProfileSchema);
   }
+  async routeAssistant(
+    input: AssistantRouteInput,
+    context: AIContext,
+  ): Promise<AssistantRoute> {
+    const raw = await this.complete(
+      [
+        this.system(),
+        {
+          role: 'user',
+          content: assistantRoutePrompt(input.question, input.actions, input.topics, context.locale),
+        },
+      ],
+      // Дешёвая модель: здесь не рассуждение, а выбор из десятка вариантов.
+      { model: this.config.cheapModel, json: true, maxTokens: 300 },
+    );
+
+    const route = await this.parseJson(raw, assistantRouteSchema);
+
+    // Ключи — наши, поэтому и проверка наша: выдуманный ключ превращается в
+    // «не понял», а не в переход неизвестно куда.
+    const actionKeys = new Set(input.actions.map((action) => action.key));
+    const topicKeys = new Set(input.topics.map((topic) => topic.key));
+
+    if (route.kind === 'action' && (!route.action || !actionKeys.has(route.action))) {
+      return { kind: 'unknown', reason: route.reason };
+    }
+    if (route.kind === 'topic' && (!route.topic || !topicKeys.has(route.topic))) {
+      return { kind: 'unknown', reason: route.reason };
+    }
+
+    return route;
+  }
+
 }

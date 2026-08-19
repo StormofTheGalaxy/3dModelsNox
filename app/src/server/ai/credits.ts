@@ -27,7 +27,8 @@ export type AIFeature =
   | 'chat_summary'
   | 'dispute_summary'
   | 'onboarding_parse'
-  | 'content_translate';
+  | 'content_translate'
+  | 'assistant';
 
 type CreditPool = 'brief_generate' | 'general_pool';
 

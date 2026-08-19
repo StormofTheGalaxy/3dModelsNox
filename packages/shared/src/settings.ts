@@ -455,6 +455,16 @@ export const SETTINGS_REGISTRY = {
     schema: z.boolean(),
     label: { ru: 'Подписки и продвижение', en: 'Subscriptions and boosts' },
   },
+  feature_ai_assistant: {
+    group: 'features',
+    default: false,
+    schema: z.boolean(),
+    label: { ru: 'Единый ИИ-ассистент', en: 'Unified AI assistant' },
+    hint: {
+      ru: 'Одна точка входа во все ИИ-возможности; сам ничего не выполняет, а доводит до кнопки',
+      en: 'One entry point to every AI capability; it does nothing itself, it leads to the button',
+    },
+  },
   feature_achievement_builder: {
     group: 'features',
     default: false,

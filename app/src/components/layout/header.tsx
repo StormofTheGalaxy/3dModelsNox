@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/button';
 import { LocaleSwitcher } from '@/components/layout/locale-switcher';
 import { RoleSwitcher } from '@/components/layout/role-switcher';
 import { UserMenu } from '@/components/layout/user-menu';
+import { AssistantLauncher } from '@/components/assistant/assistant-launcher';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { getCurrentUser, isStaff } from '@/server/auth/session';
+import { getBalances } from '@/server/ai/credits';
+import { aiIsLive } from '@/server/ai/provider';
+import { ASSISTANT_ACTIONS, assistantEnabled } from '@/server/assistant';
 import { countUnread } from '@/server/notifications';
 import { organizationsEnabled } from '@/server/organizations';
 import { cn } from '@/lib/utils';
@@ -25,9 +29,29 @@ export async function Header({ locale, theme }: { locale: Locale; theme: Theme }
   const [t, user] = await Promise.all([getTranslations('nav'), getCurrentUser()]);
 
   const roleContext: RoleContext = user?.lastRoleContext ?? 'designer';
-  const [unread, organizationsOn] = user
-    ? await Promise.all([countUnread(user.id), organizationsEnabled()])
-    : [0, false];
+  const [unread, organizationsOn, assistantOn] = user
+    ? await Promise.all([countUnread(user.id), organizationsEnabled(), assistantEnabled()])
+    : [0, false, false];
+
+  // Возможности группируем по экранам здесь: каталог серверный, а панель
+  // выбирает нужную группу уже по адресу открытой страницы.
+  const assistantActions: Record<string, { key: string; href: string; icon: string }[]> = {};
+
+  if (assistantOn) {
+    for (const action of ASSISTANT_ACTIONS) {
+      for (const scope of action.scopes) {
+        assistantActions[scope] = [
+          ...(assistantActions[scope] ?? []),
+          { key: action.key, href: action.href, icon: action.icon },
+        ];
+      }
+    }
+  }
+
+  const assistantCredits =
+    user && assistantOn
+      ? ((await getBalances(user.id)).find((balance) => balance.pool === 'general_pool')?.left ?? 0)
+      : 0;
 
   return (
     <header
@@ -59,6 +83,13 @@ export async function Header({ locale, theme }: { locale: Locale; theme: Theme }
 
         <div className="ml-auto flex items-center gap-1.5">
           {user ? <RoleSwitcher current={roleContext} /> : null}
+          {user && assistantOn ? (
+            <AssistantLauncher
+              actionsByScope={assistantActions}
+              credits={assistantCredits}
+              isLive={await aiIsLive()}
+            />
+          ) : null}
           {user ? <NotificationBell unread={unread} /> : null}
 
           <LocaleSwitcher current={locale} />

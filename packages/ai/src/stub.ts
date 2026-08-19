@@ -3,6 +3,8 @@ import { emptyBriefSections, type BriefSections, type Locale } from '@polyforge/
 import type {
   AIContext,
   AIProvider,
+  AssistantRoute,
+  AssistantRouteInput,
   BriefClarification,
   ClarifyBriefInput,
   MatchRanking,
@@ -591,6 +593,66 @@ export class StubAIProvider implements AIProvider {
       bio: input.text.slice(0, 500),
     };
   }
+
+  /**
+   * Маршрутизация вопроса к возможности экрана.
+   *
+   * Заглушка считает совпадения слов вопроса со словами подписи и описания.
+   * Это грубо, но честно: настоящая модель делает то же самое, только
+   * понимая синонимы, — а путь фичи проверяется целиком и без ключа.
+   */
+  routeAssistant(input: AssistantRouteInput, context: AIContext): Promise<AssistantRoute> {
+    const ru = context.locale === 'ru';
+    const words = tokenize(input.question);
+
+    const scored = [
+      ...input.actions.map((action) => ({
+        kind: 'action' as const,
+        key: action.key,
+        score: overlap(words, tokenize(`${action.label} ${action.description}`)),
+      })),
+      ...input.topics.map((topic) => ({
+        kind: 'topic' as const,
+        key: topic.key,
+        score: overlap(words, tokenize(topic.label)),
+      })),
+    ].sort((first, second) => second.score - first.score);
+
+    const best = scored[0];
+
+    if (!best || best.score === 0) {
+      return Promise.resolve({
+        kind: 'unknown',
+        reason: ru
+          ? 'Не понял вопрос. Выберите нужное из списка ниже.'
+          : 'I did not get the question. Pick what you need from the list below.',
+      });
+    }
+
+    return Promise.resolve({
+      kind: best.kind,
+      ...(best.kind === 'action' ? { action: best.key } : { topic: best.key }),
+      reason: ru ? 'Подобрано по словам вопроса.' : 'Matched by the words of the question.',
+    });
+  }
+}
+
+/** Слова длиннее трёх букв: предлоги и союзы совпадают у всего подряд. */
+function tokenize(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((word) => word.length > 3),
+  );
+}
+
+function overlap(question: Set<string>, candidate: Set<string>): number {
+  let hits = 0;
+  for (const word of question) {
+    if (candidate.has(word)) hits += 1;
+  }
+  return hits;
 }
 
 /** Заголовок из первых значимых слов описания. */
