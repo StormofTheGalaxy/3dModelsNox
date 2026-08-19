@@ -50,6 +50,15 @@ export async function requireStaff(locale: string): Promise<SessionUser> {
  * со всех устройств — тоже), и увод по одному её наличию зацикливается с
  * редиректом страницы на /login. Здесь же сессия проверяется по-настоящему.
  */
+/**
+ * Админ для серверных действий: возвращает пользователя или `null`, а не
+ * редиректит — действие обязано ответить ошибкой, а не увести страницу.
+ */
+export async function adminOrNull(): Promise<SessionUser | null> {
+  const user = await getCurrentUser();
+  return user?.role === 'admin' ? user : null;
+}
+
 export async function redirectIfAuthenticated(locale: string): Promise<void> {
   const user = await getCurrentUser();
   if (user) {

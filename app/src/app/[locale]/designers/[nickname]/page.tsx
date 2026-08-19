@@ -11,6 +11,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { MetricTile } from '@/components/profile/metric-tile';
 import { ReportDialog } from '@/components/report/report-dialog';
 import { AchievementBadges } from '@/components/achievements/achievement-badges';
+import { achievementCatalog } from '@/server/achievements';
+import { achievementLabels } from '@/server/achievement-labels';
 import { ReviewList } from '@/components/reviews/review-list';
 import { WorkCard } from '@/components/works/work-card';
 import { getCurrentUser } from '@/server/auth/session';
@@ -18,6 +20,7 @@ import { getPublicDesigner } from '@/server/profiles';
 import { listPublishedReviews } from '@/server/reviews';
 import { listDesignerWorks } from '@/server/works';
 import { prisma } from '@polyforge/db';
+import type { Locale } from '@polyforge/shared';
 import { formatDate } from '@/lib/utils';
 
 export async function generateMetadata({
@@ -71,6 +74,26 @@ export default async function DesignerProfilePage({
     }),
   ]);
 
+  // Иконку и подпись избранных достижений берём из каталога: у собственных
+  // достижений подписи нет в словаре, а у полки и у ника она должна совпадать.
+  const catalog = await achievementCatalog();
+  const labels = await achievementLabels(catalog, locale as Locale);
+  const byKey = new Map(catalog.map((entry) => [entry.key, entry]));
+
+  const featuredBadges = featuredAchievements.flatMap((achievement) => {
+    const entry = byKey.get(achievement.key);
+    if (!entry) return [];
+
+    return [
+      {
+        key: achievement.key,
+        tier: achievement.tier,
+        icon: entry.icon,
+        title: labels.get(achievement.key)?.title ?? achievement.key,
+      },
+    ];
+  });
+
   const { profile } = designer;
 
   return (
@@ -119,7 +142,7 @@ export default async function DesignerProfilePage({
                     {tTax(`availability.${profile.availability}`)}
                   </Badge>
 
-                  <AchievementBadges achievements={featuredAchievements} />
+                  <AchievementBadges achievements={featuredBadges} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 text-sm text-fg-muted">

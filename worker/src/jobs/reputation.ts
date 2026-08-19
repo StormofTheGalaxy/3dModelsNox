@@ -1,5 +1,6 @@
 import { prisma } from '@polyforge/db';
 import { ACHIEVEMENTS, tierForValue, tierRank, weightedRating } from '@polyforge/shared';
+import type { AchievementTier } from '@polyforge/shared';
 
 import { notifyUser } from '../notify';
 
@@ -193,6 +194,10 @@ export async function grantAchievementsBatch(sinceDays = 8): Promise<number> {
     take: 2000,
   });
 
+  // Каталог достижений живёт в таблице (post-MVP №9). Читаем его один раз
+  // на прогон: он одинаков для всех пользователей, а прогон идёт по тысячам.
+  const catalog = await activeCatalog();
+
   let granted = 0;
 
   for (const user of active) {
@@ -204,9 +209,9 @@ export async function grantAchievementsBatch(sinceDays = 8): Promise<number> {
     });
     const byKey = new Map(owned.map((entry) => [entry.key, entry.tier]));
 
-    for (const definition of ACHIEVEMENTS) {
+    for (const definition of catalog) {
       const value = metrics[definition.metric] ?? 0;
-      const tier = tierForValue(definition, value);
+      const tier = tierForValue(definition.thresholds, value);
       if (!tier) continue;
 
       const current = byKey.get(definition.key);
@@ -231,6 +236,37 @@ export async function grantAchievementsBatch(sinceDays = 8): Promise<number> {
   }
 
   return granted;
+}
+
+/**
+ * Действующие достижения из таблицы.
+ *
+ * Если таблица пуста — сид ещё не прогнали — берём стандартный набор из
+ * кода: молча перестать выдавать достижения хуже, чем выдать их по
+ * известному набору.
+ */
+async function activeCatalog(): Promise<
+  { key: string; metric: string; thresholds: Record<AchievementTier, number> }[]
+> {
+  const rows = await prisma.achievement.findMany({
+    where: { isEnabled: true },
+    orderBy: { sortOrder: 'asc' },
+    select: { key: true, metric: true, bronze: true, silver: true, gold: true },
+  });
+
+  if (rows.length === 0) {
+    return ACHIEVEMENTS.map((definition) => ({
+      key: definition.key,
+      metric: definition.metric,
+      thresholds: definition.thresholds,
+    }));
+  }
+
+  return rows.map((row) => ({
+    key: row.key,
+    metric: row.metric,
+    thresholds: { bronze: row.bronze, silver: row.silver, gold: row.gold },
+  }));
 }
 
 /** Метрики достижений одного пользователя. */

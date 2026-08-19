@@ -455,6 +455,16 @@ export const SETTINGS_REGISTRY = {
     schema: z.boolean(),
     label: { ru: 'Подписки и продвижение', en: 'Subscriptions and boosts' },
   },
+  feature_achievement_builder: {
+    group: 'features',
+    default: false,
+    schema: z.boolean(),
+    label: { ru: 'Конструктор достижений', en: 'Achievement builder' },
+    hint: {
+      ru: 'Создание своих достижений в админке; стандартный набор работает и без флага',
+      en: 'Creating custom achievements in the admin panel; the standard set works without the flag',
+    },
+  },
   feature_pwa: {
     group: 'features',
     default: false,

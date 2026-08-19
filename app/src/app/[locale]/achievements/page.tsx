@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { prisma } from '@polyforge/db';
+import type { Locale } from '@polyforge/shared';
 
 import { AchievementShelf } from '@/components/achievements/achievement-shelf';
 import { AchievementToast } from '@/components/achievements/achievement-toast';
+import { achievementLabels } from '@/server/achievement-labels';
 import { redirectToLogin } from '@/server/auth/redirects';
 import { getCurrentUser } from '@/server/auth/session';
 import { listAchievements } from '@/server/reputation';
@@ -42,6 +44,11 @@ export default async function AchievementsPage({
     }),
   ]);
 
+  const labels = await achievementLabels(
+    entries.map((entry) => entry.definition),
+    locale as Locale,
+  );
+
   const usersCount = await prisma.user.count({ where: { status: 'active' } });
   const rarity = new Map(
     totals.map((row) => [
@@ -60,6 +67,8 @@ export default async function AchievementsPage({
       <AchievementShelf
         entries={entries.map((entry) => ({
           key: entry.definition.key,
+          title: labels.get(entry.definition.key)?.title ?? entry.definition.key,
+          description: labels.get(entry.definition.key)?.description ?? '',
           icon: entry.definition.icon,
           isHidden: Boolean(entry.definition.isHidden),
           thresholds: entry.definition.thresholds,

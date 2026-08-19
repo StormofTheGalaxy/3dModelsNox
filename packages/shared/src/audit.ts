@@ -50,6 +50,11 @@ export const AUDIT_ACTIONS = [
   'organization.member_joined',
   'organization.member_removed',
   'organization.role_changed',
+  'achievement.created',
+  'achievement.updated',
+  'achievement.enabled',
+  'achievement.disabled',
+  'achievement.deleted',
   'push.subscribed',
   'push.unsubscribed',
 
@@ -122,6 +127,7 @@ export const AUDIT_TARGET_TYPES = [
   'comment',
   'template',
   'organization',
+  'achievement',
   'auction',
   'bid',
 ] as const;

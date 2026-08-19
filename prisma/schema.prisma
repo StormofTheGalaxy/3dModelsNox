@@ -1772,6 +1772,65 @@ enum AchievementTier {
 
 /// Выданное достижение. Сам каталог — конфиг в коде
 /// (`@polyforge/shared/achievements`), в БД лежат только факты выдачи (§3).
+// ── Конструктор достижений (§3, post-MVP №9). ──────────────────────────────
+
+/// Достижение платформы.
+///
+/// Каталог переехал из кода в БД, чтобы админ мог собирать новые
+/// достижения без деплоя (§3: «полноценный конструктор — фаза 2»).
+/// Метрика при этом осталась кодом: собрать её — это запрос к базе, и
+/// выбирать можно только из готового списка, а не писать условие руками.
+model Achievement {
+  id String @id @default(cuid())
+
+  /// Ключ достижения. У системных совпадает с ключом словаря подписей.
+  key String @unique
+
+  /// Кому показывать в списке: дизайнерская или заказчицкая ветка.
+  audience AchievementAudience @default(any)
+  /// Что считает триггер. Значение из ACHIEVEMENT_METRICS в packages/shared.
+  metric   String
+
+  /// Пороги по тирам. Достижение выдаётся на наибольший достигнутый.
+  bronze Int
+  silver Int
+  gold   Int
+
+  /// Имя иконки из закрытого набора ACHIEVEMENT_ICONS.
+  icon String @default("Award")
+
+  /// Скрытые не показываются до получения — на полке вместо них «???».
+  isHidden Boolean @default(false)
+  /// Системные пришли из сида: их ключ и метрику менять нельзя, подписи
+  /// берутся из словаря, а не из этих полей.
+  isSystem Boolean @default(false)
+  /// Выключенное достижение не выдаётся и пропадает из списка. Уже
+  /// выданные экземпляры остаются: отобрать награду задним числом нельзя.
+  isEnabled Boolean @default(true)
+
+  /// Подписи собственных достижений. У системных пусты — их тексты живут
+  /// в словарях и переводятся вместе с остальным интерфейсом.
+  titleRu       String?
+  titleEn       String?
+  descriptionRu String?
+  descriptionEn String?
+
+  sortOrder Int @default(100)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+
+  @@index([isEnabled, sortOrder])
+  @@map("achievements")
+}
+
+enum AchievementAudience {
+  designer
+  customer
+  any
+}
+
 model UserAchievement {
   id String @id @default(cuid())
 

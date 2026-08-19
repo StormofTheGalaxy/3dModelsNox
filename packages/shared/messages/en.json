@@ -467,6 +467,18 @@
     },
     "push": {
       "disabled": "Push notifications are turned off on the platform"
+    },
+    "achievement": {
+      "disabled": "The achievement builder is off",
+      "badKey": "Key: latin letters, digits and underscore, 2 to 40 characters",
+      "keyTaken": "An achievement with this key already exists",
+      "badMetric": "No such metric",
+      "badThresholds": "Thresholds must be whole numbers above zero",
+      "thresholdOrder": "Thresholds must grow: bronze, silver, gold",
+      "badTitle": "Title: 2 to 80 characters in both languages",
+      "badDescription": "Description: 5 to 300 characters in both languages",
+      "systemLocked": "A standard achievement cannot be deleted — the next deploy brings it back. Disable it instead.",
+      "hasHolders": "Someone already holds this achievement: it can be disabled, but not deleted"
     }
   },
   "empty": {
@@ -1848,6 +1860,7 @@
       "verification": "Verification",
       "invites": "Invites",
       "content": "Content",
+      "achievements": "Achievements",
       "broadcasts": "Broadcasts",
       "settings": "Settings",
       "audit": "Audit log"
@@ -2012,6 +2025,58 @@
         "moderation": "Moderation",
         "uploads": "Uploads",
         "features": "Feature flags"
+      }
+    },
+    "achievements": {
+      "title": "Achievements",
+      "description": "The platform catalogue: rarity, enabling, and assembling your own achievements from ready-made metrics.",
+      "create": "New achievement",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saved": "Achievement saved",
+      "delete": "Delete",
+      "turnOn": "Enable",
+      "turnOff": "Disable",
+      "key": "Key",
+      "metric": "Metric",
+      "audience": "Shown to",
+      "icon": "Icon",
+      "hidden": "Hidden: shows as a “???” slot until earned",
+      "hiddenShort": "Hidden",
+      "disabled": "Disabled",
+      "system": "Standard",
+      "custom": "Custom",
+      "titleRu": "Title (RU)",
+      "titleEn": "Title (EN)",
+      "descriptionRu": "Description (RU)",
+      "descriptionEn": "Description (EN)",
+      "rarity": "held by {percent}% ({holders})",
+      "builderOff": "The builder is off: rarity and enabling of the standard set are available. Creating custom achievements is turned on by the feature_achievement_builder flag.",
+      "systemHint": "Standard achievement: the key and the metric come from code, the captions come from the dictionaries. Thresholds, icon and visibility are editable.",
+      "tiers": {
+        "bronze": "Bronze threshold",
+        "silver": "Silver threshold",
+        "gold": "Gold threshold"
+      },
+      "audiences": {
+        "designer": "Designers",
+        "customer": "Customers",
+        "any": "Everyone"
+      },
+      "metrics": {
+        "dealsCompleted": "Completed deals",
+        "worksPublished": "Portfolio works",
+        "reviewsFiveStar": "Five-star reviews",
+        "onTimeStreak": "Milestones in a row without delay",
+        "ordersPublished": "Published orders",
+        "responsesSent": "Responses sent",
+        "repeatClients": "Repeat clients",
+        "briefsCreated": "Briefs created",
+        "disputesWon": "Disputes won",
+        "nightDeliveries": "Night-time milestone deliveries",
+        "currencies": "Currencies in completed deals",
+        "revisionFreeDeals": "Deals without revisions"
       }
     },
     "audit": {

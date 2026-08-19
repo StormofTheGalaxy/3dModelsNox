@@ -2,7 +2,6 @@ import 'server-only';
 
 import { prisma } from '@polyforge/db';
 import {
-  ACHIEVEMENTS,
   tierForValue,
   tierRank,
   weightedRating,
@@ -10,6 +9,7 @@ import {
   type SettingValue,
 } from '@polyforge/shared';
 
+import { activeAchievements } from './achievements';
 import { getSetting } from './settings';
 
 /**
@@ -259,9 +259,11 @@ export async function grantAchievements(userId: string): Promise<GrantedAchievem
   const owned = new Map(existing.map((entry) => [entry.key, entry.tier]));
   const granted: GrantedAchievement[] = [];
 
-  for (const definition of ACHIEVEMENTS) {
-    const value = metrics[definition.metric];
-    const tier = tierForValue(definition, value);
+  // Выключенные достижения не выдаются, но уже выданные остаются: отобрать
+  // награду задним числом — не то же самое, что перестать её давать.
+  for (const definition of await activeAchievements()) {
+    const value = metrics[definition.metric as AchievementMetric] ?? 0;
+    const tier = tierForValue(definition.thresholds, value);
     if (!tier) continue;
 
     const current = owned.get(definition.key);
@@ -291,10 +293,11 @@ export async function listAchievements(userId: string) {
   ]);
 
   const byKey = new Map(owned.map((entry) => [entry.key, entry]));
+  const catalog = await activeAchievements();
 
-  return ACHIEVEMENTS.map((definition) => ({
+  return catalog.map((definition) => ({
     definition,
     owned: byKey.get(definition.key) ?? null,
-    value: metrics[definition.metric],
+    value: metrics[definition.metric as AchievementMetric] ?? 0,
   }));
 }

@@ -1,11 +1,8 @@
 'use client';
 
-import * as icons from 'lucide-react';
-import { Award } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import { achievementByKey } from '@polyforge/shared';
-
+import { achievementIcon } from '@/components/achievements/achievement-icon';
 import { cn } from '@/lib/utils';
 
 /**
@@ -25,7 +22,8 @@ export function AchievementBadges({
   achievements,
   className,
 }: {
-  achievements: { key: string; tier: string }[];
+  /** Иконка и подпись приходят готовыми — каталог живёт на сервере. */
+  achievements: { key: string; tier: string; icon: string; title: string }[];
   className?: string;
 }) {
   const t = useTranslations('achievements');
@@ -35,11 +33,8 @@ export function AchievementBadges({
   return (
     <ul className={cn('flex items-center gap-1.5', className)}>
       {achievements.map((achievement) => {
-        const definition = achievementByKey(achievement.key);
-        const Icon =
-          (icons as unknown as Record<string, icons.LucideIcon>)[definition?.icon ?? ''] ?? Award;
-
-        const label = `${t(`items.${achievement.key}.title`)} · ${t(`tiers.${achievement.tier}`)}`;
+        const Icon = achievementIcon(achievement.icon);
+        const label = `${achievement.title} · ${t(`tiers.${achievement.tier}`)}`;
 
         return (
           <li key={achievement.key}>

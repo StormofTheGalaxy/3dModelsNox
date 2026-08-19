@@ -1,6 +1,5 @@
 'use client';
 
-import * as icons from 'lucide-react';
 import { HelpCircle, Pin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTransition } from 'react';
@@ -11,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/components/ui/toast';
 import { useRouter } from '@/i18n/navigation';
+import { achievementIcon } from '@/components/achievements/achievement-icon';
 import { toggleFeaturedAchievement } from '@/server/actions/achievements';
 import { cn, formatDate } from '@/lib/utils';
 
@@ -24,6 +24,9 @@ import { cn, formatDate } from '@/lib/utils';
 
 export interface ShelfEntry {
   key: string;
+  /** Подписи приходят готовыми: у своих достижений их нет в словаре. */
+  title: string;
+  description: string;
   icon: string;
   isHidden: boolean;
   thresholds: Record<string, number>;
@@ -63,10 +66,9 @@ export function AchievementShelf({
         const locked = !entry.owned;
         const secret = entry.isHidden && locked;
 
-        // Иконка приходит именем из конфига: React-компонент в общий пакет
+        // Иконка приходит именем из каталога: React-компонент в общий пакет
         // не положить, он должен оставаться независимым от рантайма.
-        const Icon =
-          (icons as unknown as Record<string, icons.LucideIcon>)[entry.icon] ?? HelpCircle;
+        const Icon = achievementIcon(entry.icon);
 
         const nextTier = ACHIEVEMENT_TIERS.find(
           (tier) => entry.value < (entry.thresholds[tier] ?? 0),
@@ -90,7 +92,7 @@ export function AchievementShelf({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">
-                      {secret ? t('secret') : t(`items.${entry.key}.title`)}
+                      {secret ? t('secret') : entry.title}
                     </span>
                     {entry.owned ? (
                       <Badge variant={TIER_TONE[entry.owned.tier as keyof typeof TIER_TONE]}>
@@ -100,7 +102,7 @@ export function AchievementShelf({
                   </div>
 
                   <p className="mt-0.5 text-sm text-fg-muted">
-                    {secret ? t('secretHint') : t(`items.${entry.key}.description`)}
+                    {secret ? t('secretHint') : entry.description}
                   </p>
 
                   {!secret ? (

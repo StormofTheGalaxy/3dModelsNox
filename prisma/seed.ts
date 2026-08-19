@@ -1,7 +1,7 @@
 import { hash } from '@node-rs/argon2';
 
 import { prisma } from '@polyforge/db';
-import { SETTINGS_REGISTRY, SETTING_KEYS } from '@polyforge/shared';
+import { ACHIEVEMENTS, SETTINGS_REGISTRY, SETTING_KEYS } from '@polyforge/shared';
 
 import { SYSTEM_BRIEF_TEMPLATES } from './brief-templates';
 import { SYSTEM_TEST_TASKS } from './test-tasks';
@@ -141,10 +141,46 @@ async function seedTestTasks(): Promise<void> {
   console.info(`✓ тестовые задания: ${SYSTEM_TEST_TASKS.length}`);
 }
 
+/**
+ * Стандартный набор достижений (§3, post-MVP №9).
+ *
+ * Каталог живёт в таблице, но стандартные достижения приходят из кода:
+ * так свежая установка одинакова везде, а обновление платформы может
+ * добавить новое системное достижение.
+ *
+ * Пороги и иконки существующих записей не перетираются: админ мог их
+ * поправить осознанно, и деплой не должен отменять его решение.
+ */
+async function seedAchievements(): Promise<void> {
+  for (const [index, definition] of ACHIEVEMENTS.entries()) {
+    await prisma.achievement.upsert({
+      where: { key: definition.key },
+      create: {
+        key: definition.key,
+        audience: definition.audience,
+        metric: definition.metric,
+        bronze: definition.thresholds.bronze,
+        silver: definition.thresholds.silver,
+        gold: definition.thresholds.gold,
+        icon: definition.icon,
+        isHidden: definition.isHidden ?? false,
+        isSystem: true,
+        sortOrder: index,
+      },
+      // Метрика — код, и расходиться с ним запись не должна; остальное
+      // остаётся таким, каким его оставил админ.
+      update: { metric: definition.metric, isSystem: true },
+    });
+  }
+
+  console.info(`✓ достижения: ${ACHIEVEMENTS.length}`);
+}
+
 async function main(): Promise<void> {
   await seedSettings();
   await seedBriefTemplates();
   await seedTestTasks();
+  await seedAchievements();
   await seedSuperAdmin();
 }
 

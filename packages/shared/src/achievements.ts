@@ -1,13 +1,17 @@
 /**
- * Каталог достижений (§3, §4.8).
+ * Каталог достижений (§3, §4.8; конструктор — post-MVP №9).
  *
- * Конфиг живёт в коде, а не в БД: условия выдачи — это код, и держать их
- * половину в таблице значило бы иметь два источника правды. В БД лежат
- * только факты выдачи (`UserAchievement`), а админка управляет видимостью
- * и смотрит статистику редкости.
+ * Здесь остался стандартный набор и то, что действительно является кодом:
+ * список метрик. Метрика — это запрос к базе, её нельзя набрать в форме, и
+ * добавление новой по-прежнему требует правки кода.
  *
- * Подписи — ключи словаря (`achievements.<key>.title` / `.description`),
- * поэтому каталог одинаково читается на обоих языках.
+ * Сами достижения переехали в таблицу `achievements`: админ собирает новые
+ * из готовых метрик без деплоя. Набор ниже — сид этой таблицы, поэтому
+ * свежая установка выглядит ровно так же, как до конструктора.
+ *
+ * Подписи стандартных достижений — ключи словаря
+ * (`achievements.items.<key>.title` / `.description`); у собственных текст
+ * вводит админ сразу на двух языках.
  */
 
 export const ACHIEVEMENT_TIERS = ['bronze', 'silver', 'gold'] as const;
@@ -29,6 +33,49 @@ export const ACHIEVEMENT_METRICS = [
   'revisionFreeDeals',
 ] as const;
 export type AchievementMetric = (typeof ACHIEVEMENT_METRICS)[number];
+
+/**
+ * Что метрика означает для админа. Ключи словаря
+ * (`admin.achievements.metrics.<metric>`) — подписи переводятся вместе с
+ * остальным интерфейсом.
+ */
+export const ACHIEVEMENT_AUDIENCES = ['designer', 'customer', 'any'] as const;
+export type AchievementAudience = (typeof ACHIEVEMENT_AUDIENCES)[number];
+
+/**
+ * Иконки, доступные конструктору.
+ *
+ * Список закрытый, и это осознанно: свободное поле «имя иконки lucide»
+ * молча превращает опечатку в безымянную звёздочку у ника, а весь набор
+ * lucide в клиентской сборке — лишние сотни килобайт ради одной картинки.
+ */
+export const ACHIEVEMENT_ICONS = [
+  'Award',
+  'Trophy',
+  'Medal',
+  'Star',
+  'Crown',
+  'Flame',
+  'Target',
+  'Zap',
+  'Rocket',
+  'Gem',
+  'Shield',
+  'Scale',
+  'Handshake',
+  'HeartHandshake',
+  'Images',
+  'Palette',
+  'Boxes',
+  'Clock',
+  'Send',
+  'FileText',
+  'ClipboardList',
+  'Coins',
+  'Moon',
+  'Sparkles',
+] as const;
+export type AchievementIcon = (typeof ACHIEVEMENT_ICONS)[number];
 
 export interface AchievementDefinition {
   key: string;
@@ -153,17 +200,27 @@ export function achievementByKey(key: string): AchievementDefinition | undefined
   return ACHIEVEMENTS.find((achievement) => achievement.key === key);
 }
 
+/** Ключ достижения: латиница, цифры и подчёркивание — он ходит в URL и словарь. */
+export const ACHIEVEMENT_KEY_PATTERN = /^[a-z][a-z0-9_]{1,39}$/u;
+
+/**
+ * Пороги в том виде, в каком их хранит таблица и принимают функции ниже.
+ * Отдельный тип, потому что каталог теперь приходит из БД, а не только из
+ * константы выше.
+ */
+export type AchievementThresholds = Record<AchievementTier, number>;
+
 /**
  * Наибольший достигнутый тир для значения метрики.
  * `null` — порог бронзы ещё не взят.
  */
 export function tierForValue(
-  definition: AchievementDefinition,
+  thresholds: AchievementThresholds,
   value: number,
 ): AchievementTier | null {
-  if (value >= definition.thresholds.gold) return 'gold';
-  if (value >= definition.thresholds.silver) return 'silver';
-  if (value >= definition.thresholds.bronze) return 'bronze';
+  if (value >= thresholds.gold) return 'gold';
+  if (value >= thresholds.silver) return 'silver';
+  if (value >= thresholds.bronze) return 'bronze';
   return null;
 }
 
@@ -174,12 +231,12 @@ export function tierRank(tier: AchievementTier): number {
 
 /** Следующий порог — для полосы прогресса на полке достижений. */
 export function nextThreshold(
-  definition: AchievementDefinition,
+  thresholds: AchievementThresholds,
   value: number,
 ): { tier: AchievementTier; target: number } | null {
   for (const tier of ACHIEVEMENT_TIERS) {
-    if (value < definition.thresholds[tier]) {
-      return { tier, target: definition.thresholds[tier] };
+    if (value < thresholds[tier]) {
+      return { tier, target: thresholds[tier] };
     }
   }
   return null;
