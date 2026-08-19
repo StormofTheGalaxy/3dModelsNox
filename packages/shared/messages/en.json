@@ -451,6 +451,11 @@
       "badParent": "You cannot reply to that comment",
       "locked": "The comment is deleted or hidden",
       "editWindowClosed": "Editing is only possible in the first {minutes} minutes after posting"
+    },
+    "template": {
+      "disabled": "Public templates are switched off on this platform",
+      "hidden": "A moderator took this template down — it cannot be published again",
+      "badTitle": "Template name: 3 to 140 characters"
     }
   },
   "empty": {
@@ -962,6 +967,33 @@
     "mod_content": {
       "title": "Mod content for Arma and simulators",
       "description": "Enfusion-ready content with LODs and a mod config"
+    },
+    "catalog": {
+      "title": "Brief templates",
+      "subtitle": "Vetted platform presets and templates other customers shared. Take any of them as a starting point and rewrite it for yourself.",
+      "filterType": "Asset type",
+      "anyType": "Any",
+      "sort": "Sort",
+      "sortPopular": "Popular",
+      "sortNew": "New",
+      "empty": "No templates match this filter",
+      "systemBadge": "Platform",
+      "communityBadge": "Community",
+      "use": "Start from this",
+      "uses": "used {count} times",
+      "hide": "Take down",
+      "hidden": "The template was taken down",
+      "mine": "My templates",
+      "mineHint": "A published template appears in the catalog under your nickname. You can withdraw it at any time — briefs already created from it are unaffected.",
+      "publicBadge": "In the catalog",
+      "privateBadge": "Mine only",
+      "hiddenBadge": "Taken down by a moderator",
+      "publish": "Publish",
+      "published": "The template is published",
+      "unpublish": "Remove from the catalog",
+      "unpublished": "The template was removed from the catalog",
+      "delete": "Delete",
+      "deleted": "The template was deleted"
     }
   },
   "orders": {

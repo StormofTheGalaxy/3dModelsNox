@@ -39,13 +39,38 @@ export async function createBrief(
   if (templateId) {
     const template = await prisma.briefTemplate.findUnique({
       where: { id: templateId },
-      select: { sections: true, title: true, isSystem: true, ownerId: true },
+      select: {
+        id: true,
+        sections: true,
+        title: true,
+        isSystem: true,
+        isPublic: true,
+        hiddenAt: true,
+        ownerId: true,
+      },
     });
 
-    // Чужой личный шаблон использовать нельзя.
-    if (template && (template.isSystem || template.ownerId === user.id)) {
+    // Чужой личный шаблон использовать нельзя; чужой опубликованный — можно,
+    // пока он не снят модерацией (§4.4, post-MVP №6).
+    const allowed =
+      template !== null &&
+      (template.isSystem ||
+        template.ownerId === user.id ||
+        (template.isPublic && template.hiddenAt === null));
+
+    if (template && allowed) {
       sections = parseBriefSections(template.sections);
+      // Заголовок системного пресета — ключ i18n, подставлять его в ТЗ нельзя.
       title = template.isSystem ? '' : template.title;
+
+      // Счётчик использований — по нему сортируется каталог. Свои
+      // применения не считаются: иначе автор накручивает себе место.
+      if (!template.isSystem && template.ownerId !== user.id) {
+        await prisma.briefTemplate.update({
+          where: { id: template.id },
+          data: { usesCount: { increment: 1 } },
+        });
+      }
     }
   }
 

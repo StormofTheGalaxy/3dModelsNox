@@ -403,6 +403,12 @@ export const SETTINGS_REGISTRY = {
     schema: z.boolean(),
     label: { ru: 'Аукцион заказов', en: 'Order auction' },
   },
+  feature_public_templates: {
+    group: 'features',
+    default: false,
+    schema: z.boolean(),
+    label: { ru: 'Публичные шаблоны ТЗ', en: 'Public brief templates' },
+  },
   feature_work_comments: {
     group: 'features',
     default: false,

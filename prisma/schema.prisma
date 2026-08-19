@@ -417,6 +417,7 @@ enum ReportTargetType {
   message
   review
   comment
+  template
 }
 
 enum ReportCategory {
@@ -835,6 +836,20 @@ model BriefTemplate {
   /// Порядок в списке пресетов.
   order    Int     @default(0)
 
+  /// Личный шаблон, опубликованный для всех (§4.4, post-MVP №6).
+  /// Системные пресеты публичны по определению, флага не требуют.
+  isPublic    Boolean   @default(false)
+  publishedAt DateTime?
+
+  /// Сколько раз по шаблону создали ТЗ. Денормализовано: каталог сортируется
+  /// по популярности, а считать это подзапросом на каждую карточку незачем.
+  usesCount Int @default(0)
+
+  /// Пост-модерация: публичный шаблон снимается модератором, а не удаляется —
+  /// у автора он остаётся личным.
+  hiddenAt   DateTime?
+  hiddenById String?
+
   /// Подписи системных пресетов — ключи i18n; у личных это готовый текст.
   title       String
   description String?
@@ -846,6 +861,7 @@ model BriefTemplate {
 
   @@index([ownerId])
   @@index([isSystem, order])
+  @@index([isPublic, hiddenAt, usesCount])
   @@map("brief_templates")
 }
 

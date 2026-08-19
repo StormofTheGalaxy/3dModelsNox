@@ -2,10 +2,13 @@ import type { Metadata } from 'next';
 import { FilePlus2, Sparkles } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TemplatePicker } from '@/components/briefs/template-picker';
+import { Link } from '@/i18n/navigation';
 import { requireVerifiedUser } from '@/server/auth/guards';
 import { listBriefTemplates } from '@/server/briefs';
+import { publicTemplatesEnabled } from '@/server/templates';
 
 export async function generateMetadata({
   params,
@@ -26,10 +29,12 @@ export default async function NewBriefPage({
   setRequestLocale(locale);
 
   const user = await requireVerifiedUser(locale);
-  const [t, tTemplates, templates] = await Promise.all([
+  const [t, tTemplates, tCatalog, templates, catalogOn] = await Promise.all([
     getTranslations('brief'),
     getTranslations('briefTemplates'),
+    getTranslations('briefTemplates.catalog'),
     listBriefTemplates(user.id),
+    publicTemplatesEnabled(),
   ]);
 
   // Системные пресеты хранят в БД ключи словаря, личные — готовый текст.
@@ -60,10 +65,19 @@ export default async function NewBriefPage({
         </Card>
 
         <div className="flex flex-col gap-3">
-          <h2 className="flex items-center gap-2 font-semibold">
-            <FilePlus2 className="size-4 text-fg-muted" aria-hidden />
-            {t('chooseTemplate')}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 font-semibold">
+              <FilePlus2 className="size-4 text-fg-muted" aria-hidden />
+              {t('chooseTemplate')}
+            </h2>
+
+            {/* Каталог сообщества — post-MVP за флагом (§4.4). */}
+            {catalogOn ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/templates">{tCatalog('title')}</Link>
+              </Button>
+            ) : null}
+          </div>
 
           <TemplatePicker templates={items} blankLabel={t('newFromScratch')} blankHint={t('newFromScratchHint')} />
         </div>
