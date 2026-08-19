@@ -10,6 +10,7 @@ import { getCurrentUser } from '../auth/session';
 import { finalMilestone, getMilestoneWithDeal, postSystemMessage } from '../deals';
 import { storeDealFile, type StoredDealFile } from '../media';
 import { notify } from '../notifications';
+import { recordPlatformFee } from '../payments';
 import { checkRateLimit } from '../ratelimit';
 import { grantAchievements, recomputeLevel } from '../reputation';
 import { enqueueWatermark } from '../queue';
@@ -498,6 +499,15 @@ export async function confirmPayment(
         });
       }
     }
+  });
+
+  // Комиссия начисляется в момент закрытия этапа — при выключенном флаге
+  // (а он выключен: юрлица нет) не делает ничего.
+  await recordPlatformFee({
+    milestoneId: milestone.id,
+    designerId: milestone.deal.designerId,
+    amount: payment.amount,
+    currency: payment.currency,
   });
 
   await postSystemMessage(milestone.dealId, 'payment.confirmed', {

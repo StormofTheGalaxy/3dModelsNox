@@ -483,6 +483,11 @@
     "assistant": {
       "disabled": "The AI assistant is turned off on the platform",
       "tooShort": "Write a question of at least three characters"
+    },
+    "payment": {
+      "failed": "The payment did not go through. Try again.",
+      "disabled": "The payments module is turned off on the platform",
+      "noWebhook": "This payment mode does not accept provider notifications"
     }
   },
   "empty": {
@@ -1552,7 +1557,9 @@
         "receipt": "Receipt or screenshot",
         "note": "Comment",
         "submit": "Send receipt"
-      }
+      },
+      "payout": "payout {amount} {currency} (−{percent}%)",
+      "commissionHint": "The platform commission of {percent}% is withheld when the milestone closes"
     },
     "files": {
       "empty": "No files yet",
@@ -1958,7 +1965,21 @@
         "verified": "verified"
       },
       "markVerified": "Mark as verified",
-      "markFlagged": "Flag as suspicious"
+      "markFlagged": "Flag as suspicious",
+      "commission": {
+        "title": "Commission and payments module",
+        "on": "On",
+        "off": "Off",
+        "hintOn": "The commission is withheld when a milestone closes, at the rate in force at that moment. Changing the schedule does not recalculate past charges.",
+        "hintOff": "There is no commission: the platform is not a party to settlements and has no legal entity (§1.2.1). The schedule below is groundwork and affects nothing.",
+        "tier": "{percent}% from {from} deals",
+        "noFees": "No charges.",
+        "total": "Charged: {amount} {currency} · milestones: {count}",
+        "provider": "Payment provider: {provider} · {mode}",
+        "modeOn": "module enabled",
+        "modeOff": "manual mode: the sides pay directly, the platform records receipts",
+        "totalPast": "Charged earlier: {amount} {currency} · milestones: {count}"
+      }
     },
     "invites": {
       "waiting": "On the waitlist",

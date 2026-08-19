@@ -1503,6 +1503,8 @@ model Milestone {
 
   deliveries Delivery[]
   payments   PaymentConfirmation[]
+  intents    PaymentIntent[]
+  fee        PlatformFee?
 
   @@unique([dealId, position])
   @@index([dealId, status])
@@ -1557,6 +1559,79 @@ model DeliveryFile {
 
 /// Подтверждение оплаты (§3). Платформа денег не проводит — только фиксирует
 /// то, что стороны предоставили сами.
+// ── Платёжный модуль и комиссии (§1.2.2, post-MVP №11). ────────────────────
+//
+// Обе фичи за флагами и выключены: юрлица нет, комиссий нет (§1.2.1).
+// Таблицы заведены заранее, потому что задел на них требует ТЗ, а
+// добавлять хранение денег в работающую сделку задним числом — худший
+// момент из возможных.
+
+/// Намерение платежа у провайдера. При ручном режиме — просто запись о
+/// том, что этап ждёт оплаты; настоящие деньги по-прежнему идут мимо.
+model PaymentIntent {
+  id String @id @default(cuid())
+
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  /// Кто платит и кому. Сделка всегда между двумя людьми (§1.2.3).
+  payerId String
+  payeeId String
+
+  /// Имя провайдера: manual сегодня, платёжный шлюз потом.
+  provider String @default("manual")
+  /// Идентификатор на стороне провайдера — по нему приходит вебхук.
+  externalId String?
+
+  /// Суммы в минимальных единицах валюты: копейки, центы.
+  amountMinor Int
+  feeMinor    Int    @default(0)
+  currency    String @default("USD")
+
+  status PaymentIntentStatus @default(created)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, externalId])
+  @@index([milestoneId, status])
+  @@map("payment_intents")
+}
+
+enum PaymentIntentStatus {
+  created
+  pending
+  succeeded
+  failed
+  canceled
+  refunded
+}
+
+/// Начисленная комиссия платформы.
+///
+/// Пишется только при включённом feature_commissions. Отдельной таблицей,
+/// а не колонкой в этапе: комиссия — это факт со своей датой и ставкой, и
+/// пересчитывать её задним числом при смене шкалы нельзя.
+model PlatformFee {
+  id String @id @default(cuid())
+
+  milestoneId String @unique
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  /// С кого удержана: сторона сделки, а не организация (§1.2.3).
+  userId String
+
+  /// Ставка на момент начисления. Шкала может измениться — начисление нет.
+  percent     Int
+  amountMinor Int
+  currency    String @default("USD")
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("platform_fees")
+}
+
 model PaymentConfirmation {
   id String @id @default(cuid())
 

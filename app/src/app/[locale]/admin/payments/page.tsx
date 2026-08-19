@@ -7,7 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { PaymentReviewActions } from '@/components/admin/payment-review-actions';
 import { Link } from '@/i18n/navigation';
-import { getSettings } from '@/server/settings';
+import {
+  commissionsEnabled,
+  feeTotals,
+  paymentProvider,
+  paymentsEnabled,
+} from '@/server/payments';
+import { getSetting, getSettings } from '@/server/settings';
 import { formatDate } from '@/lib/utils';
 
 export const metadata: Metadata = { robots: { index: false } };
@@ -70,6 +76,15 @@ export default async function AdminPaymentsPage({
     getTranslations('admin'),
   ]);
 
+  // Комиссии и платёжный модуль (§1.2.2, post-MVP №11). Пока юрлица нет,
+  // блок честно говорит, что удержаний не было и провайдер ручной.
+  const [commissionsOn, paymentsOn, tiers, totals] = await Promise.all([
+    commissionsEnabled(),
+    paymentsEnabled(),
+    getSetting('commission_tiers'),
+    feeTotals(),
+  ]);
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -80,6 +95,60 @@ export default async function AdminPaymentsPage({
             : t('payments.modeSample', { percent: settings.receipt_random_check_pct })}
         </p>
       </div>
+
+      <Card>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold">{t('payments.commission.title')}</h2>
+            <Badge variant={commissionsOn ? 'success' : 'neutral'}>
+              {t(commissionsOn ? 'payments.commission.on' : 'payments.commission.off')}
+            </Badge>
+          </div>
+
+          <p className="text-sm text-fg-muted">
+            {t(commissionsOn ? 'payments.commission.hintOn' : 'payments.commission.hintOff')}
+          </p>
+
+          <ul className="flex flex-wrap gap-2">
+            {[...tiers]
+              .sort((first, second) => first.fromDeals - second.fromDeals)
+              .map((tier) => (
+                <li
+                  key={tier.fromDeals}
+                  className="rounded-full bg-surface-2 px-3 py-1 text-xs text-fg-muted"
+                >
+                  {t('payments.commission.tier', {
+                    percent: tier.percent,
+                    from: tier.fromDeals,
+                  })}
+                </li>
+              ))}
+          </ul>
+
+          <p className="text-sm">
+            {totals.length === 0
+              ? t('payments.commission.noFees')
+              : totals
+                  .map((row) =>
+                    // При выключенных комиссиях начисления — это история, и
+                    // подпись не должна спорить со строкой «комиссий нет».
+                    t(commissionsOn ? 'payments.commission.total' : 'payments.commission.totalPast', {
+                      amount: row.total.toLocaleString(locale),
+                      currency: row.currency,
+                      count: row.count,
+                    }),
+                  )
+                  .join(' · ')}
+          </p>
+
+          <p className="text-xs text-fg-muted">
+            {t('payments.commission.provider', {
+              provider: paymentProvider().name,
+              mode: t(paymentsOn ? 'payments.commission.modeOn' : 'payments.commission.modeOff'),
+            })}
+          </p>
+        </CardContent>
+      </Card>
 
       <nav className="flex gap-2" aria-label={t('payments.filterLabel')}>
         {(['all', 'sampled'] as const).map((value) => (

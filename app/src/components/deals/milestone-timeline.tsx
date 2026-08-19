@@ -43,6 +43,7 @@ export function MilestoneTimeline({
   milestones,
   details,
   sourcesUnlocked,
+  commission,
 }: {
   locale: string;
   role: 'customer' | 'designer' | 'staff';
@@ -50,6 +51,8 @@ export function MilestoneTimeline({
   milestones: MilestoneView[];
   details: MilestoneDetails[];
   sourcesUnlocked: boolean;
+  /** Комиссия платформы. При выключенном флаге приходит null (§1.2.1). */
+  commission: { percent: number } | null;
 }) {
   const t = useTranslations('deals.milestones');
   const tRoot = useTranslations();
@@ -122,6 +125,23 @@ export function MilestoneTimeline({
 
                   <p className="text-sm text-fg-muted">
                     {milestone.amount.toLocaleString(locale)} {milestone.currency}
+                    {/* Удержание показываем обеим сторонам и только когда
+                        комиссии включены: пока их нет, строка «к получению»
+                        повторяла бы сумму этапа и путала. */}
+                    {commission ? (
+                      <>
+                        {' · '}
+                        <span title={t('commissionHint', { percent: commission.percent })}>
+                          {t('payout', {
+                            amount: Math.floor(
+                              (milestone.amount * (100 - commission.percent)) / 100,
+                            ).toLocaleString(locale),
+                            currency: milestone.currency,
+                            percent: commission.percent,
+                          })}
+                        </span>
+                      </>
+                    ) : null}
                     {milestone.dueDate ? (
                       <>
                         {' · '}

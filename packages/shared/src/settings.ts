@@ -386,18 +386,53 @@ export const SETTINGS_REGISTRY = {
   },
 
   // ── Feature-флаги (§1.2.2 — задел на будущее, в MVP выключено) ──────
+  /**
+   * Шкала комиссии (§1.2.2): 15/10/5 % по числу завершённых сделок.
+   *
+   * Пороги и проценты — настройка, а не константа: ставка комиссии —
+   * последнее, что стоит менять деплоем.
+   */
+  commission_tiers: {
+    group: 'deals',
+    default: [
+      { fromDeals: 0, percent: 15 },
+      { fromDeals: 10, percent: 10 },
+      { fromDeals: 30, percent: 5 },
+    ],
+    schema: z
+      .array(
+        z.object({
+          fromDeals: z.number().int().min(0),
+          percent: z.number().min(0).max(50),
+        }),
+      )
+      .min(1)
+      .max(6),
+    label: { ru: 'Шкала комиссии, %', en: 'Commission schedule, %' },
+    hint: {
+      ru: 'Применяется только при включённых комиссиях. Действует самая выгодная подходящая ставка',
+      en: 'Applies only when commissions are on. The most favourable matching rate wins',
+    },
+  },
   feature_commissions: {
     group: 'features',
     default: false,
     schema: z.boolean(),
     label: { ru: 'Комиссии платформы', en: 'Platform commissions' },
-    hint: { ru: 'Требует юрлица. В MVP выключено', en: 'Requires a legal entity. Off in MVP' },
+    hint: {
+      ru: 'Требует юрлица. Пока выключено, комиссия равна нулю везде, включая расчёты и показ',
+      en: 'Requires a legal entity. While off, the commission is zero everywhere, in maths and on screen',
+    },
   },
   feature_payments: {
     group: 'features',
     default: false,
     schema: z.boolean(),
     label: { ru: 'Платёжный модуль', en: 'Payments module' },
+    hint: {
+      ru: 'Требует юрлица и договора с провайдером. Сегодня доступен только ручной режим: стороны платят сами, платформа фиксирует чеки',
+      en: 'Requires a legal entity and a provider contract. Only the manual mode exists today: the sides pay each other, the platform records receipts',
+    },
   },
   feature_auction: {
     group: 'features',

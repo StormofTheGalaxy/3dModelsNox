@@ -60,6 +60,7 @@ export function DealPanel({
   sourcesUnlocked,
   translation,
   review,
+  commission,
 }: {
   locale: string;
   role: 'customer' | 'designer' | 'staff';
@@ -91,6 +92,8 @@ export function DealPanel({
     } | null;
     aboutMe: ReviewView | null;
   };
+  /** Комиссия платформы; null — комиссии выключены (§1.2.1). */
+  commission: { percent: number } | null;
 }) {
   const t = useTranslations('deals');
   const [tab, setTab] = useState<TabKey>('brief');
@@ -172,6 +175,7 @@ export function DealPanel({
               milestones={milestones}
               details={details}
               sourcesUnlocked={sourcesUnlocked}
+              commission={commission}
             />
           )}
 

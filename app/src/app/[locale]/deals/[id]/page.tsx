@@ -18,6 +18,7 @@ import { prisma } from '@polyforge/db';
 
 import { getOwnReview, getReviewAbout } from '@/server/reviews';
 import { getSetting } from '@/server/settings';
+import { commissionPreview } from '@/server/payments';
 
 export async function generateMetadata({
   params,
@@ -54,6 +55,10 @@ export default async function DealPage({
   if (!access) notFound();
 
   const { deal, role } = access;
+
+  // Комиссия платформы (§1.2.2, post-MVP №11). Пока флаг выключен — а он
+  // выключен, юрлица нет, — приходит нулевая и в интерфейс не попадает.
+  const commission = await commissionPreview(deal.price, deal.designerId);
 
   const [messages, changeRequests] = await Promise.all([
     listDealMessages(deal.id),
@@ -96,6 +101,7 @@ export default async function DealPage({
     <DealPanel
       locale={locale}
       role={role}
+      commission={commission.enabled ? { percent: commission.percent } : null}
       viewerId={user.id}
       deal={{
         id: deal.id,
