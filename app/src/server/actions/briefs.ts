@@ -14,6 +14,7 @@ import {
 import { writeAuditLog } from '../audit';
 import { getCurrentUser } from '../auth/session';
 import { generateShareToken, getOwnBrief } from '../briefs';
+import { managedOrganizationIds, managesBrief } from '../organizations';
 import { enqueueBriefPdf } from '../queue';
 import { errorState, successState, type ActionState } from './types';
 import { fieldErrorsFrom } from './form';
@@ -29,6 +30,7 @@ import { fieldErrorsFrom } from './form';
 /** Создаёт ТЗ — пустое или из пресета. */
 export async function createBrief(
   templateId?: string,
+  organizationId?: string,
 ): Promise<{ briefId: string } | { error: string }> {
   const user = await getCurrentUser();
   if (!user?.emailVerifiedAt) return { error: 'errors.forbidden' };
@@ -74,9 +76,15 @@ export async function createBrief(
     }
   }
 
+  // ТЗ от имени команды: право распоряжаться получают её менеджеры (§1.4).
+  // Автор остаётся в ownerId — по нему видно, кто завёл.
+  const managed = organizationId ? await managedOrganizationIds(user.id) : [];
+  const forOrganization = organizationId && managed.includes(organizationId) ? organizationId : null;
+
   const brief = await prisma.brief.create({
     data: {
       ownerId: user.id,
+      organizationId: forOrganization,
       ownerRole: user.lastRoleContext === 'designer' ? 'designer' : 'customer',
       title,
       sections: sections as unknown as Prisma.InputJsonValue,
@@ -160,10 +168,10 @@ export async function autosaveBrief(input: {
 
   const brief = await prisma.brief.findUnique({
     where: { id: input.briefId },
-    select: { ownerId: true, status: true },
+    select: { ownerId: true, organizationId: true, status: true },
   });
 
-  if (!brief || brief.ownerId !== user.id) return { ok: false };
+  if (!brief || !(await managesBrief(brief, user.id))) return { ok: false };
   // Замороженное ТЗ правится только через BriefChangeRequest (фаза 4).
   if (brief.status === 'frozen') return { ok: false };
 
@@ -385,10 +393,10 @@ export async function getBriefPdfStatus(
 
   const brief = await prisma.brief.findUnique({
     where: { id: briefId },
-    select: { ownerId: true, pdfStatus: true, pdfUrl: true },
+    select: { ownerId: true, organizationId: true, pdfStatus: true, pdfUrl: true },
   });
 
-  if (!brief || brief.ownerId !== user.id) return { status: null, url: null };
+  if (!brief || !(await managesBrief(brief, user.id))) return { status: null, url: null };
 
   return { status: brief.pdfStatus, url: brief.pdfUrl };
 }

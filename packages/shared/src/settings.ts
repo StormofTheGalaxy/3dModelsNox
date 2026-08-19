@@ -357,6 +357,7 @@ export const SETTINGS_REGISTRY = {
       bid: { points: 60, windowSeconds: 3600 },
       telegram_link: { points: 10, windowSeconds: 3600 },
       comment: { points: 30, windowSeconds: 3600 },
+      organization: { points: 20, windowSeconds: 3600 },
       message: { points: 120, windowSeconds: 60 },
     },
     schema: z.record(z.string(), rateLimitRule),
@@ -402,6 +403,16 @@ export const SETTINGS_REGISTRY = {
     default: false,
     schema: z.boolean(),
     label: { ru: 'Аукцион заказов', en: 'Order auction' },
+  },
+  feature_organizations: {
+    group: 'features',
+    default: false,
+    schema: z.boolean(),
+    label: { ru: 'Команды и студии', en: 'Teams and studios' },
+    hint: {
+      ru: 'Общие ТЗ и заказы для нескольких человек; стороной сделки остаётся человек',
+      en: 'Shared briefs and orders for several people; the deal party is still a person',
+    },
   },
   feature_public_templates: {
     group: 'features',

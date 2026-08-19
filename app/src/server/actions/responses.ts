@@ -12,6 +12,7 @@ import { refundCredits, spendCredits } from '../ai/credits';
 import { aiProvider } from '../ai/provider';
 import { createDealFromResponse } from './deals';
 import { notify } from '../notifications';
+import { managesOrder } from '../organizations';
 import { checkRateLimit } from '../ratelimit';
 import { responsesLeftToday } from '../responses';
 import { errorState, successState, type ActionState } from './types';
@@ -75,12 +76,14 @@ export async function submitResponse(
       title: true,
       status: true,
       customerId: true,
+      organizationId: true,
       invitedDesignerIds: true,
     },
   });
 
   if (!order || order.status !== 'published') return errorState('errors.order.notPublished');
-  if (order.customerId === user.id) return errorState('errors.response.ownOrder');
+  // Откликаться на свой заказ нельзя — и менеджеру команды тоже (§1.4).
+  if (await managesOrder(order, user.id)) return errorState('errors.response.ownOrder');
 
   // Прикреплять можно только свои работы.
   const ownWorks = await prisma.portfolioWork.findMany({
@@ -147,10 +150,14 @@ export async function markResponseViewed(responseId: string): Promise<{ ok: bool
 
   const response = await prisma.orderResponse.findUnique({
     where: { id: responseId },
-    select: { status: true, viewedAt: true, order: { select: { customerId: true } } },
+    select: {
+      status: true,
+      viewedAt: true,
+      order: { select: { customerId: true, organizationId: true } },
+    },
   });
 
-  if (!response || response.order.customerId !== user.id) return { ok: false };
+  if (!response || !(await managesOrder(response.order, user.id))) return { ok: false };
   if (response.viewedAt) return { ok: true };
 
   await prisma.orderResponse.update({
@@ -184,11 +191,11 @@ export async function setResponseStatus(
       id: true,
       designerId: true,
       orderId: true,
-      order: { select: { customerId: true, title: true, status: true } },
+      order: { select: { customerId: true, organizationId: true, title: true, status: true } },
     },
   });
 
-  if (!response || response.order.customerId !== user.id) {
+  if (!response || !(await managesOrder(response.order, user.id))) {
     return { ok: false, error: 'errors.forbidden' };
   }
 

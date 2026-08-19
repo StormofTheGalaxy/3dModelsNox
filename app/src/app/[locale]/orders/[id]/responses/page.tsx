@@ -11,6 +11,7 @@ import { ResponseActions } from '@/components/orders/response-actions';
 import { WorkCard } from '@/components/works/work-card';
 import { requireVerifiedUser } from '@/server/auth/guards';
 import { getOrder } from '@/server/orders';
+import { managedOrganizationIds, managesRecord } from '@/server/organizations';
 import { getAttachedWorks, listOrderResponses } from '@/server/responses';
 import { formatDate } from '@/lib/utils';
 
@@ -43,8 +44,11 @@ export default async function OrderResponsesPage({
   const user = await requireVerifiedUser(locale);
   const order = await getOrder(id);
 
-  // Отклики видит только владелец заказа.
-  if (!order || order.customerId !== user.id) notFound();
+  // Отклики видит тот, кто распоряжается заказом: сам заказчик или
+  // менеджер команды, от имени которой заказ опубликован (§1.4).
+  if (!order || !managesRecord(order, user.id, await managedOrganizationIds(user.id))) {
+    notFound();
+  }
 
   const [t, tTax, responses] = await Promise.all([
     getTranslations('orders.responses'),

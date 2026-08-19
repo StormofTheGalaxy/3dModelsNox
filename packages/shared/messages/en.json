@@ -39,6 +39,7 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "briefs": "My briefs",
+    "teams": "Teams",
     "myOrders": "My orders",
     "myResponses": "My proposals",
     "notifications": "Notifications",
@@ -456,6 +457,13 @@
       "disabled": "Public templates are switched off on this platform",
       "hidden": "A moderator took this template down — it cannot be published again",
       "badTitle": "Template name: 3 to 140 characters"
+    },
+    "organization": {
+      "disabled": "Teams and studios are turned off on the platform",
+      "badName": "Team name must be 2 to 80 characters",
+      "userNotFound": "No user with that nickname",
+      "ownerRole": "The owner's role cannot be changed",
+      "ownerLeave": "The owner cannot leave the team — hand it over first"
     }
   },
   "empty": {
@@ -1413,6 +1421,11 @@
       "title": "Reply to your comment: “{workTitle}”",
       "body": "@{author} replied in the discussion of the work.",
       "action": "Open the work"
+    },
+    "organization_invite": {
+      "title": "Invitation to “{organization}”",
+      "body": "{inviter} invites you to work on shared briefs and orders.",
+      "action": "Open teams"
     }
   },
   "deals": {
@@ -2013,5 +2026,50 @@
     "needToken": "To connect your account, open the settings on the site and press “Connect Telegram”: {url}",
     "badToken": "That link is invalid or has expired. Request a new one in the settings on the site.",
     "unknown": "I do not understand that command. /help — what I can do."
+  },
+  "teams": {
+    "title": "Teams and studios",
+    "subtitle": "Shared briefs and orders for those who don't work alone. The party to the deal, the payee and the owner of the reputation is still a person.",
+    "kindLabel": "Type",
+    "kind": {
+      "studio": "Studio",
+      "customer_team": "Customer team"
+    },
+    "role": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "member": "Member"
+    },
+    "invitesTitle": "Invitations",
+    "accept": "Accept",
+    "decline": "Decline",
+    "joined": "You joined the team",
+    "createTitle": "Create a team",
+    "createHint": "A studio gets a public page with a shared portfolio. A customer team only shares access to briefs and orders.",
+    "name": "Name",
+    "create": "Create",
+    "created": "Team created",
+    "empty": "You are not a member of any team yet.",
+    "invited": "Invited",
+    "roleChanged": "Role updated",
+    "promote": "Make manager",
+    "demote": "Remove manager role",
+    "remove": "Remove",
+    "removed": "Member removed",
+    "leave": "Leave",
+    "left": "You left the team",
+    "inviteLabel": "Invite by nickname",
+    "invitePlaceholder": "nickname without @",
+    "invite": "Invite",
+    "invitedDone": "Invitation sent",
+    "membersTitle": "Members",
+    "membersCount": "Members: {count}",
+    "studioWorks": "Studio works",
+    "noWorks": "Studio members haven't added any works yet",
+    "onBehalfLabel": "Create on behalf of",
+    "onBehalfSelf": "Myself",
+    "onBehalfHint": "A team brief is visible and editable to its owner and managers.",
+    "ownerBadge": "Team owner",
+    "teamBadge": "Team: {name}"
   }
 }

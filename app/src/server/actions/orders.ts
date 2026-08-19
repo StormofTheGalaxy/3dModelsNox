@@ -14,6 +14,7 @@ import { writeAuditLog } from '../audit';
 import { getCurrentUser } from '../auth/session';
 import { notify } from '../notifications';
 import { buildSearchText, countActiveOrders } from '../orders';
+import { managedOrganizationIds, managesRecord } from '../organizations';
 import { getSetting } from '../settings';
 import { errorState, successState, type ActionState } from './types';
 import { fieldErrorsFrom } from './form';
@@ -55,10 +56,19 @@ export async function publishOrder(
 
   const brief = await prisma.brief.findUnique({
     where: { id: input.briefId },
-    select: { id: true, ownerId: true, status: true, sections: true, title: true },
+    select: {
+      id: true,
+      ownerId: true,
+      organizationId: true,
+      status: true,
+      sections: true,
+      title: true,
+    },
   });
 
-  if (!brief || brief.ownerId !== user.id) return errorState('errors.forbidden');
+  // Общее ТЗ команды публикует любой её менеджер (§1.4).
+  const managed = await managedOrganizationIds(user.id);
+  if (!brief || !managesRecord(brief, user.id, managed)) return errorState('errors.forbidden');
   if (brief.status === 'archived') return errorState('errors.order.briefArchived');
 
   // Лимит активных заказов — настройка платформы (§4.5).
@@ -107,6 +117,9 @@ export async function publishOrder(
   const order = await prisma.order.create({
     data: {
       customerId: user.id,
+      // Заказ наследует команду у ТЗ: разводить их — значит завести случай,
+      // когда общее ТЗ порождает личный заказ, невидимый соседям.
+      organizationId: brief.organizationId,
       briefId: brief.id,
       title: input.title,
       status: 'published',
@@ -189,10 +202,13 @@ export async function extendOrder(orderId: string): Promise<{ ok: boolean }> {
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { customerId: true, status: true },
+    select: { customerId: true, organizationId: true, status: true },
   });
 
-  if (!order || order.customerId !== user.id) return { ok: false };
+  // Общими заказами команды распоряжаются владелец и менеджеры (§1.4).
+  if (!order || !managesRecord(order, user.id, await managedOrganizationIds(user.id))) {
+    return { ok: false };
+  }
   if (order.status !== 'published') return { ok: false };
 
   const days = await getSetting('order_autoarchive_days');
@@ -216,10 +232,12 @@ export async function cancelOrder(orderId: string): Promise<{ ok: boolean }> {
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { customerId: true, status: true },
+    select: { customerId: true, organizationId: true, status: true },
   });
 
-  if (!order || order.customerId !== user.id) return { ok: false };
+  if (!order || !managesRecord(order, user.id, await managedOrganizationIds(user.id))) {
+    return { ok: false };
+  }
   // Заказ в работе отменяется через сделку, а не с витрины (фаза 4).
   if (order.status === 'in_progress' || order.status === 'completed') return { ok: false };
 
@@ -250,7 +268,13 @@ export async function inviteDesigner(
   const [order, designer] = await Promise.all([
     prisma.order.findUnique({
       where: { id: orderId },
-      select: { customerId: true, status: true, title: true, invitedDesignerIds: true },
+      select: {
+        customerId: true,
+        organizationId: true,
+        status: true,
+        title: true,
+        invitedDesignerIds: true,
+      },
     }),
     prisma.user.findUnique({
       where: { nicknameLower: designerNickname.toLowerCase() },
@@ -258,7 +282,9 @@ export async function inviteDesigner(
     }),
   ]);
 
-  if (!order || order.customerId !== user.id) return { ok: false, error: 'errors.forbidden' };
+  if (!order || !managesRecord(order, user.id, await managedOrganizationIds(user.id))) {
+    return { ok: false, error: 'errors.forbidden' };
+  }
   if (order.status !== 'published') return { ok: false, error: 'errors.order.notPublished' };
   if (!designer?.designerProfile || designer.status !== 'active') {
     return { ok: false, error: 'errors.order.designerNotFound' };

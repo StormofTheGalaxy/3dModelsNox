@@ -29,6 +29,7 @@ import {
 import { refundCredits, spendCredits, type AIFeature } from '../ai/credits';
 import { aiIsLive, aiProvider } from '../ai/provider';
 import { checkRateLimit } from '../ratelimit';
+import { managesBrief, managesOrder } from '../organizations';
 import { errorState, successState, type ActionState } from './types';
 import { fieldErrorsFrom } from './form';
 
@@ -278,10 +279,14 @@ export async function markClarificationApplied(
 
   const message = await prisma.briefChatMessage.findUnique({
     where: { id: messageId },
-    select: { id: true, appliedFields: true, brief: { select: { ownerId: true } } },
+    select: {
+      id: true,
+      appliedFields: true,
+      brief: { select: { ownerId: true, organizationId: true } },
+    },
   });
 
-  if (!message || message.brief.ownerId !== user.id) return { ok: false };
+  if (!message || !(await managesBrief(message.brief, user.id))) return { ok: false };
 
   const key = suggestionKey({ section, field });
   if (message.appliedFields.includes(key)) return { ok: true };
@@ -303,10 +308,10 @@ export async function loadBriefChat(
 
   const brief = await prisma.brief.findUnique({
     where: { id: briefId },
-    select: { ownerId: true },
+    select: { ownerId: true, organizationId: true },
   });
 
-  if (brief?.ownerId !== user.id) return { ok: false };
+  if (!brief || !(await managesBrief(brief, user.id))) return { ok: false };
 
   return { ok: true, turns: await listBriefChat(briefId) };
 }
@@ -331,10 +336,12 @@ export async function matchDesignersForOrder(
 
   const owner = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { customerId: true },
+    select: { customerId: true, organizationId: true },
   });
 
-  if (owner?.customerId !== user.id) return { ok: false, error: 'errors.forbidden' };
+  if (!owner || !(await managesOrder(owner, user.id))) {
+    return { ok: false, error: 'errors.forbidden' };
+  }
 
   const found = await candidateDesigners(orderId);
   if (!found) return { ok: false, error: 'errors.notFound' };

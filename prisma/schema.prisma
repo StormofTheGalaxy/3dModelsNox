@@ -139,6 +139,9 @@ model User {
   reportsFiled    Report[]         @relation("ReportAuthor")
   reportsResolved Report[]         @relation("ReportResolver")
 
+  organizations   Organization[]       @relation("OrganizationOwner")
+  memberships     OrganizationMember[] @relation("OrganizationMembership")
+
   briefs          Brief[]          @relation("BriefOwner")
   briefVersions   BriefVersion[]   @relation("BriefVersionAuthor")
   briefTemplates  BriefTemplate[]  @relation("BriefTemplateOwner")
@@ -722,6 +725,11 @@ model Brief {
   owner     User           @relation("BriefOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   ownerRole BriefOwnerRole @default(customer)
 
+  /// Общее ТЗ команды (§1.4): им распоряжаются владелец и менеджеры.
+  /// Автор в ownerId остаётся — по нему видно, кто его завёл.
+  organizationId String?
+  organization   Organization? @relation("BriefOrganization", fields: [organizationId], references: [id], onDelete: SetNull)
+
   title  String
   status BriefStatus @default(draft)
   access BriefAccess @default(private)
@@ -759,6 +767,7 @@ model Brief {
   orders         Order[]              @relation("OrderBrief")
 
   @@index([ownerId, updatedAt])
+  @@index([organizationId, updatedAt])
   @@index([status, access])
   @@map("briefs")
 }
@@ -819,6 +828,72 @@ model BriefVersion {
   @@unique([briefId, version])
   @@index([briefId, createdAt])
   @@map("brief_versions")
+}
+
+// ── Команды, студии и менеджеры заказчика (§1.4, post-MVP №7) ──────────────
+
+enum OrganizationKind {
+  /// Студия дизайнеров: публичная страница, участники видны каталогу.
+  studio
+  /// Кабинет заказчика на несколько человек: ТЗ и заказы общие.
+  customer_team
+}
+
+enum OrganizationRole {
+  /// Создатель. Один на организацию, передаётся явно.
+  owner
+  /// Распоряжается общими ТЗ и заказами наравне с владельцем. Сделка
+  /// личная: её заводит человек, он же платит и получает отзыв.
+  manager
+  /// Состоит в организации, но чужими ТЗ и заказами не распоряжается.
+  member
+}
+
+model Organization {
+  id String @id @default(cuid())
+
+  /// Публичный адрес студии: /studios/<slug>.
+  slug String           @unique
+  kind OrganizationKind
+
+  name      String
+  bio       String?
+  avatarUrl String?
+  website   String?
+
+  ownerId String
+  owner   User   @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members OrganizationMember[]
+  briefs  Brief[]              @relation("BriefOrganization")
+  orders  Order[]              @relation("OrderOrganization")
+
+  @@index([kind, createdAt])
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id String @id @default(cuid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("OrganizationMembership", fields: [userId], references: [id], onDelete: Cascade)
+
+  role OrganizationRole @default(member)
+
+  invitedById String?
+  invitedAt   DateTime  @default(now())
+  /// Приглашение принято. До этого участник не имеет никаких прав.
+  acceptedAt  DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([userId, acceptedAt])
+  @@map("organization_members")
 }
 
 /// Пресеты ТЗ: системные из seed и личные («Сохранить как мой шаблон»).
@@ -997,6 +1072,7 @@ enum NotificationType {
   auction_winner_declined
   work_comment
   work_comment_reply
+  organization_invite
   system
 }
 
@@ -1005,6 +1081,11 @@ model Order {
 
   customerId String
   customer   User   @relation("OrderCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+
+  /// Заказ от имени команды (§1.4). Стороной сделки остаётся человек:
+  /// платежи и репутация персональные, организация — способ работать вместе.
+  organizationId String?
+  organization   Organization? @relation("OrderOrganization", fields: [organizationId], references: [id], onDelete: SetNull)
 
   /// ТЗ, из которого опубликован заказ. Одно ТЗ может использоваться в
   /// нескольких заказах — сделка хранит снимок версии (§4.4).
@@ -1053,6 +1134,7 @@ model Order {
 
   @@index([status, publishedAt])
   @@index([customerId, status])
+  @@index([organizationId, status])
   @@index([status, expiresAt])
   @@map("orders")
 }

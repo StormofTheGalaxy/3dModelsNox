@@ -8,6 +8,7 @@ import { TemplatePicker } from '@/components/briefs/template-picker';
 import { Link } from '@/i18n/navigation';
 import { requireVerifiedUser } from '@/server/auth/guards';
 import { listBriefTemplates } from '@/server/briefs';
+import { managedOrganizations } from '@/server/organizations';
 import { publicTemplatesEnabled } from '@/server/templates';
 
 export async function generateMetadata({
@@ -29,12 +30,14 @@ export default async function NewBriefPage({
   setRequestLocale(locale);
 
   const user = await requireVerifiedUser(locale);
-  const [t, tTemplates, tCatalog, templates, catalogOn] = await Promise.all([
+  const [t, tTemplates, tCatalog, templates, catalogOn, organizations] = await Promise.all([
     getTranslations('brief'),
     getTranslations('briefTemplates'),
     getTranslations('briefTemplates.catalog'),
     listBriefTemplates(user.id),
     publicTemplatesEnabled(),
+    // Пустой список, если команд нет или флаг выключен — селектор не покажется.
+    managedOrganizations(user.id),
   ]);
 
   // Системные пресеты хранят в БД ключи словаря, личные — готовый текст.
@@ -79,7 +82,15 @@ export default async function NewBriefPage({
             ) : null}
           </div>
 
-          <TemplatePicker templates={items} blankLabel={t('newFromScratch')} blankHint={t('newFromScratchHint')} />
+          <TemplatePicker
+            templates={items}
+            blankLabel={t('newFromScratch')}
+            blankHint={t('newFromScratchHint')}
+            organizations={organizations.map((organization) => ({
+              id: organization.id,
+              name: organization.name,
+            }))}
+          />
         </div>
       </div>
     </div>

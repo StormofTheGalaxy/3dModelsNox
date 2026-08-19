@@ -5,6 +5,7 @@ import { competitionLevel, type OrderFilter } from '@polyforge/shared';
 
 import type { OrderCardData } from '@/components/orders/order-card';
 import { bestBidForCards } from './auctions';
+import { managedOrganizationIds, orderedBy } from './organizations';
 
 /**
  * Витрина заказов (§4.5).
@@ -149,6 +150,7 @@ export async function getOrder(orderId: string) {
       status: true,
       workMode: true,
       customerId: true,
+      organizationId: true,
       briefId: true,
       expiresAt: true,
       lastActivityAt: true,
@@ -157,9 +159,12 @@ export async function getOrder(orderId: string) {
   });
 }
 
+/** Заказы кабинета: свои плюс общие в командах, где зритель распоряжается. */
 export async function listCustomerOrders(customerId: string) {
+  const managed = await managedOrganizationIds(customerId);
+
   return prisma.order.findMany({
-    where: { customerId },
+    where: orderedBy(customerId, managed),
     orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }],
     select: {
       id: true,

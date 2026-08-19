@@ -11,6 +11,7 @@ import { NotificationBell } from '@/components/notifications/notification-bell';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { getCurrentUser, isStaff } from '@/server/auth/session';
 import { countUnread } from '@/server/notifications';
+import { organizationsEnabled } from '@/server/organizations';
 import { cn } from '@/lib/utils';
 
 const NAV_LINKS = [
@@ -24,7 +25,9 @@ export async function Header({ locale, theme }: { locale: Locale; theme: Theme }
   const [t, user] = await Promise.all([getTranslations('nav'), getCurrentUser()]);
 
   const roleContext: RoleContext = user?.lastRoleContext ?? 'designer';
-  const unread = user ? await countUnread(user.id) : 0;
+  const [unread, organizationsOn] = user
+    ? await Promise.all([countUnread(user.id), organizationsEnabled()])
+    : [0, false];
 
   return (
     <header
@@ -66,6 +69,7 @@ export async function Header({ locale, theme }: { locale: Locale; theme: Theme }
               nickname={user.nickname}
               isStaff={isStaff(user)}
               invitesLeft={user.invitesLeft}
+              organizationsOn={organizationsOn}
             />
           ) : (
             <div className="flex items-center gap-1.5">

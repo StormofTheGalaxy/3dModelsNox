@@ -5,6 +5,8 @@ import { randomBytes } from 'node:crypto';
 import { prisma, type Prisma } from '@polyforge/db';
 import { parseBriefSections, type BriefSections } from '@polyforge/shared';
 
+import { managedOrganizationIds, ownedBy } from './organizations';
+
 /**
  * Чтение ТЗ и правила доступа (§4.4).
  *
@@ -15,6 +17,7 @@ import { parseBriefSections, type BriefSections } from '@polyforge/shared';
 const BRIEF_FULL_SELECT = {
   id: true,
   ownerId: true,
+  organizationId: true,
   ownerRole: true,
   title: true,
   status: true,
@@ -59,10 +62,25 @@ function toBrief(row: Prisma.BriefGetPayload<{ select: typeof BRIEF_FULL_SELECT 
 }
 
 /** ТЗ владельца — полный доступ, включая черновики. */
+/**
+ * ТЗ, которым зритель вправе распоряжаться: своё либо общее в его команде
+ * (§1.4, post-MVP №7).
+ *
+ * Все действия над ТЗ ходят через эту функцию, поэтому организация
+ * учитывается ровно в одном месте, а не в каждом обработчике по-своему.
+ */
 export async function getOwnBrief(briefId: string, ownerId: string): Promise<BriefWithSections | null> {
   const brief = await prisma.brief.findUnique({ where: { id: briefId }, select: BRIEF_FULL_SELECT });
-  if (!brief || brief.ownerId !== ownerId) return null;
-  return toBrief(brief);
+  if (!brief) return null;
+
+  if (brief.ownerId === ownerId) return toBrief(brief);
+
+  if (brief.organizationId) {
+    const managed = await managedOrganizationIds(ownerId);
+    if (managed.includes(brief.organizationId)) return toBrief(brief);
+  }
+
+  return null;
 }
 
 export type BriefViewerAccess = 'owner' | 'allowed' | 'public' | 'link' | 'denied';
@@ -122,9 +140,12 @@ export async function getBriefByShareToken(token: string): Promise<BriefWithSect
   return brief;
 }
 
+/** Список ТЗ: свои плюс общие в командах, где зритель распоряжается (§1.4). */
 export async function listOwnBriefs(ownerId: string) {
+  const managed = await managedOrganizationIds(ownerId);
+
   return prisma.brief.findMany({
-    where: { ownerId },
+    where: ownedBy(ownerId, managed),
     orderBy: { updatedAt: 'desc' },
     select: {
       id: true,
@@ -134,6 +155,8 @@ export async function listOwnBriefs(ownerId: string) {
       currentVersion: true,
       updatedAt: true,
       sections: true,
+      organizationId: true,
+      organization: { select: { name: true, slug: true } },
     },
   });
 }

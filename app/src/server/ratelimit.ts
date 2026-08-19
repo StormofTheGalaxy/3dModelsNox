@@ -18,6 +18,7 @@ export type RateLimitAction =
   | 'bid'
   | 'telegram_link'
   | 'comment'
+  | 'organization'
   | 'message';
 
 export interface RateLimitResult {

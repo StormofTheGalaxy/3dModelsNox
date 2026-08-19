@@ -20,6 +20,7 @@ import { ReportDialog } from '@/components/report/report-dialog';
 import { getCurrentUser } from '@/server/auth/session';
 import { getAuctionState } from '@/server/auctions';
 import { getOrder } from '@/server/orders';
+import { managedOrganizationIds, managesRecord } from '@/server/organizations';
 import { getSetting } from '@/server/settings';
 import { getProfileState } from '@/server/profiles';
 import { translateField } from '@/server/translation';
@@ -69,7 +70,11 @@ export default async function OrderPage({
         })
       : { text: order.title, original: order.title, translated: false };
 
-  const isOwner = viewer?.id === order.customerId;
+  // Владелец в терминах интерфейса — тот, кто вправе распоряжаться заказом:
+  // сам заказчик или менеджер команды, от имени которой он опубликован (§1.4).
+  const isOwner = viewer
+    ? managesRecord(order, viewer.id, await managedOrganizationIds(viewer.id))
+    : false;
   const competition =
     order.responsesCount <= 3 ? 'low' : order.responsesCount <= 10 ? 'medium' : 'high';
 

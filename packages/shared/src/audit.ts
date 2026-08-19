@@ -45,6 +45,11 @@ export const AUDIT_ACTIONS = [
   'template.published',
   'template.unpublished',
   'template.hidden',
+  'organization.created',
+  'organization.member_invited',
+  'organization.member_joined',
+  'organization.member_removed',
+  'organization.role_changed',
 
   // ТЗ и сделки (появятся в фазах 2 и 4)
   'brief.frozen',
@@ -114,6 +119,7 @@ export const AUDIT_TARGET_TYPES = [
   'waitlist',
   'comment',
   'template',
+  'organization',
   'auction',
   'bid',
 ] as const;

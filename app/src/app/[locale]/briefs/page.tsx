@@ -36,9 +36,10 @@ export default async function BriefsPage({ params }: { params: Promise<{ locale:
   setRequestLocale(locale);
 
   const user = await requireVerifiedUser(locale);
-  const [t, tAi, briefs, balances] = await Promise.all([
+  const [t, tAi, tTeams, briefs, balances] = await Promise.all([
     getTranslations('brief'),
     getTranslations('brief.ai'),
+    getTranslations('teams'),
     listOwnBriefs(user.id),
     getBalances(user.id),
   ]);
@@ -94,6 +95,13 @@ export default async function BriefsPage({ params }: { params: Promise<{ locale:
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2">
+                      {/* Общее ТЗ помечено: в одном списке со своими его иначе
+                          не отличить, а правит его вся команда (§1.4). */}
+                      {brief.organization ? (
+                        <Badge variant="accent">
+                          {tTeams('teamBadge', { name: brief.organization.name })}
+                        </Badge>
+                      ) : null}
                       <Badge variant={STATUS_TONE[brief.status]}>{t(`status.${brief.status}`)}</Badge>
                       <Badge variant="outline">{t(`access.${brief.access}`)}</Badge>
                     </div>

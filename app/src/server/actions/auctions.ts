@@ -10,6 +10,7 @@ import { getCurrentUser } from '../auth/session';
 import { auctionEnabled, notifyBidders, ownActiveBid, settleDeclinedWinner } from '../auctions';
 import { createDealFromBid } from './deals';
 import { notify } from '../notifications';
+import { managesOrder } from '../organizations';
 import { checkRateLimit } from '../ratelimit';
 import { getSetting } from '../settings';
 import { errorState, successState, type ActionState } from './types';
@@ -62,6 +63,7 @@ export async function placeBid(_previous: ActionState, formData: FormData): Prom
       title: true,
       status: true,
       customerId: true,
+      organizationId: true,
       workMode: true,
       auction: {
         select: {
@@ -78,7 +80,9 @@ export async function placeBid(_previous: ActionState, formData: FormData): Prom
 
   if (!order?.auction || order.workMode !== 'auction') return errorState('errors.auction.notFound');
   if (order.status !== 'published') return errorState('errors.order.notPublished');
-  if (order.customerId === user.id) return errorState('errors.response.ownOrder');
+  // Ставить на свой заказ нельзя — и менеджеру команды тоже: он им
+  // распоряжается, а значит, видит торги изнутри (§1.4).
+  if (await managesOrder(order, user.id)) return errorState('errors.response.ownOrder');
 
   const auction = order.auction;
   const now = new Date();
@@ -223,10 +227,15 @@ export async function closeAuction(orderId: string): Promise<{ ok: boolean; erro
 
   const auction = await prisma.auction.findUnique({
     where: { orderId },
-    select: { id: true, closedAt: true, revealedAt: true, order: { select: { customerId: true } } },
+    select: {
+      id: true,
+      closedAt: true,
+      revealedAt: true,
+      order: { select: { customerId: true, organizationId: true } },
+    },
   });
 
-  if (!auction || auction.order.customerId !== user.id) {
+  if (!auction || !(await managesOrder(auction.order, user.id))) {
     return { ok: false, error: 'errors.forbidden' };
   }
   if (auction.closedAt) return { ok: false, error: 'errors.auction.closed' };
@@ -275,6 +284,7 @@ export async function selectWinner(bidId: string): Promise<{ ok: boolean; error?
       order: {
         select: {
           customerId: true,
+          organizationId: true,
           title: true,
           auction: {
             select: { id: true, mode: true, revealedAt: true, closedAt: true, winnerBidId: true },
@@ -284,7 +294,7 @@ export async function selectWinner(bidId: string): Promise<{ ok: boolean; error?
     },
   });
 
-  if (!bid?.order.auction || bid.order.customerId !== user.id) {
+  if (!bid?.order.auction || !(await managesOrder(bid.order, user.id))) {
     return { ok: false, error: 'errors.forbidden' };
   }
   if (bid.withdrawnAt) return { ok: false, error: 'errors.auction.bidWithdrawn' };

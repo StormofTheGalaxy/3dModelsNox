@@ -13,6 +13,7 @@ import {
   Settings,
   Shield,
   Ticket,
+  Users,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -31,10 +32,12 @@ export function UserMenu({
   nickname,
   isStaff,
   invitesLeft,
+  organizationsOn,
 }: {
   nickname: string;
   isStaff: boolean;
   invitesLeft: number;
+  organizationsOn: boolean;
 }) {
   const t = useTranslations('nav');
   const router = useRouter();
@@ -109,6 +112,16 @@ export function UserMenu({
               {t('briefs')}
             </Link>
           </DropdownMenu.Item>
+
+          {/* Команды и студии — post-MVP за флагом (§1.4). */}
+          {organizationsOn ? (
+            <DropdownMenu.Item asChild className={itemClass}>
+              <Link href="/teams">
+                <Users className="size-4 text-fg-muted" aria-hidden />
+                {t('teams')}
+              </Link>
+            </DropdownMenu.Item>
+          ) : null}
 
           <DropdownMenu.Item asChild className={itemClass}>
             <Link href="/invites">

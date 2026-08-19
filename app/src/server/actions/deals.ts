@@ -9,6 +9,7 @@ import { writeAuditLog } from '../audit';
 import { getCurrentUser, isStaff } from '../auth/session';
 import { getDealForUser, postSystemMessage } from '../deals';
 import { notify } from '../notifications';
+import { managesOrder } from '../organizations';
 import { getSetting } from '../settings';
 import { errorState, successState, type ActionState } from './types';
 import { fieldErrorsFrom } from './form';
@@ -41,6 +42,7 @@ export async function createDealFromResponse(
         select: {
           id: true,
           customerId: true,
+          organizationId: true,
           title: true,
           briefId: true,
           deal: { select: { id: true } },
@@ -50,7 +52,12 @@ export async function createDealFromResponse(
     },
   });
 
-  if (!response || response.order.customerId !== user.id) return { error: 'errors.forbidden' };
+  // Принять отклик вправе и менеджер команды, но стороной сделки становится
+  // он сам: сделка — договор двух людей, организация в неё не входит
+  // (§1.2.1, §1.2.3). Дальше платит и отвечает тот, кто нажал.
+  if (!response || !(await managesOrder(response.order, user.id))) {
+    return { error: 'errors.forbidden' };
+  }
   if (response.status !== 'accepted') return { error: 'errors.deal.responseNotAccepted' };
   // Повторный вызов не должен плодить сделки на один заказ.
   if (response.order.deal) return { dealId: response.order.deal.id };
