@@ -50,6 +50,8 @@ export const AUDIT_ACTIONS = [
   'organization.member_joined',
   'organization.member_removed',
   'organization.role_changed',
+  'push.subscribed',
+  'push.unsubscribed',
 
   // ТЗ и сделки (появятся в фазах 2 и 4)
   'brief.frozen',

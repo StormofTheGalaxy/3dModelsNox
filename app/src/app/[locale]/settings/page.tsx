@@ -3,9 +3,12 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { InstallPrompt } from '@/components/pwa/install-prompt';
+import { PushSettings } from '@/components/pwa/push-settings';
 import { TelegramSettings } from '@/components/settings/telegram-settings';
 import { TranslationSettings } from '@/components/settings/translation-settings';
 import { requireUser } from '@/server/auth/guards';
+import { listPushSubscriptions, pushEnabled, pushIsLive, pushPublicKey } from '@/server/push';
 import { telegramIsLive } from '@/server/telegram';
 import { getSetting } from '@/server/settings';
 import { prisma } from '@polyforge/db';
@@ -33,9 +36,12 @@ export default async function SettingsPage({
   const user = await requireUser(locale);
   const t = await getTranslations('settings');
 
-  // Поля Telegram нужны только здесь, поэтому не едут в каждой сессии.
-  const [telegramOn, telegram] = await Promise.all([
+  // Поля Telegram и список устройств нужны только здесь, поэтому не едут
+  // в каждой сессии.
+  const [telegramOn, pwaOn, devices, telegram] = await Promise.all([
     getSetting('feature_telegram'),
+    pushEnabled(),
+    listPushSubscriptions(user.id),
     prisma.user.findUnique({
       where: { id: user.id },
       select: {
@@ -91,6 +97,21 @@ export default async function SettingsPage({
           username={telegram?.telegramUsername ?? null}
           enabled={telegram?.telegramNotifications ?? true}
           botConfigured={telegramIsLive()}
+        />
+      ) : null}
+
+      {pwaOn ? <InstallPrompt /> : null}
+
+      {pwaOn ? (
+        <PushSettings
+          publicKey={pushPublicKey()}
+          pushIsLive={pushIsLive()}
+          devices={devices.map((device) => ({
+            id: device.id,
+            userAgent: device.userAgent,
+            createdAt: device.createdAt.toISOString(),
+            lastSentAt: device.lastSentAt?.toISOString() ?? null,
+          }))}
         />
       ) : null}
     </div>

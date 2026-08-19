@@ -20,6 +20,7 @@
     "@polyforge/shared": "*",
     "@polyforge/storage": "*",
     "@polyforge/telegram": "*",
+    "@polyforge/webpush": "*",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-dropdown-menu": "^2.1.24",
     "@radix-ui/react-label": "^2.1.15",

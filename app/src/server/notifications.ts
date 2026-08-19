@@ -7,11 +7,12 @@ import { getEmailTranslator } from '@polyforge/mail';
 
 import { absoluteUrl } from './env';
 import { sendNotificationEmail } from './mail';
+import { sendWebPushNotification } from './push';
 import { redis } from './redis';
 import { sendTelegramNotification } from './telegram';
 
 /**
- * Уведомления (§4.7): in-app плюс email по настройкам подписок.
+ * Уведомления (§4.7): in-app, email, Telegram и веб-пуши по настройкам подписок.
  *
  * Запись в БД — источник правды; ws только доставляет её в открытую вкладку.
  * Если реалтайм-сервис лежит, пользователь увидит колокольчик при следующей
@@ -35,18 +36,18 @@ export interface NotifyInput {
 async function channelsFor(
   userId: string,
   type: NotificationType,
-): Promise<{ inApp: boolean; email: boolean; telegram: boolean }> {
+): Promise<{ inApp: boolean; email: boolean; telegram: boolean; webPush: boolean }> {
   const preference = await prisma.notificationPreference.findUnique({
     where: { userId_type: { userId, type } },
-    select: { inApp: true, email: true, telegram: true },
+    select: { inApp: true, email: true, telegram: true, webPush: true },
   });
 
-  return preference ?? { inApp: true, email: true, telegram: true };
+  return preference ?? { inApp: true, email: true, telegram: true, webPush: true };
 }
 
 export async function notify(input: NotifyInput): Promise<void> {
   const channels = await channelsFor(input.userId, input.type);
-  if (!channels.inApp && !channels.email && !channels.telegram) return;
+  if (!channels.inApp && !channels.email && !channels.telegram && !channels.webPush) return;
 
   const recipient = await prisma.user.findUnique({
     where: { id: input.userId },
@@ -79,6 +80,25 @@ export async function notify(input: NotifyInput): Promise<void> {
   // человека от дел: этот же признак решает и про письмо, и про Telegram.
   if (!input.push) return;
 
+  const locale = recipient.locale as Locale;
+
+  if (channels.webPush) {
+    const delivered = await sendWebPushNotification({
+      userId: input.userId,
+      type: input.type,
+      payload: input.payload,
+      link: input.link,
+      locale,
+    });
+
+    if (delivered > 0) {
+      await prisma.notification.update({
+        where: { id: notification.id },
+        data: { webPushSentAt: new Date() },
+      });
+    }
+  }
+
   if (channels.telegram) {
     const delivered = await sendTelegramNotification({
       userId: input.userId,
@@ -97,7 +117,6 @@ export async function notify(input: NotifyInput): Promise<void> {
 
   if (!channels.email) return;
 
-  const locale = recipient.locale as Locale;
   const t = getEmailTranslator(locale);
   const values = Object.fromEntries(
     Object.entries(input.payload).map(([key, value]) => [key, String(value)]),

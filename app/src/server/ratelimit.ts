@@ -19,6 +19,7 @@ export type RateLimitAction =
   | 'telegram_link'
   | 'comment'
   | 'organization'
+  | 'push_subscribe'
   | 'message';
 
 export interface RateLimitResult {

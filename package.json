@@ -25,7 +25,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "docker:dev": "docker compose -f docker-compose.dev.yml up -d",
     "docker:dev:down": "docker compose -f docker-compose.dev.yml down",
-    "telegram:webhook": "tsx scripts/telegram-webhook.ts"
+    "telegram:webhook": "tsx scripts/telegram-webhook.ts",
+    "push:keys": "tsx scripts/push-keys.ts"
   },
   "prisma": {
     "schema": "prisma/schema.prisma",
@@ -38,9 +39,11 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/web-push": "^3.6.4",
     "prisma": "^6.19.3",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "web-push": "^3.6.7"
   },
   "engines": {
     "node": ">=22"

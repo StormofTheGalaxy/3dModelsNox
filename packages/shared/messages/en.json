@@ -464,6 +464,9 @@
       "userNotFound": "No user with that nickname",
       "ownerRole": "The owner's role cannot be changed",
       "ownerLeave": "The owner cannot leave the team — hand it over first"
+    },
+    "push": {
+      "disabled": "Push notifications are turned off on the platform"
     }
   },
   "empty": {
@@ -2071,5 +2074,33 @@
     "onBehalfHint": "A team brief is visible and editable to its owner and managers.",
     "ownerBadge": "Team owner",
     "teamBadge": "Team: {name}"
+  },
+  "pwa": {
+    "install": {
+      "title": "Install the app",
+      "hint": "The platform installs on your phone like an app: with an icon, without the address bar, and with notifications.",
+      "action": "Install",
+      "installed": "The app is already installed",
+      "iosHint": "In Safari: Share → Add to Home Screen."
+    },
+    "offline": {
+      "title": "No connection",
+      "description": "The page didn't load: the connection is gone. Orders, responses and deals change constantly, so we don't show yesterday's data — better to come back when the network is up.",
+      "retry": "Try again"
+    },
+    "push": {
+      "title": "Push notifications",
+      "hint": "Notifications reach your device even when the tab is closed. A subscription belongs to a device: turn it on separately on each one.",
+      "subscribe": "Enable on this device",
+      "unsubscribe": "Disable on this device",
+      "subscribed": "Notifications enabled",
+      "unsubscribed": "Notifications disabled",
+      "denied": "The browser declined the request",
+      "blocked": "Notifications are blocked for this site in your browser settings. They can only be re-enabled there.",
+      "unsupported": "This browser doesn't support push notifications.",
+      "stub": "Sending keys aren't configured: the subscription will be created, but no notifications will be delivered.",
+      "devicesTitle": "Devices with notifications",
+      "forget": "Forget"
+    }
   }
 }

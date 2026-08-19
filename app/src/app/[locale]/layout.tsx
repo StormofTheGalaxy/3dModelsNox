@@ -14,9 +14,11 @@ import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { ThemeScript } from '@/components/theme/theme-script';
 import { Analytics } from '@/components/analytics/analytics';
+import { ServiceWorkerRegistrar } from '@/components/pwa/service-worker';
 import { Toaster } from '@/components/ui/toast';
 import { routing } from '@/i18n/routing';
 import { publicEnv } from '@/server/env';
+import { pushEnabled } from '@/server/push';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -81,7 +83,7 @@ export default async function LocaleLayout({
   // Без этого статически отрендеренные страницы теряют язык.
   setRequestLocale(locale);
 
-  const cookieStore = await cookies();
+  const [cookieStore, pwaOn] = await Promise.all([cookies(), pushEnabled()]);
   const themePreference = (cookieStore.get(COOKIES.theme)?.value ?? 'dark') as Theme;
   // Для «системной» темы сервер не знает ответа — ставим тёмную по умолчанию,
   // а ThemeScript поправит класс до первой отрисовки.
@@ -105,6 +107,7 @@ export default async function LocaleLayout({
         </NextIntlClientProvider>
 
         <Analytics />
+        <ServiceWorkerRegistrar enabled={pwaOn} />
       </body>
     </html>
   );

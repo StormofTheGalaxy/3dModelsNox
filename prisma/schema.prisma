@@ -142,6 +142,8 @@ model User {
   organizations   Organization[]       @relation("OrganizationOwner")
   memberships     OrganizationMember[] @relation("OrganizationMembership")
 
+  pushSubscriptions PushSubscription[] @relation("PushSubscriptionOwner")
+
   briefs          Brief[]          @relation("BriefOwner")
   briefVersions   BriefVersion[]   @relation("BriefVersionAuthor")
   briefTemplates  BriefTemplate[]  @relation("BriefTemplateOwner")
@@ -1215,6 +1217,8 @@ model Notification {
   /// Ушло ли в Telegram. Отдельно от письма: каналы независимы и могут
   /// сработать по-разному (бот заблокирован, почта отбита).
   telegramSentAt DateTime?
+  /// Ушло ли пушем хотя бы на одно устройство.
+  webPushSentAt  DateTime?
 
   createdAt DateTime @default(now())
 
@@ -1233,9 +1237,38 @@ model NotificationPreference {
   inApp    Boolean @default(true)
   email    Boolean @default(true)
   telegram Boolean @default(true)
+  webPush  Boolean @default(true)
 
   @@unique([userId, type])
   @@map("notification_preferences")
+}
+
+// ── PWA и пуш-уведомления (§4.7, post-MVP №8). За флагом feature_pwa. ───────
+
+/// Подписка браузера на пуши. Живёт на устройстве, поэтому у одного
+/// человека их столько, со скольких устройств он разрешил уведомления.
+model PushSubscription {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("PushSubscriptionOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Адрес сервиса доставки браузера. Он же идентификатор устройства.
+  endpoint String @unique
+  /// Ключи шифрования подписки: полезная нагрузка шифруется ими, и сервис
+  /// доставки видит только адрес, но не текст уведомления.
+  p256dh   String
+  auth     String
+
+  /// Чтобы человек узнал своё устройство в списке и отключил лишнее.
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  /// Последняя удачная доставка — по ней видно живую подписку.
+  lastSentAt DateTime?
+
+  @@index([userId, createdAt])
+  @@map("push_subscriptions")
 }
 
 // ── Аукцион заказов (§3, post-MVP №1). За флагом feature_auction. ───────────

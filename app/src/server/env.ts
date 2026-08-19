@@ -50,6 +50,13 @@ const serverEnvSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().default(''),
   TELEGRAM_BOT_USERNAME: z.string().default(''),
   TELEGRAM_WEBHOOK_SECRET: z.string().default(''),
+
+  // Веб-пуши. Без пары ключей VAPID поднимается заглушка (packages/webpush).
+  // Пара генерируется один раз: npm run push:keys.
+  WEB_PUSH_PUBLIC_KEY: z.string().default(''),
+  WEB_PUSH_PRIVATE_KEY: z.string().default(''),
+  // Контакт на случай, если сервис доставки захочет пожаловаться.
+  WEB_PUSH_SUBJECT: z.string().default('mailto:hello@polyforge.local'),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
