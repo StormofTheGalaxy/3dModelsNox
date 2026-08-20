@@ -6,8 +6,7 @@ build/
 coverage/
 
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
 packages/db/generated/

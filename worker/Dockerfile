@@ -10,9 +10,14 @@ WORKDIR /repo
 
 FROM base AS deps
 COPY package.json package-lock.json ./
+COPY packages/ai/package.json packages/ai/
 COPY packages/shared/package.json packages/shared/
 COPY packages/db/package.json packages/db/
+COPY packages/mail/package.json packages/mail/
+COPY packages/payments/package.json packages/payments/
 COPY packages/storage/package.json packages/storage/
+COPY packages/telegram/package.json packages/telegram/
+COPY packages/webpush/package.json packages/webpush/
 COPY app/package.json app/
 COPY ws/package.json ws/
 COPY worker/package.json worker/
@@ -34,6 +39,7 @@ RUN npx prisma generate --schema=prisma/schema.prisma
 
 RUN groupadd --system --gid 1001 nodejs \
     && useradd --system --uid 1001 --gid nodejs polyforge \
+    && mkdir -p /repo/.data/uploads \
     && chown -R polyforge:nodejs /repo
 USER polyforge
 

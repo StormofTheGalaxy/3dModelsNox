@@ -10,9 +10,14 @@ WORKDIR /repo
 # ── Зависимости всего монорепо ──────────────────────────────────────────────
 FROM base AS deps
 COPY package.json package-lock.json ./
+COPY packages/ai/package.json packages/ai/
 COPY packages/shared/package.json packages/shared/
 COPY packages/db/package.json packages/db/
+COPY packages/mail/package.json packages/mail/
+COPY packages/payments/package.json packages/payments/
 COPY packages/storage/package.json packages/storage/
+COPY packages/telegram/package.json packages/telegram/
+COPY packages/webpush/package.json packages/webpush/
 COPY app/package.json app/
 COPY ws/package.json ws/
 COPY worker/package.json worker/
@@ -25,6 +30,16 @@ COPY --from=deps /repo/app/node_modules ./app/node_modules
 COPY . .
 # Клиент Prisma генерируется до сборки: Next импортирует его типы.
 RUN npx prisma generate --schema=prisma/schema.prisma
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ARG NEXT_PUBLIC_WS_URL=http://localhost:4000
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+ARG NEXT_PUBLIC_YM_ID=
+ARG NEXT_PUBLIC_GA_ID=
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL \
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
+    NEXT_PUBLIC_YM_ID=$NEXT_PUBLIC_YM_ID \
+    NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build --workspace=app
 
@@ -34,7 +49,9 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN groupadd --system --gid 1001 nodejs \
-    && useradd --system --uid 1001 --gid nodejs nextjs
+    && useradd --system --uid 1001 --gid nodejs nextjs \
+    && mkdir -p /repo/.data/uploads \
+    && chown -R nextjs:nodejs /repo/.data
 
 # standalone-сборка сохраняет структуру монорепо
 COPY --from=builder --chown=nextjs:nodejs /repo/app/.next/standalone ./

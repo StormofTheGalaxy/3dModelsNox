@@ -22,7 +22,7 @@ import { REALTIME_CHANNELS } from '@polyforge/shared';
 const PORT = Number(process.env.WS_PORT ?? 4000);
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-const JWT_SECRET = process.env.AUTH_JWT_SECRET;
+const JWT_SECRET = process.env.AUTH_JWT_SECRET || process.env.SESSION_SECRET;
 
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
   throw new Error('AUTH_JWT_SECRET обязателен и должен быть не короче 32 символов');

@@ -66,7 +66,15 @@ let cached: ServerEnv | null = null;
 function parseServerEnv(): ServerEnv {
   if (cached) return cached;
 
-  const parsed = serverEnvSchema.safeParse(process.env);
+  // Coolify-инсталляции соседних сервисов используют один SESSION_SECRET.
+  // Раздельные ключи приоритетны, но общий секрет позволяет мигрировать стек без простоя.
+  const sessionSecret = process.env.SESSION_SECRET;
+  const parsed = serverEnvSchema.safeParse({
+    ...process.env,
+    AUTH_JWT_SECRET: process.env.AUTH_JWT_SECRET || sessionSecret,
+    AUTH_REFRESH_SECRET: process.env.AUTH_REFRESH_SECRET || sessionSecret,
+    AUTH_TOKEN_PEPPER: process.env.AUTH_TOKEN_PEPPER || sessionSecret,
+  });
   if (!parsed.success) {
     const issues = parsed.error.issues
       .map((issue) => `  • ${issue.path.join('.')}: ${issue.message}`)

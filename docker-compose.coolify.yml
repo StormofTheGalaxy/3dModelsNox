@@ -1,0 +1,139 @@
+# Coolify: Build Pack = Docker Compose, Docker Compose Location = /docker-compose.coolify.yml.
+# Назначьте домен сервису gateway на порт 5000. PostgreSQL берётся из DATABASE_URL.
+
+name: polyforge-coolify
+
+x-runtime-environment: &runtime-environment
+  NODE_ENV: production
+  DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in Coolify (append ?schema=polyforge)}
+  REDIS_URL: redis://redis:6379
+  SESSION_SECRET: ${SESSION_SECRET:-}
+  AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-}
+  AUTH_REFRESH_SECRET: ${AUTH_REFRESH_SECRET:-}
+  AUTH_TOKEN_PEPPER: ${AUTH_TOKEN_PEPPER:-}
+  NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Set the public application URL in Coolify}
+  NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_APP_URL:?Set the public application URL in Coolify}
+  DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+  DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+  TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+  RESEND_API_KEY: ${RESEND_API_KEY:-}
+  EMAIL_FROM: ${EMAIL_FROM:-PolyForge <noreply@example.com>}
+  EMAIL_TRANSPORT: ${EMAIL_TRANSPORT:-console}
+  STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+  STORAGE_LOCAL_DIR: /repo/.data/uploads
+  S3_ENDPOINT: ${S3_ENDPOINT:-}
+  S3_REGION: ${S3_REGION:-ru-1}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+  S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:-polyforge-public}
+  S3_BUCKET_PRIVATE: ${S3_BUCKET_PRIVATE:-polyforge-private}
+  S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+  TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+  WEB_PUSH_PUBLIC_KEY: ${WEB_PUSH_PUBLIC_KEY:-}
+  WEB_PUSH_PRIVATE_KEY: ${WEB_PUSH_PRIVATE_KEY:-}
+  WEB_PUSH_SUBJECT: ${WEB_PUSH_SUBJECT:-mailto:admin@example.com}
+  NEXT_PUBLIC_YM_ID: ${NEXT_PUBLIC_YM_ID:-}
+  NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.coolify
+    restart: unless-stopped
+    expose:
+      - "5000"
+    depends_on:
+      app:
+        condition: service_healthy
+      ws:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Set the public application URL in Coolify}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_APP_URL:?Set the public application URL in Coolify}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+        NEXT_PUBLIC_YM_ID: ${NEXT_PUBLIC_YM_ID:-}
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+    restart: unless-stopped
+    environment:
+      <<: *runtime-environment
+      PORT: "5000"
+      HOSTNAME: 0.0.0.0
+    expose:
+      - "5000"
+    volumes:
+      - uploads:/repo/.data/uploads
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  ws:
+    build:
+      context: .
+      dockerfile: ws/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Set the public application URL in Coolify}
+      WS_PORT: "4000"
+    expose:
+      - "4000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *runtime-environment
+    volumes:
+      - uploads:/repo/.data/uploads
+    depends_on:
+      app:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  redis-data:
+  uploads:

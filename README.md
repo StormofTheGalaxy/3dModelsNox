@@ -437,6 +437,26 @@ docker compose --env-file .env up -d --build
 Секреты для Actions: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`,
 `DEPLOY_PATH`, опционально `DEPLOY_PORT`.
 
+### Coolify
+
+Для Coolify предусмотрен отдельный стек без встроенных PostgreSQL и TLS-прокси:
+
+1. Создайте ресурс **Docker Compose** из этого репозитория.
+2. Укажите Compose-файл `/docker-compose.coolify.yml`.
+3. Назначьте домен сервису `gateway`, порт `5000`; healthcheck path — `/api/health`.
+4. Задайте `NEXT_PUBLIC_APP_URL=https://ваш-домен` до первой сборки.
+5. Передайте URL общей PostgreSQL в `DATABASE_URL`, добавив отдельную схему:
+   `postgres://user:password@host:5432/postgres?schema=polyforge`.
+
+Стек сам поднимает Redis, app, WebSocket-сервис и worker. `/socket.io` проходит
+через тот же домен, поэтому отдельный публичный адрес для WebSocket не нужен.
+Миграции Prisma применяются при старте `app`. Секреты задаются только в Coolify
+и не должны попадать в Git; `.dockerignore` также исключает все `.env` из образов.
+
+Можно использовать один существующий `SESSION_SECRET` (не короче 32 символов),
+но для нового деплоя рекомендуются отдельные `AUTH_JWT_SECRET`,
+`AUTH_REFRESH_SECRET` и `AUTH_TOKEN_PEPPER`.
+
 ## Бэкапы
 
 `scripts/backup.sh` делает `pg_dump`, жмёт и кладёт в приватный бакет S3, чистит
