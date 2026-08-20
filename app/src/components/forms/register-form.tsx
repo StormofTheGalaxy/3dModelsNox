@@ -116,6 +116,18 @@ export function RegisterForm({
         )}
       </Field>
 
+      {/* Человеку без кода форма раньше ничего не предлагала: он упирался
+          в обязательное поле и уходил. Лист ожидания — единственный путь
+          внутрь в закрытой бете, и сказать о нём надо здесь. */}
+      {inviteOnly && !presetInviteCode ? (
+        <p className="-mt-2 text-sm text-fg-muted">
+          {t('noInvite')}{' '}
+          <Link href="/#waitlist" className="text-accent hover:underline">
+            {t('joinWaitlist')}
+          </Link>
+        </p>
+      ) : null}
+
       <label className="flex items-start gap-2.5 text-sm text-fg-muted">
         <input
           type="checkbox"

@@ -5,8 +5,10 @@ import { prisma } from '@polyforge/db';
 
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { VerificationFlow } from '@/components/verification/verification-flow';
+import { Link } from '@/i18n/navigation';
 import { redirectToLogin } from '@/server/auth/redirects';
 import { getCurrentUser } from '@/server/auth/session';
 import { formatDate } from '@/lib/utils';
@@ -38,13 +40,21 @@ export default async function VerificationPage({
     select: { specializations: true, verifiedAt: true, level: true },
   });
 
-  const t = await getTranslations('verification');
+  const [t, tProfile] = await Promise.all([
+    getTranslations('verification'),
+    getTranslations('profile'),
+  ]);
 
   if (!profile) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="mb-4 text-2xl font-bold">{t('title')}</h1>
+      <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-10 sm:px-6">
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <Alert tone="warning">{t('needProfile')}</Alert>
+        {/* Надпись «заполните профиль» без пути к профилю — тупик: человек
+            уже здесь, значит он и хотел этим заняться. */}
+        <Button asChild className="sm:w-fit">
+          <Link href="/profile/designer">{tProfile('createProfile')}</Link>
+        </Button>
       </div>
     );
   }

@@ -123,6 +123,8 @@
     "inviteCode": "Инвайт-код",
     "inviteCodeHint": "10 символов из приглашения",
     "inviteCodeApplied": "Код {code} применён",
+    "noInvite": "Кода нет?",
+    "joinWaitlist": "Оставьте заявку в листе ожидания",
     "acceptTerms": "Я принимаю <terms>пользовательское соглашение</terms> и <privacy>политику конфиденциальности</privacy>",
     "submitRegister": "Создать аккаунт",
     "submitLogin": "Войти",

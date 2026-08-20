@@ -7,12 +7,15 @@ import {
   ClipboardList,
   FileText,
   Handshake,
+  Images,
   LayoutDashboard,
   LogOut,
   Send,
   Settings,
   Shield,
+  Store,
   Ticket,
+  Trophy,
   Users,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -22,6 +25,14 @@ import { useTransition } from 'react';
 import { Link } from '@/i18n/navigation';
 import { logoutAction } from '@/server/actions/auth';
 import { cn } from '@/lib/utils';
+
+/** Разделы платформы: те же, что в шапке на широком экране. */
+const PUBLIC_SECTIONS = [
+  { key: 'works', icon: Images },
+  { key: 'designers', icon: Users },
+  { key: 'orders', icon: Store },
+  { key: 'top', icon: Trophy },
+] as const;
 
 const itemClass = cn(
   'flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm outline-none',
@@ -78,6 +89,20 @@ export function UserMenu({
             'data-[state=open]:[animation:pf-fade-in_120ms_var(--ease-out-quick)]',
           )}
         >
+          {/* На телефоне шапка прячет разделы платформы, и добраться до них
+              можно было только через подвал. Здесь они рядом с остальным. */}
+          <div className="md:hidden">
+            {PUBLIC_SECTIONS.map((section) => (
+              <DropdownMenu.Item key={section.key} asChild className={itemClass}>
+                <Link href={`/${section.key}`}>
+                  <section.icon className="size-4 text-fg-muted" aria-hidden />
+                  {t(section.key)}
+                </Link>
+              </DropdownMenu.Item>
+            ))}
+            <DropdownMenu.Separator className="my-1 h-px bg-[var(--pf-border)]" />
+          </div>
+
           <DropdownMenu.Item asChild className={itemClass}>
             <Link href="/dashboard">
               <LayoutDashboard className="size-4 text-fg-muted" aria-hidden />

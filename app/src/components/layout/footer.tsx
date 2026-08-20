@@ -26,6 +26,9 @@ export async function Footer() {
           <Link className="text-fg-muted transition-colors hover:text-fg" href="/designers">
             {tNav('designers')}
           </Link>
+          <Link className="text-fg-muted transition-colors hover:text-fg" href="/top">
+            {tNav('top')}
+          </Link>
           <Link className="text-fg-muted transition-colors hover:text-fg" href="/orders">
             {tNav('orders')}
           </Link>

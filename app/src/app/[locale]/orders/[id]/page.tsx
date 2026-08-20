@@ -53,7 +53,11 @@ export default async function OrderPage({
   const [order, viewer] = await Promise.all([getOrder(id), getCurrentUser()]);
   if (!order) notFound();
 
-  const [t, tTax] = await Promise.all([getTranslations('orders'), getTranslations('taxonomy')]);
+  const [t, tTax, tProfile] = await Promise.all([
+    getTranslations('orders'),
+    getTranslations('taxonomy'),
+    getTranslations('profile'),
+  ]);
 
   // Автоперевод контента (§4.7): заказ читается на языке интерфейса зрителя.
   // Гостю не переводим — за это списываются кредиты, а платить за анонимов
@@ -226,7 +230,12 @@ export default async function OrderPage({
               />
             )
           ) : viewer && !isOwner && !profileState?.hasDesigner ? (
-            <Alert tone="info">{t('response.needProfile')}</Alert>
+            <div className="flex flex-col gap-3">
+              <Alert tone="info">{t('response.needProfile')}</Alert>
+              <Button asChild className="sm:w-fit">
+                <Link href="/profile/designer">{tProfile('createProfile')}</Link>
+              </Button>
+            </div>
           ) : null}
         </div>
 

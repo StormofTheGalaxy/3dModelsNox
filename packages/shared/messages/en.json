@@ -123,6 +123,8 @@
     "inviteCode": "Invite code",
     "inviteCodeHint": "10 characters from your invitation",
     "inviteCodeApplied": "Code {code} applied",
+    "noInvite": "No code?",
+    "joinWaitlist": "Join the waiting list",
     "acceptTerms": "I accept the <terms>Terms of Service</terms> and the <privacy>Privacy Policy</privacy>",
     "submitRegister": "Create account",
     "submitLogin": "Log in",
