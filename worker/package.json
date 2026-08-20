@@ -20,12 +20,12 @@
     "bullmq": "^5.34.0",
     "ioredis": "^5.4.1",
     "react": "^19.2.0",
-    "sharp": "^0.34.0"
+    "sharp": "^0.34.0",
+    "tsx": "^4.19.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.0",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
 }

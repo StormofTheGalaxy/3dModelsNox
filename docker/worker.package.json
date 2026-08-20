@@ -1,0 +1,17 @@
+{
+  "name": "polyforge-worker-runtime",
+  "private": true,
+  "workspaces": [
+    "packages/ai",
+    "packages/db",
+    "packages/mail",
+    "packages/shared",
+    "packages/storage",
+    "packages/telegram",
+    "packages/webpush",
+    "worker"
+  ],
+  "dependencies": {
+    "prisma": "6.19.3"
+  }
+}

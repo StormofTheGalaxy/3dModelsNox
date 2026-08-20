@@ -1,0 +1,8 @@
+{
+  "name": "polyforge-ws-runtime",
+  "private": true,
+  "workspaces": [
+    "packages/shared",
+    "ws"
+  ]
+}

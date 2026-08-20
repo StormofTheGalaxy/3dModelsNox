@@ -8,25 +8,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 WORKDIR /repo
 
 FROM base AS deps
-COPY package.json package-lock.json ./
-COPY packages/ai/package.json packages/ai/
+COPY docker/ws.package.json ./package.json
 COPY packages/shared/package.json packages/shared/
-COPY packages/db/package.json packages/db/
-COPY packages/mail/package.json packages/mail/
-COPY packages/payments/package.json packages/payments/
-COPY packages/storage/package.json packages/storage/
-COPY packages/telegram/package.json packages/telegram/
-COPY packages/webpush/package.json packages/webpush/
-COPY app/package.json app/
 COPY ws/package.json ws/
-COPY worker/package.json worker/
-# tsx лежит в devDependencies и нужен в рантайме — ставим всё.
-RUN npm ci --ignore-scripts
+# Изолированный workspace не тянет Next.js и зависимости worker/app.
+RUN npm install --omit=dev --ignore-scripts --package-lock=false --no-audit --no-fund
 
 FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=deps /repo/node_modules ./node_modules
-COPY package.json tsconfig.base.json ./
+COPY docker/ws.package.json ./package.json
+COPY tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY ws ./ws
 

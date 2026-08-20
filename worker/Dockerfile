@@ -9,28 +9,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /repo
 
 FROM base AS deps
-COPY package.json package-lock.json ./
+COPY docker/worker.package.json ./package.json
 COPY packages/ai/package.json packages/ai/
 COPY packages/shared/package.json packages/shared/
 COPY packages/db/package.json packages/db/
 COPY packages/mail/package.json packages/mail/
-COPY packages/payments/package.json packages/payments/
 COPY packages/storage/package.json packages/storage/
 COPY packages/telegram/package.json packages/telegram/
 COPY packages/webpush/package.json packages/webpush/
-COPY app/package.json app/
-COPY ws/package.json ws/
 COPY worker/package.json worker/
 # Скрипты установки не отключаем: sharp тянет платформенные бинарники.
-RUN npm ci
+RUN npm install --omit=dev --package-lock=false --no-audit --no-fund
 
 FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=deps /repo/node_modules ./node_modules
-COPY package.json tsconfig.base.json ./
+COPY docker/worker.package.json ./package.json
+COPY tsconfig.base.json ./
+COPY packages/ai ./packages/ai
 COPY packages/shared ./packages/shared
 COPY packages/db ./packages/db
+COPY packages/mail ./packages/mail
 COPY packages/storage ./packages/storage
+COPY packages/telegram ./packages/telegram
+COPY packages/webpush ./packages/webpush
 COPY prisma ./prisma
 COPY worker ./worker
 
