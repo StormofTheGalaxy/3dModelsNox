@@ -26,7 +26,6 @@ RUN npm ci
 # ── Сборка ──────────────────────────────────────────────────────────────────
 FROM base AS builder
 COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/app/node_modules ./app/node_modules
 COPY . .
 # Клиент Prisma генерируется до сборки: Next импортирует его типы.
 RUN npx prisma generate --schema=prisma/schema.prisma
