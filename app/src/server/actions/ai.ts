@@ -92,7 +92,7 @@ export async function generateBriefFromPrompt(
 ): Promise<ActionState & { briefId?: string }> {
   const parsed = briefGenerateSchema.safeParse({ prompt: formData.get('prompt') ?? '' });
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const briefId = formData.get('briefId');

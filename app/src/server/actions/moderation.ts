@@ -164,7 +164,7 @@ export async function grantStrike(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const outcome = await issueStrike({

@@ -59,7 +59,7 @@ export async function registerAction(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const input = parsed.data;
@@ -75,11 +75,11 @@ export async function registerAction(
 
   if (inviteOnly) {
     if (!input.inviteCode) {
-      return errorState('errors.generic', { fieldErrors: { inviteCode: 'errors.invite.required' } });
+      return errorState('errors.checkFields', { fieldErrors: { inviteCode: 'errors.invite.required' } });
     }
     const check = await checkInviteCode(input.inviteCode);
     if (!check.ok) {
-      return errorState('errors.generic', { fieldErrors: { inviteCode: check.error } });
+      return errorState('errors.checkFields', { fieldErrors: { inviteCode: check.error } });
     }
     inviteId = check.inviteId;
     inviterId = check.ownerId;
@@ -102,7 +102,7 @@ export async function registerAction(
   if (emailTaken) fieldErrors.email = 'errors.email.taken';
   if (nicknameTaken) fieldErrors.nickname = 'errors.nickname.taken';
   if (Object.keys(fieldErrors).length > 0) {
-    return errorState('errors.generic', { fieldErrors });
+    return errorState('errors.checkFields', { fieldErrors });
   }
 
   const user = await prisma.user.create({
@@ -181,7 +181,7 @@ export async function loginAction(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const { email, password } = parsed.data;
@@ -330,7 +330,7 @@ export async function forgotPasswordAction(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const limit = await checkRateLimit('password_reset', ip ?? 'unknown');
@@ -396,7 +396,7 @@ export async function resetPasswordAction(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const record = await prisma.authToken.findUnique({
@@ -445,7 +445,7 @@ export async function joinWaitlistAction(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const limit = await checkRateLimit('register', `waitlist:${ip ?? 'unknown'}`);

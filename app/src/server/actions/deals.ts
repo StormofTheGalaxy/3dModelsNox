@@ -268,7 +268,7 @@ export async function saveMilestonePlan(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const access = await getDealForUser(parsed.data.dealId, user.id);

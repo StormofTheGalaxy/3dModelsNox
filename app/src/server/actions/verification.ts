@@ -83,7 +83,7 @@ export async function submitVerification(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const request = await prisma.verificationRequest.findUnique({
@@ -149,7 +149,7 @@ export async function decideVerification(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const request = await prisma.verificationRequest.findUnique({

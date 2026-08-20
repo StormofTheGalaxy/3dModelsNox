@@ -50,9 +50,10 @@ export default async function OrderResponsesPage({
     notFound();
   }
 
-  const [t, tTax, responses] = await Promise.all([
+  const [t, tTax, tDesigners, responses] = await Promise.all([
     getTranslations('orders.responses'),
     getTranslations('taxonomy'),
+    getTranslations('designers'),
     listOrderResponses(order.id),
   ]);
 
@@ -111,8 +112,10 @@ export default async function OrderResponsesPage({
                               {profile.rating.toFixed(1)}
                             </span>
                           ) : null}
-                          {profile ? `· ${profile.ordersCompleted}` : null}
-                          · {formatDate(response.createdAt, locale)}
+                          {profile ? (
+                            <span>· {tDesigners('orders', { count: profile.ordersCompleted })}</span>
+                          ) : null}
+                          <span>· {formatDate(response.createdAt, locale)}</span>
                         </span>
                       </div>
                     </div>

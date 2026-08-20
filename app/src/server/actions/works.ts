@@ -144,7 +144,7 @@ export async function saveWork(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const input = parsed.data;
@@ -160,7 +160,7 @@ export async function saveWork(
   const orderedMedia = input.mediaIds.filter((id) => ownedMediaIds.has(id));
 
   if (orderedMedia.length === 0) {
-    return errorState('errors.generic', { fieldErrors: { mediaIds: 'errors.work.mediaRequired' } });
+    return errorState('errors.checkFields', { fieldErrors: { mediaIds: 'errors.work.mediaRequired' } });
   }
 
   const isFirstPublish = work.title === '';
@@ -283,7 +283,7 @@ export async function submitReport(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const input = parsed.data;

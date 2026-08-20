@@ -49,7 +49,7 @@ export async function publishOrder(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const input = parsed.data;
@@ -99,7 +99,7 @@ export async function publishOrder(
 
     auctionEndsAt = new Date(input.auctionEndsAt);
     if (Number.isNaN(auctionEndsAt.getTime())) {
-      return errorState('errors.generic', { fieldErrors: { auctionEndsAt: 'errors.auction.invalidEndsAt' } });
+      return errorState('errors.checkFields', { fieldErrors: { auctionEndsAt: 'errors.auction.invalidEndsAt' } });
     }
 
     const hours = (auctionEndsAt.getTime() - Date.now()) / (60 * 60 * 1000);
@@ -334,7 +334,7 @@ export async function saveFilter(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   await prisma.savedFilter.create({

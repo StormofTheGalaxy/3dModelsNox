@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { History, Pencil } from 'lucide-react';
+import { History, Pencil, Send } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
@@ -46,7 +46,11 @@ export default async function BriefPage({
   const brief = await getOwnBrief(id, user.id);
   if (!brief) notFound();
 
-  const [t, versions] = await Promise.all([getTranslations('brief'), listBriefVersions(brief.id)]);
+  const [t, tOrders, versions] = await Promise.all([
+    getTranslations('brief'),
+    getTranslations('orders'),
+    listBriefVersions(brief.id),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
@@ -69,10 +73,22 @@ export default async function BriefPage({
           />
 
           {brief.status !== 'frozen' ? (
-            <Button asChild size="sm">
+            <Button asChild size="sm" variant="outline">
               <Link href={`/briefs/${brief.id}/edit`}>
                 <Pencil aria-hidden />
                 {t('edit')}
+              </Link>
+            </Button>
+          ) : null}
+
+          {/* Главное действие с готовым ТЗ — опубликовать по нему заказ.
+              Его тут не было, и заказчик должен был догадаться пойти в
+              «Заказы» и выбрать своё ТЗ из списка. */}
+          {brief.status !== 'frozen' && brief.status !== 'archived' ? (
+            <Button asChild size="sm">
+              <Link href={`/orders/new?brief=${brief.id}`}>
+                <Send aria-hidden />
+                {tOrders('publish')}
               </Link>
             </Button>
           ) : null}

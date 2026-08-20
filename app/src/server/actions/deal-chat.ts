@@ -64,7 +64,7 @@ export async function sendDealMessage(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const access = await getDealForUser(dealId, user.id);
@@ -441,7 +441,7 @@ export async function requestBriefChange(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const access = await getDealForUser(parsed.data.dealId, user.id);

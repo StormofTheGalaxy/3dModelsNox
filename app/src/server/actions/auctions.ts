@@ -40,7 +40,7 @@ export async function placeBid(_previous: ActionState, formData: FormData): Prom
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const input = parsed.data;

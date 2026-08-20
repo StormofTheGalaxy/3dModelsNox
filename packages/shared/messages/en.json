@@ -232,6 +232,7 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
+    "checkFields": "Check the highlighted fields",
     "network": "No connection to the server.",
     "notFound": "Page not found",
     "notFoundText": "We couldn't find what you were looking for.",
@@ -1137,6 +1138,7 @@
       "improved": "Text edited. Review it — the changes are already in the field.",
       "improveHint": "AI fixes grammar and structure but doesn't write for you",
       "price": "Your price",
+      "currency": "Currency",
       "days": "Days",
       "attachWorks": "Portfolio pieces",
       "attachWorksHint": "One to three — this is what the client actually looks at",

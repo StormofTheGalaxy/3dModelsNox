@@ -43,6 +43,10 @@ export function ResponseForm({
   const tRoot = useTranslations();
 
   const [coverText, setCoverText] = useState('');
+  // Цена и срок держатся в состоянии, как и письмо: после ошибки сервера
+  // форма перерисовывается, и неуправляемые поля теряли введённое.
+  const [price, setPrice] = useState('');
+  const [days, setDays] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [improving, startImprove] = useTransition();
 
@@ -145,13 +149,15 @@ export function ResponseForm({
                   required
                   inputMode="numeric"
                   className="font-mono"
+                  value={price}
+                  onChange={(event) => setPrice(event.target.value)}
                   invalid={invalid}
                 />
               )}
             </Field>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="response-currency">{t('price')}</Label>
+              <Label htmlFor="response-currency">{t('currency')}</Label>
               <Select id="response-currency" name="currency" defaultValue={defaultCurrency}>
                 {CURRENCIES.map((currency) => (
                   <option key={currency} value={currency}>
@@ -172,6 +178,8 @@ export function ResponseForm({
                   required
                   inputMode="numeric"
                   className="font-mono"
+                  value={days}
+                  onChange={(event) => setDays(event.target.value)}
                   invalid={invalid}
                 />
               )}

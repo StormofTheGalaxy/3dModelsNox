@@ -29,7 +29,7 @@ export async function completeOnboarding(
 
   const parsed = onboardingSchema.safeParse({ intent: formData.get('intent') });
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const { intent } = parsed.data;
@@ -86,7 +86,7 @@ export async function saveDesignerProfile(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const input = parsed.data;
@@ -138,7 +138,7 @@ export async function saveCustomerProfile(
   });
 
   if (!parsed.success) {
-    return errorState('errors.generic', { fieldErrors: fieldErrorsFrom(parsed.error) });
+    return errorState('errors.checkFields', { fieldErrors: fieldErrorsFrom(parsed.error) });
   }
 
   const input = parsed.data;
